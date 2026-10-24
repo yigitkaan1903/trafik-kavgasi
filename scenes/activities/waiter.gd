@@ -1,7 +1,8 @@
 extends Node2D
 ## Garsonluk vardiyası (Kafe Yıldız, 3/4 üstten bakış): boş masalara müşteri gelir ve sipariş verir, mutfak
-## birkaç saniyede yemeği tezgaha çıkarır. Tezgahtan al (E), doğru masaya götür (E). Hızlı servis = büyük bahşiş.
-## Vardiya bitince maaş + bahşiş alınır, oyun içinde 4 saat geçer. Mekan: tools/make_rooms.py "restoran".
+## birkaç saniyede yemeği tezgaha çıkarır. Tezgahın önünde E: tepsiye al (tepside en fazla 2 tabak),
+## doğru masaya götür (E). Maaş sipariş başına, hızlı servise küçük bahşiş. Oyun içinde 4 saat geçer.
+## Mekan: tools/make_rooms.py "restoran".
 
 const StatusBar = preload("res://scenes/ui/status_bar.gd")
 const ChoicePopup = preload("res://scenes/ui/choice_popup.gd")
@@ -14,6 +15,8 @@ const PATIENCE := 26.0
 const COOK_TIME := [3.0, 5.5]
 const EAT_TIME := 6.0
 const MAX_ON_PASS := 3
+const TRAY_SIZE := 2                 # tepside aynı anda taşınabilecek tabak
+const PASS_FRONT := Rect2(0, 118, 190, 40)   # mutfak tezgahının önü: buranın her yerinden alınır
 const DISHES := [
 	{"name": "Çay", "color": Color("c84438"), "rim": Color("f4f2ec")},
 	{"name": "Tost", "color": Color("e6b428"), "rim": Color("8d5e3c")},
@@ -31,7 +34,7 @@ var _customers: Array = []                          # {"node", "state": waiting/
 var _cooks: Array = []
 var _cooking: Array = []                            # {"table", "dish", "t"}
 var _on_pass: Array = []                            # {"table", "dish"}
-var _carry := {}
+var _carry: Array = []                              # tepsideki tabaklar {"table", "dish"}
 var _time_left := SHIFT_SECONDS
 var _spawn_t := 1.0
 var _tips := 0
@@ -61,7 +64,7 @@ func _ready() -> void:
 		c.face_dir("up")
 		c.target = c.position
 		_cooks.append(c)
-	_player = _person("player", _room.mark("spawn"))
+	_player = _person(GameState.player_look(), _room.mark("spawn"))
 	_player.marker = true
 	_player.face_dir("up")
 	_room.follow(_player)
@@ -123,41 +126,51 @@ func _table_near() -> int:
 
 
 func _at_pass() -> bool:
-	return _player.position.distance_to(_room.mark("pickup")) < 34.0
+	return PASS_FRONT.has_point(_player.position)
+
+
+func _carry_for(table: int) -> int:
+	for i in _carry.size():
+		if _carry[i]["table"] == table:
+			return i
+	return -1
 
 
 func _hint_text() -> String:
-	if _carry.is_empty():
-		if _at_pass() and not _on_pass.is_empty():
-			return "E: %s al (masa %d)" % [DISHES[_on_pass[0]["dish"]]["name"], _on_pass[0]["table"] + 1]
-		return "Yemek çıkınca mutfak tezgahından al (sol üst)" if _on_pass.is_empty() else "Tezgahta yemek var! (sol üst)"
+	if _at_pass() and not _on_pass.is_empty() and _carry.size() < TRAY_SIZE:
+		return "E: %s tepsiye al (masa %d)  ·  Tepside %d/%d" % [DISHES[_on_pass[0]["dish"]]["name"], _on_pass[0]["table"] + 1, _carry.size(), TRAY_SIZE]
 	var t := _table_near()
-	if t >= 0:
+	if t >= 0 and _carry_for(t) >= 0:
 		return "E: Masa %d'ye servis et" % (t + 1)
-	return "%s elinde: masa %d'ye götür" % [DISHES[_carry["dish"]]["name"], _carry["table"] + 1]
+	if _carry.is_empty():
+		return "Yemek çıkınca mutfak tezgahından al (sol üst)" if _on_pass.is_empty() else "Tezgahta yemek var! (sol üst)"
+	var dest: Array = _carry.map(func(c): return "masa %d" % (c["table"] + 1))
+	return "Tepside: %s  ·  Götür" % ", ".join(dest)
 
 
 func _interact() -> void:
-	if _carry.is_empty():
-		if _at_pass() and not _on_pass.is_empty():
-			_carry = _on_pass.pop_front()
-			_player.face_dir("up")
+	if _at_pass() and not _on_pass.is_empty() and _carry.size() < TRAY_SIZE:
+		_carry.append(_on_pass.pop_front())
+		_player.face_dir("up")
+		Audio.sfx("tray")
 		return
 	var t := _table_near()
-	if t < 0:
+	if t < 0 or _carry.is_empty():
 		return
 	_player.face_point(_tables[t])
 	var c = _customers[t]
-	if t != _carry["table"] or c == null or c["state"] != "waiting":
+	var k := _carry_for(t)
+	if k < 0 or c == null or c["state"] != "waiting":
 		if c != null:
 			Bubble.say(self, c["node"], "Ben bunu istemedim!", 34.0, 1.6)
 		return
-	var tip := 2 + int(10.0 * c["patience"] / PATIENCE)   # hızlı servis: en fazla 12 TL
+	var tip := 1 + int(4.0 * c["patience"] / PATIENCE)   # hızlı servis: en fazla 5 TL
 	_tips += tip
 	_served += 1
 	c["state"] = "eating"
 	c["t"] = EAT_TIME
-	_carry = {}
+	_carry.remove_at(k)
+	Audio.sfx("tray", 0.8)
 	Bubble.say(self, c["node"], ["Eline sağlık!", "Çok hızlısın!", "Teşekkürler!"].pick_random() + "  +%d TL" % tip, 34.0, 1.8)
 
 
@@ -197,8 +210,7 @@ func _leave(i: int) -> void:
 	_customers[i] = null
 	_on_pass = _on_pass.filter(func(d): return d["table"] != i)
 	_cooking = _cooking.filter(func(d): return d["table"] != i)
-	if not _carry.is_empty() and _carry["table"] == i:
-		_carry = {}
+	_carry = _carry.filter(func(d): return d["table"] != i)
 	var tw := create_tween()
 	tw.tween_interval(0.8)
 	tw.tween_property(node, "modulate:a", 0.0, 0.4)
@@ -222,11 +234,10 @@ func _update_kitchen(delta: float) -> void:
 ## Test için: tezgahtaki ilk yemeği alıp masasına götürür.
 func _autopilot(delta: float) -> void:
 	var goal := Vector2(-1, -1)
-	if _carry.is_empty():
-		if not _on_pass.is_empty():
-			goal = _room.mark("pickup")
-	else:
-		goal = _serve[_carry["table"]]
+	if _carry.size() < TRAY_SIZE and not _on_pass.is_empty():
+		goal = _room.mark("pickup")
+	elif not _carry.is_empty():
+		goal = _serve[_carry[0]["table"]]
 	if goal.x < 0.0:
 		_player.set_moving(false)
 		return
@@ -236,7 +247,7 @@ func _autopilot(delta: float) -> void:
 
 func _finish() -> void:
 	_done = true
-	var pay: int = _action.get("money", 70)
+	var pay: int = _served * int(_action.get("per_order", 12))
 	var a := _action.duplicate()
 	a["money"] = pay + _tips
 	GameState.do_action(a)
@@ -246,7 +257,7 @@ func _finish() -> void:
 	popup.add_line("Melek Hanım: \"%s\"" % ("Harikaydın, yarın yine gel!" if _missed == 0 and _served >= 6 else
 			"Fena değil, ama müşteri bekletme!" if _missed < 3 else "Bu böyle olmaz, daha hızlı olmalısın!"))
 	popup.add_line("Servis: %d   ·   Kızıp giden: %d" % [_served, _missed], 9, Color(1, 1, 1, 0.7))
-	popup.add_line("Maaş %d TL + bahşiş %d TL = %d TL" % [pay, _tips, pay + _tips], 11, Color("4ade80"))
+	popup.add_line("%d sipariş x %d TL = %d TL  +  bahşiş %d TL  =  %d TL" % [_served, int(_action.get("per_order", 12)), pay, _tips, pay + _tips], 10, Color("4ade80"))
 	popup.add_choice("Çarşıya dön", "ok")
 	_ui.add_child(popup)
 	popup.chosen.connect(func(_c): GameState.open_place_scene("carsi"))
@@ -257,8 +268,13 @@ func _draw_top() -> void:
 	var font := ThemeDB.fallback_font
 	for k in _on_pass.size():
 		_plate(_pass_slots[k] + Vector2(-8, 0), _on_pass[k]["dish"], _on_pass[k]["table"])
-	if not _carry.is_empty():
-		_plate(_player.position + Vector2(-8, -20), _carry["dish"], _carry["table"])
+	if not _carry.is_empty():   # elde tepsi, üstünde tabaklar
+		var tp: Vector2 = _player.position + Vector2(-11, -19)
+		_top.draw_rect(Rect2(tp.x - 1, tp.y + 5, 24, 4), Color("1b1024"))
+		_top.draw_rect(Rect2(tp.x, tp.y + 5, 22, 3), Color("a8afbf"))
+		_top.draw_rect(Rect2(tp.x, tp.y + 5, 22, 1), Color("e6e8ee"))
+		for i in _carry.size():
+			_plate(tp + Vector2(-2 + i * 11, -1), _carry[i]["dish"], _carry[i]["table"])
 	for i in _tables.size():
 		_top.draw_string(font, _serve[i] + Vector2(-6, -12), str(i + 1), HORIZONTAL_ALIGNMENT_CENTER, 12, 7, Color("f6d86a"))
 		var c = _customers[i]

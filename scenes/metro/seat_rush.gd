@@ -50,7 +50,7 @@ func _ready() -> void:
 		_occupied[order[k]] = p
 
 	_player = Person.new()
-	_player.look = "player"
+	_player.look = GameState.player_look()
 	_player.marker = true
 	_player.position = _door
 	_player.face_dir("up")

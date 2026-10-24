@@ -1,0 +1,35 @@
+## Telefona her gün gelen mesajlar: annen, baban, arkadaşlar, okul, reklamlar.
+## Her yeni günde bir ya da iki tanesi rastgele gelir (GameState._daily_messages).
+## {money}: cebindeki para, {day}: gün adı yerine yazılır.
+
+const DAILY := [
+	["Annem", "Oğlum yemek yiyor musun? Sesin hiç iyi gelmiyordu."],
+	["Annem", "Kışlıkları gönderdim, kargodan almayı unutma."],
+	["Annem", "Teyzen seni metrobüste görmüş, kavga ediyormuşsun?! Ne kavgası?!"],
+	["Annem", "Ders çalışıyorsun değil mi? Baban soruyor."],
+	["Annem", "Bugün dolma yaptım, keşke burada olsaydın."],
+	["Annem", "Erken yat, geç kalma. Seni seviyorum."],
+	["Babam", "Harçlık konusunu annenle konuş."],
+	["Babam", "Araba mı alacakmışsın? Önce ehliyetin var mı onu söyle."],
+	["Babam", "Maç izledin mi? Hakem yine rezaletti."],
+	["Sınıf grubu", "Arkadaşlar vize tarihi açıklandı mı? Kimse bir şey bilmiyor mu?"],
+	["Sınıf grubu", "Bugün derse giren var mı? Yoklama alınmış mı?"],
+	["Sınıf grubu", "Kim not tutuyor, fotoğrafını atsın lütfen"],
+	["Ayyaş Eren", "kanka dün ne oldu hatırlamıyorum, sen biliyon mu"],
+	["Kaan Hardal", "Kanka akşam kafeye geliyon mu? Ebu Hazretleri de gelcek"],
+	["Ebu Hazretleri", "Evlat, sabır acıdır meyvesi tatlıdır. Ödevi bana da at."],
+	["Furth Man", "Furth Man is watching you. Derse gel."],
+	["YTÜ OİDB", "Ders kayıt haftası yaklaşıyor. Danışmanınızla görüşmeyi unutmayınız."],
+	["YTÜ SKS", "Yemekhanede bu hafta: kuru fasulye, pilav, cacık. Afiyet olsun!"],
+	["Turkcell", "Size özel 20 GB internet sadece 199 TL! Hemen almak için EVET yazın."],
+	["Turkcell", "Faturanızın son ödeme tarihi yaklaşıyor."],
+	["ZepBet", "Zeplin seni bekliyor! İlk yatırımına %200 bonus. (18+, kumar bağımlılık yapar.)"],
+	["ZepBet", "Dün biri 47x yakaladı. Sıra sende mi?"],
+	["Mahalle Market", "Hüseyin Abi: taze simit geldi, öğrenciye çay bedava!"],
+	["Rıza'nın Salonu", "Kas yapmanın sırrı: düzen. Bugün salonda görüşelim mi?"],
+	["Necdet Oto", "KAÇIRMA! Kızlık Şahin sadece 200 TL. Kimsede yok bu fiyat!"],
+	["Getir", "Acıktın mı? İlk siparişe 50 TL indirim kodu: YTUOGR"],
+	["E-Devlet", "Adınıza yeni bir belge düzenlenmiştir. (Korkma, öğrenci belgesi.)"],
+	["İSPARK", "Aracınız park süresini aşmıştır. (Araban yok ama olsun.)"],
+	["Banka", "Hesabınızda {money} TL bulunmaktadır. İyi günler dileriz."],
+]

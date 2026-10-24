@@ -6,6 +6,8 @@ const Cars = preload("res://data/cars.gd")
 const Rivals = preload("res://data/rivals.gd")
 const MetroEvents = preload("res://data/metro_events.gd")
 const Places = preload("res://data/places.gd")
+const Shop = preload("res://data/shop.gd")
+const Messages = preload("res://data/messages.gd")
 
 const SAVE_VERSION := 2
 const SAVE_PATH := "user://save.json"
@@ -66,6 +68,11 @@ var last_lecture_day := 0
 var good_weeks := 0           # art arda devamı tutturulan hafta
 var technique := false        # Direksiyon Kilidi
 var messages: Array = []      # telefondaki mesajlar: [gönderen, metin], yeniden eskiye
+var unread := 0               # okunmamış mesaj sayısı (telefondaki bildirim)
+var outfit := "esofman"       # üzerindeki kıyafet (data/shop.gd OUTFITS)
+var outfits_owned: Array = ["esofman"]
+var weapons_owned: Array = []
+var weapon := ""              # çantadaki silah ("" yok)
 var pending_notice := ""      # haritaya dönünce gösterilecek uyarı (ör. bayıldın)
 
 # ---- para, arabalar, kavgalar
@@ -100,6 +107,7 @@ var open_place := "ev"         # mekan ekranı hangi yeri gösterecek
 var activity := {}              # ayrı sahnede oynanan eylem (garsonluk, ders, yemekhane)
 
 var fullscreen := true
+var screen_shake := true      # dövüşte ekran sarsıntısı (ayarlardan kapatılabilir)
 var ui_theme: Theme
 var title_font: Font
 var _fade: ColorRect
@@ -146,6 +154,11 @@ func new_game(diff: String = "normal") -> void:
 	good_weeks = 0
 	technique = false
 	messages = []
+	unread = 0
+	outfit = "esofman"
+	outfits_owned = ["esofman"]
+	weapons_owned = []
+	weapon = ""
 	pending_notice = ""
 	add_message("Annem", "Okulun ilk haftası! Haftada en az %d gün derse git, harçlığın pazartesi yatsın." % Places.ATTEND_NEEDED)
 	money = START_MONEY
@@ -183,7 +196,8 @@ func save_game() -> void:
 		"wins": wins, "losses": losses, "traffic_wins": traffic_wins, "distance_m": distance_m,
 		"metro_station": metro_station, "metro_dir": metro_dir, "intro_seen": intro_seen,
 		"metro_on_board": metro_on_board, "metro_seated": metro_seated, "simit_buff": simit_buff,
-		"blast_best": blast_best, "drive_dest": drive_dest, "drive_left": drive_left,
+		"blast_best": blast_best, "drive_dest": drive_dest, "drive_left": drive_left, "unread": unread,
+		"outfit": outfit, "outfits_owned": outfits_owned, "weapons_owned": weapons_owned, "weapon": weapon,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
@@ -268,6 +282,13 @@ func load_game() -> bool:
 	metro_seated = bool(data.get("metro_seated", false))
 	drive_dest = data.get("drive_dest", "") if Places.MAPS.has(data.get("drive_dest", "")) else ""
 	drive_left = float(data.get("drive_left", 0.0))
+	unread = int(data.get("unread", 0))
+	outfits_owned = data.get("outfits_owned", ["esofman"]).filter(func(o): return Shop.OUTFITS.has(o))
+	if not outfits_owned.has("esofman"):
+		outfits_owned.push_front("esofman")
+	outfit = data.get("outfit", "esofman") if outfits_owned.has(data.get("outfit", "")) else "esofman"
+	weapons_owned = data.get("weapons_owned", []).filter(func(w): return Shop.WEAPONS.has(w))
+	weapon = data.get("weapon", "") if weapons_owned.has(data.get("weapon", "")) else ""
 	return true
 
 
@@ -280,16 +301,30 @@ func _new_car(id: String) -> Dictionary:
 func set_fullscreen(on: bool) -> void:
 	fullscreen = on
 	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if on else DisplayServer.WINDOW_MODE_WINDOWED)
-	if not _no_save:
-		var cfg := ConfigFile.new()
-		cfg.set_value("display", "fullscreen", on)
-		cfg.save(SETTINGS_PATH)
+	save_settings()
+
+
+## Ayarlar (tam ekran, müzik ve efekt sesi, ekran sarsıntısı) ayrı dosyada saklanır.
+func save_settings() -> void:
+	if _no_save:
+		return
+	var cfg := ConfigFile.new()
+	cfg.set_value("display", "fullscreen", fullscreen)
+	cfg.set_value("display", "screen_shake", screen_shake)
+	if _audio():
+		cfg.set_value("audio", "music", _audio().music_volume)
+		cfg.set_value("audio", "sfx", _audio().sfx_volume)
+	cfg.save(SETTINGS_PATH)
 
 
 func _load_settings() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load(SETTINGS_PATH) == OK:
 		fullscreen = cfg.get_value("display", "fullscreen", true)
+		screen_shake = cfg.get_value("display", "screen_shake", true)
+		if _audio():
+			_audio().music_volume = cfg.get_value("audio", "music", 0.6)
+			_audio().sfx_volume = cfg.get_value("audio", "sfx", 0.8)
 	set_fullscreen(fullscreen)
 
 
@@ -348,6 +383,8 @@ func _new_day() -> void:
 	trained_today = {}
 	if protein_days > 0:
 		protein_days -= 1
+	if randf() < 0.85:
+		_daily_messages()
 	if weekday() == 0:
 		_week_check()
 
@@ -379,8 +416,25 @@ func _faint() -> void:
 
 func add_message(sender: String, text: String) -> void:
 	messages.push_front([sender, text])
-	if messages.size() > 10:
-		messages.resize(10)
+	if messages.size() > 20:
+		messages.resize(20)
+	unread += 1
+	if is_inside_tree() and get_tree().current_scene != null and _audio():
+		_audio().sfx("notify", 0.7, 0.0)
+
+
+## Ses yöneticisi (autoload "Audio"); test betiklerinde yoktur.
+func _audio() -> Node:
+	return get_node_or_null("/root/Audio") if is_inside_tree() else null
+
+
+## Her yeni gün annen, arkadaşların, okul ya da reklamlardan bir iki mesaj gelir.
+func _daily_messages() -> void:
+	var pool: Array = Messages.DAILY.duplicate()
+	pool.shuffle()
+	var count := 1 + (1 if randf() < 0.45 else 0)
+	for m in pool.slice(0, count):
+		add_message(m[0], m[1].replace("{money}", str(money)))
 
 
 func has_gym_access() -> bool:
@@ -422,13 +476,20 @@ func action_block_reason(a: Dictionary) -> String:
 		return "Hafta sonu ders yok"
 	if needs.has("once_per_day") and done_today.get(needs["once_per_day"], 0) == day:
 		return "Bugün zaten derse girdin" if needs["once_per_day"] == "lecture" else "Bugün yeterince yaptın"
-	if needs.has("open") and (minute < needs["open"][0] or minute >= needs["open"][1]):
-		return "Şu an kapalı (%02d:00-%02d:00)" % [needs["open"][0] / 60, needs["open"][1] / 60]
+	if needs.has("open") and not is_open(needs["open"]):
+		return "Şu an kapalı (%02d:00-%02d:00)" % [needs["open"][0] / 60, needs["open"][1] / 60 % 24]
 	if needs.get("gym", false) and not has_gym_access():
 		return "Önce giriş ya da üyelik al"
 	if needs.has("min_energy") and energy < needs["min_energy"]:
 		return "Çok yorgunsun"
 	return ""
+
+
+## Açık mı? Kapanış 1440'tan büyükse gece yarısını geçer (ör. [420, 1500] = 07:00-01:00).
+func is_open(hours: Array) -> bool:
+	if hours[1] > 1440:
+		return minute >= hours[0] or minute < hours[1] - 1440
+	return minute >= hours[0] and minute < hours[1]
 
 
 ## Bu durumda listede hiç gösterilmeyecek eylemler (ör. zaten üyeysen üyelik).
@@ -680,8 +741,13 @@ func can_intimidate(id: String) -> bool:
 	return fear_level(id) >= INTIMIDATE_FEAR
 
 
+## Kavgayı kazanınca alınan para (rivals.gd ödülü x FIGHT_REWARD_MULT).
+func fight_reward(id: String = "") -> int:
+	return int(rival(id)["reward"] * Places.FIGHT_REWARD_MULT)
+
+
 func intimidate_reward(id: String) -> int:
-	return int(rival(id)["reward"] / 3)
+	return int(fight_reward(id) / 3)
 
 
 func intimidate(id: String) -> void:
@@ -727,8 +793,13 @@ func apply_fight_result(won: bool) -> Dictionary:
 		wins += 1
 		if fight_venue == "traffic":
 			traffic_wins += 1
-		money += r["reward"]
-		result["money"] = r["reward"]
+		var reward := fight_reward()
+		money += reward
+		result["money"] = reward
+		if weapon == "bicak" and randf() < Shop.KNIFE_POLICE_CHANCE:
+			var fine := mini(money, Shop.KNIFE_POLICE_FINE)
+			money -= fine
+			result["police"] = "Polis çevirdi, bıçağı gördü: -%d TL ceza!" % fine
 		var before := fear_level(fight_rival)
 		nam[fight_rival] = nam.get(fight_rival, 0) + 1
 		result["fear_up"] = fear_level(fight_rival) > before
@@ -743,7 +814,7 @@ func apply_fight_result(won: bool) -> Dictionary:
 			metro_seated = false
 			result["seat"] = "Yerini kaptırdın, ayakta gidiyorsun."
 		losses += 1
-		var penalty := mini(money, int(r["reward"] / 2))
+		var penalty := mini(money, int(fight_reward() / 2))
 		money -= penalty
 		result["money"] = -penalty
 		if fight_bet and has_car():
@@ -887,6 +958,33 @@ func make_label(text: String, size: int = 10, color: Color = Color.WHITE) -> Lab
 	return l
 
 
+## Oyuncunun görünüşü (üzerindeki kıyafete göre karakter sayfası).
+func player_look() -> String:
+	return "player" if outfit == "esofman" else "player_" + outfit
+
+
+func buy_outfit(id: String) -> bool:
+	if outfits_owned.has(id) or not try_spend(Shop.OUTFITS[id]["price"]):
+		return false
+	outfits_owned.append(id)
+	save_game()
+	return true
+
+
+func buy_weapon(id: String) -> bool:
+	if weapons_owned.has(id) or not try_spend(Shop.WEAPONS[id]["price"]):
+		return false
+	weapons_owned.append(id)
+	if weapon == "":
+		weapon = id
+	save_game()
+	return true
+
+
+func weapon_info() -> Dictionary:
+	return Shop.WEAPONS.get(weapon, {})
+
+
 func fighter_texture(look: String, pose: String) -> Texture2D:
 	return load("res://assets/sprites/fighter_%s_%s.png" % [look, pose])
 
@@ -968,6 +1066,12 @@ func _debug_args() -> void:
 	if args.has("seated"):
 		metro_on_board = true
 		metro_seated = true
+	if args.has("weapon"):   # --weapon=sopa  (alıp çantaya koyar)
+		weapons_owned.append(args["weapon"])
+		weapon = args["weapon"]
+	if args.has("outfit"):   # --outfit=deri
+		outfits_owned.append(args["outfit"])
+		outfit = args["outfit"]
 	if args.has("drive"):   # --drive=kampus [--drive_left=200]: arabayla yolculuğun ortası
 		drive_dest = args["drive"]
 		drive_left = float(args.get("drive_left", str(Places.DRIVE_METERS)))

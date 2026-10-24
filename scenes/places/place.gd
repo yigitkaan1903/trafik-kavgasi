@@ -10,6 +10,8 @@ const Person = preload("res://scenes/metro/person.gd")
 const StatusBar = preload("res://scenes/ui/status_bar.gd")
 const Phone = preload("res://scenes/ui/phone.gd")
 const DialogBox = preload("res://scenes/ui/dialog_box.gd")
+const Shop = preload("res://data/shop.gd")
+const PAGE_SIZE := 5          # uzun listelerde (mağaza, gardırop) bir sayfadaki seçenek
 
 const WALK_SPEED := 70.0
 const REACH := 16.0
@@ -27,7 +29,7 @@ const LIGHTS := {
 }
 ## Spotun tıklama alanı hangi eşyanın görseli (işaret adı -> [eşya, kaçıncısı]); yoksa duruş noktasından hesaplanır.
 const SPOT_PROPS := {
-	"desk": ["desk_laptop", 0], "bed": ["bed", 0], "fridge": ["fridge", 0], "water": ["water_cooler", 0],
+	"desk": ["desk_laptop", 0], "bed": ["bed", 0], "wardrobe": ["wardrobe", 0], "fridge": ["fridge", 0], "water": ["water_cooler", 0],
 	"lift_0": ["squat_rack", 0], "lift_1": ["squat_rack", 1], "run_0": ["tm_console", 0], "run_1": ["tm_console", 1],
 	"run_2": ["tm_console", 2], "bag_0": ["bag", 0], "bag_1": ["bag", 1],
 }
@@ -109,7 +111,7 @@ func _ready() -> void:
 
 	var fill := _add_crowd()
 
-	_player = _person("player", _room.mark("spawn"))
+	_player = _person(GameState.player_look(), _room.mark("spawn"))
 	_player.face_dir("up")
 	_player.marker = _id == "gym" or _id == "carsi"
 	_room.follow(_player)
@@ -371,7 +373,12 @@ func _interact(i: int) -> void:
 		"car":
 			_car_dialog(s)
 		_:
-			_open_dialog(s, i)
+			if s.has("shop"):
+				_open_shop(s, 0)
+			elif s.get("wardrobe", false):
+				_open_wardrobe(s, 0)
+			else:
+				_open_dialog(s, i)
 
 
 func _coach():
@@ -445,6 +452,70 @@ func _on_pick(id: String, s: Dictionary) -> void:
 			GameState.go_to(GameState.SCENE_TRAFFIC)
 		_:
 			await _perform(_action(id), s.get("node"))
+
+
+## Sayfalı seçim kutusu: choices = [[yazı, id, kapalı mı]], fazlası "Diğerleri" ile sonraki sayfada.
+func _paged_dialog(speaker: String, line: String, choices: Array, page: int, on_pick: Callable, reopen: Callable) -> void:
+	var d := DialogBox.new()
+	d.speaker = speaker
+	d.line = line
+	var pages := maxi(1, ceili(choices.size() / float(PAGE_SIZE)))
+	page = clampi(page, 0, pages - 1)
+	for c in choices.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE):
+		d.add_choice(c[0], c[1], c[2])
+	if pages > 1:
+		d.add_choice("Diğerleri ›  (%d/%d)" % [page + 1, pages], "page")
+	_show_dialog(d, func(id: String):
+		if id == "page":
+			reopen.call((page + 1) % pages)
+		elif id != "close":
+			on_pick.call(id))
+
+
+## Butik (kıyafet) ya da hırdavat (silah): alınanlar gardıroba gelir.
+func _open_shop(s: Dictionary, page: int) -> void:
+	var items: Dictionary = Shop.OUTFITS if s["shop"] == "outfits" else Shop.WEAPONS
+	var owned: Array = GameState.outfits_owned if s["shop"] == "outfits" else GameState.weapons_owned
+	var choices: Array = []
+	for id in items:
+		var it: Dictionary = items[id]
+		if it["price"] <= 0:
+			continue
+		var text := "%s  (%d TL)  %s" % [it["name"], it["price"], it["desc"]]
+		if owned.has(id):
+			text = "%s  (sende var)" % it["name"]
+		elif GameState.money < it["price"]:
+			text = "%s  (%d TL, paran yetmiyor)" % [it["name"], it["price"]]
+		choices.append([text, id, owned.has(id) or GameState.money < it["price"]])
+	_paged_dialog(_spot_name(s), s.get("lines", [""]).pick_random(), choices, page, func(id: String):
+		var ok := GameState.buy_outfit(id) if s["shop"] == "outfits" else GameState.buy_weapon(id)
+		if ok:
+			Audio.sfx("buy")
+			_say(s["node"], "Güle güle giy! Gardırobuna koydum." if s["shop"] == "outfits" else "Çantana koydum. Dikkatli ol evlat.")
+			_say(_player, "+ %s" % items[id]["name"], 2.0), func(pg: int): _open_shop(s, pg))
+
+
+## Evdeki gardırop: kıyafet giy, çantaya silah koy ya da çıkar.
+func _open_wardrobe(s: Dictionary, page: int) -> void:
+	var choices: Array = []
+	for id in GameState.outfits_owned:
+		var on: bool = id == GameState.outfit
+		choices.append(["%s%s" % [Shop.OUTFITS[id]["name"], "  (üzerinde)" if on else ""], "wear:" + id, on])
+	for id in GameState.weapons_owned:
+		var on: bool = id == GameState.weapon
+		choices.append(["Çanta: %s%s" % [Shop.WEAPONS[id]["name"], "  (çantada)" if on else ""], "arm:" + id, on])
+	if GameState.weapon != "":
+		choices.append(["Silahı çantadan çıkar", "arm:", false])
+	var line: String = "Butikten aldıkların burada. Çarşıdaki butik ve hırdavatçıya uğra." if choices.size() <= 1 else s.get("lines", [""]).pick_random()
+	_paged_dialog("Gardırop", line, choices, page, func(id: String):
+		if id.begins_with("wear:"):
+			GameState.outfit = id.trim_prefix("wear:")
+			_player.set_look(GameState.player_look())
+			_say(_player, "Yakıştı mı? Bence yakıştı.")
+		else:
+			GameState.weapon = id.trim_prefix("arm:")
+			_say(_player, "Çanta boş." if GameState.weapon == "" else "%s çantada. Kavgada işime yarar." % Shop.WEAPONS[GameState.weapon]["name"])
+		GameState.save_game(), func(pg: int): _open_wardrobe(s, pg))
 
 
 func _car_dialog(s: Dictionary) -> void:

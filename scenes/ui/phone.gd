@@ -102,6 +102,8 @@ func _ready() -> void:
 		if a.begins_with("--phone="):
 			var app := a.trim_prefix("--phone=")
 			_app = app.get_slice("-", 0)
+			if _app == "msg":
+				_read_messages()
 			toggle()
 			if app == "zep-fly":
 				_start_zep()
@@ -130,6 +132,12 @@ func toggle() -> void:
 	if not _open and _zep_state == "fly":
 		_cash_out()   # telefonu kapatırken uçuştaysa otomatik çeker
 	toggled.emit(_open)
+
+
+func _read_messages() -> void:
+	if GameState.unread > 0:
+		GameState.unread = 0
+		GameState.save_game()
 
 
 func close() -> void:
@@ -176,8 +184,11 @@ func _draw_icon() -> void:
 	_icon.draw_rect(Rect2(5, 3, 12, 23), Color("2a2a33"))
 	_icon.draw_rect(Rect2(6, 5, 10, 17), Color("3b82f6") if _open else Color("60a5fa"))
 	_icon.draw_rect(Rect2(10, 23, 2, 2), Color("8a8a96"))
-	if not _seen and int(Time.get_ticks_msec() / 500) % 2 == 0:
-		_icon.draw_circle(Vector2(17, 4), 3, Color("ef4444"))
+	if GameState.unread > 0:   # okunmamış mesaj sayısı
+		var pulse := 0.5 + 0.5 * absf(sin(Time.get_ticks_msec() / 400.0))
+		_icon.draw_circle(Vector2(17, 4), 4.5, Color("1b1024"))
+		_icon.draw_circle(Vector2(17, 4), 3.8, Color("ef4444").lerp(Color("ff8a7a"), pulse * 0.4))
+		_icon.draw_string(_font, Vector2(13, 6.5), str(mini(9, GameState.unread)), HORIZONTAL_ALIGNMENT_CENTER, 8, 6, Color.WHITE)
 	_icon.draw_string(_font, Vector2(0, 30), "T", HORIZONTAL_ALIGNMENT_CENTER, 22, 6, Color(1, 1, 1, 0.6))
 
 
@@ -234,8 +245,9 @@ func _draw_home() -> void:
 	_rect(r, Color("15803d"))
 	_rect(Rect2(r.position.x + 5, r.position.y + 7, 16, 10), Color.WHITE)
 	_rect(Rect2(r.position.x + 7, r.position.y + 17, 3, 3), Color.WHITE)
-	_body.draw_circle(Vector2(r.end.x - 2, r.position.y + 2), 4, Color("ef4444"))
-	_text(Vector2(r.end.x - 6, r.position.y + 5), str(mini(9, GameState.messages.size())), 6, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, 8)
+	if GameState.unread > 0:
+		_body.draw_circle(Vector2(r.end.x - 2, r.position.y + 2), 4, Color("ef4444"))
+		_text(Vector2(r.end.x - 6, r.position.y + 5), str(mini(9, GameState.unread)), 6, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, 8)
 	for key in HOME_ICONS:
 		var ir: Rect2 = HOME_ICONS[key]
 		var label: String = {"zep": "ZepBet", "blocks": "Block Blast", "msg": "Mesajlar"}[key]
@@ -246,9 +258,10 @@ func _draw_messages() -> void:
 	_rect(SCREEN, Color("f1f5f9"))
 	_title_bar("Mesajlar", Color("22c55e"))
 	var y := 40.0
-	var list: Array = [["Banka", "Hesap bakiyeniz: %d TL. İyi günler dileriz." % GameState.money]]
-	list.append_array(GameState.messages.slice(0, 3))
-	list.append_array(FILLER_MESSAGES)
+	var list: Array = GameState.messages.slice(0, 4)
+	if list.size() < 4:
+		list.append(["Banka", "Hesap bakiyeniz: %d TL. İyi günler dileriz." % GameState.money])
+		list.append_array(FILLER_MESSAGES)
 	for m in list.slice(0, 4):
 		var text: String = m[1]
 		_rect(Rect2(9, y, 100, 36), Color.WHITE)
@@ -519,5 +532,7 @@ func _body_input(event: InputEvent) -> void:
 			for key in HOME_ICONS:
 				if HOME_ICONS[key].has_point(p):
 					_app = key
+					if key == "msg":
+						_read_messages()
 		"zep":
 			_zep_click(p)

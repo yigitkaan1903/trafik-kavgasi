@@ -21,14 +21,13 @@ const CRUISE_T := STOP_GAP / TOP_SPEED - ACCEL_T / 2.0 - BRAKE_T / 2.0
 const RIDE_TIME := ACCEL_T + CRUISE_T + BRAKE_T
 const PLATFORM_X := -40.0    # durunca peronun sol ucu
 const PLATFORM_LEN := 880.0
-const EVENT_CHANCE := 0.45   # sakin dönem bittiyse durakta olay çıkma ihtimali
-const QUIET_MIN := 2          # bir olaydan sonra en az bu kadar durak sakin geçer
-const QUIET_MAX := 4
+const EVENT_CHANCE := 0.28   # sakin dönem bittiyse durakta olay çıkma ihtimali
+const QUIET_MIN := 3          # bir olaydan sonra en az bu kadar durak sakin geçer
+const QUIET_MAX := 6
 const LEAVE_CHANCE := 0.4    # durakta oturan birinin inme ihtimali
 const WALK_SPEED := 60.0
 const PLAYER_SEAT := 21      # olaylarla oturtulunca oyuncunun koltuğu
-const SEAT_FILL := 0.9       # yolculuk başında koltukların doluluğu
-const STANDING := 9          # ayakta yolcu sayısı
+const WHEELCHAIR_SPOT := Vector2(396, 104)   # tekerlekli sandalye alanı (orta kapının karşısı)
 const AISLE_Y := 134.0       # koridorun ortası
 const PROVOKE := ["Ne bakıyorsun?", "Biraz ilerler misin?", "Ayağıma bastın!", "Çantan sırtıma giriyor!"]
 
@@ -38,6 +37,9 @@ var _riding := false
 var _t := 0.0
 var _scroll := 0.0
 var _speed := 0.0
+var _seat_fill := 0.75       # koltukların doluluğu ve ayakta yolcu sayısı saate göre (_crowd_for_time)
+var _standing_target := 6
+var _wheelchair: Array = []  # [kişi, sandalye görseli] ya da boş
 var _door_open := 0.0        # kapı kanatları: 0 kapalı, 1 açık
 var _departing := false
 var _doors_fx: Node2D
@@ -77,6 +79,7 @@ func _ready() -> void:
 	add_child(_room)
 	_seat_pos = _room.points("seats")
 	_doors = _room.points("doors")
+	_crowd_for_time()
 	_doors_fx = Node2D.new()   # kayan kapı kanatları
 	_doors_fx.draw.connect(_draw_doors)
 	_room.floor_layer.add_child(_doors_fx)
@@ -298,22 +301,64 @@ func _standing_spot() -> Vector2:
 	return spots.pick_random()
 
 
+## Yoğunluk saate göre: sabah ve akşam iş saatlerinde tıklım tıklım, gece seyrek.
+func _crowd_for_time() -> void:
+	var m: float = GameState.minute
+	if m >= 21 * 60 + 30 or m < 6 * 60 + 30:
+		_seat_fill = 0.35
+		_standing_target = 1
+	elif (m >= 7 * 60 and m < 10 * 60) or (m >= 17 * 60 and m < 20 * 60):
+		_seat_fill = 0.95
+		_standing_target = 11
+	else:
+		_seat_fill = 0.7
+		_standing_target = 5
+
+
+## Tekerlekli sandalyeli yolcu: orta kapının karşısındaki alanda durur.
+func _add_wheelchair() -> void:
+	if not _wheelchair.is_empty():
+		return
+	var p = _person(MetroEvents.random_look(), WHEELCHAIR_SPOT)
+	p.sit("right")
+	var chair := Sprite2D.new()
+	chair.texture = load("res://assets/rooms/props/wheelchair.png")
+	chair.centered = false
+	chair.position = WHEELCHAIR_SPOT + Vector2(-13, 1)
+	chair.offset = Vector2(0, -19)
+	_room.add_actor(chair)
+	_room.add_blocker(p)
+	_wheelchair = [p, chair]
+
+
+func _remove_wheelchair() -> void:
+	if _wheelchair.is_empty():
+		return
+	var p = _wheelchair[0]
+	_room.remove_blocker(p)
+	for n in _wheelchair:
+		var tw := create_tween()
+		tw.tween_property(n, "modulate:a", 0.0, 0.5)
+		tw.tween_callback(n.queue_free)
+	_wheelchair = []
+
+
 func _add_passengers() -> void:
 	_seats.resize(_seat_pos.size())
 	_seats.fill(null)
-	_player = _person("player", Vector2(_room.mark("door_in").x - 40, AISLE_Y))
+	_player = _person(GameState.player_look(), Vector2(_room.mark("door_in").x - 40, AISLE_Y))
 	_player.marker = true
 	_player.face_dir("down")
 	for i in _seat_pos.size():
-		if (GameState.metro_seated and i == PLAYER_SEAT) or randf() > SEAT_FILL:
+		if (GameState.metro_seated and i == PLAYER_SEAT) or randf() > _seat_fill:
 			continue
 		var s = _person(MetroEvents.random_look(), _seat_pos[i])
 		s.sit("right")
 		_seats[i] = s
-	if GameState.metro_seated and _seats.find(null) == -1:
-		pass
-	for k in STANDING:
+	for k in _standing_target:
 		_add_standing(_standing_spot())
+	if randf() < 0.35 or OS.get_cmdline_user_args().has("--wheelchair"):
+		_add_wheelchair()
 	var driver = _person("sivil35", _room.mark("driver"))
 	driver.sit("right")
 	if GameState.metro_seated:
@@ -346,8 +391,10 @@ func _arrive() -> void:
 		GameState.energy = maxf(0.0, GameState.energy - Places.STANDING_ENERGY_PER_STOP)
 	var name: String = MetroEvents.STATIONS[GameState.metro_station]
 	_center_text(name)
+	Audio.sfx("ding", 0.6, 0.0)
 	GameState.save_game()
 	var tw := create_tween()   # kapılar açılır
+	Audio.sfx("door", 0.8)
 	tw.tween_property(self, "_door_open", 1.0, 0.35).set_ease(Tween.EASE_OUT)
 	await tw.finished
 	_station_shuffle()
@@ -372,6 +419,7 @@ func _depart() -> void:
 		return
 	_departing = true
 	var tw := create_tween()
+	Audio.sfx("door", 0.6)
 	tw.tween_property(self, "_door_open", 0.0, 0.3).set_ease(Tween.EASE_IN)
 	await tw.finished
 	_departing = false
@@ -428,7 +476,13 @@ func _station_shuffle() -> void:
 			tw.tween_property(leaver, "modulate:a", 0.0, 0.25)
 			tw.tween_callback(leaver.queue_free)
 			_schedule_grab(i, 1.6)   # sen kapmazsan biri kapar
-	if _standing.size() < STANDING:
+	if _wheelchair.is_empty() and randf() < 0.12:
+		_add_wheelchair()
+	elif not _wheelchair.is_empty() and randf() < 0.2:
+		_say(_wheelchair[0], "İnecek var, rampayı açar mısınız?")
+		_remove_wheelchair()
+	_crowd_for_time()
+	if _standing.size() < _standing_target:
 		var door: Vector2 = _doors.pick_random()
 		var spot := _standing_spot()
 		var p = _add_standing(door)
@@ -627,10 +681,6 @@ func _draw_outside() -> void:
 		if night:
 			for wy in range(int(80 - b.position.y), 76, 5):
 				_outside.draw_rect(Rect2(x + 3, wy, 2, 2), Color("ffd27a"))
-	if night and _speed > 1.0:
-		for x in range(0, 800, 120):
-			var lx := roundf(fposmod(x - _scroll * 1.3, 900.0) - 60.0)
-			_outside.draw_circle(Vector2(lx, 30), 10, Color(1, 0.86, 0.6, 0.25))
 	# peronlar: geride kalan (kalkışta) ve yaklaşan (yanaşırken)
 	if _riding or _t > 0.0:   # yolda (ya da yolda bir pencere açıkken)
 		var gone := _traveled(_t)

@@ -45,13 +45,14 @@ func _ready() -> void:
 	if venue == "traffic":
 		if GameState.has_car():
 			_add_parked_car(GameState.car()["id"], Vector2(_arena.position.x + 70, _arena.position.y - 6), false)
-		_add_parked_car(rival["car"], Vector2(_arena.end.x - 70, _arena.position.y - 6), true)
+		if rival.has("car"):
+			_add_parked_car(rival["car"], Vector2(_arena.end.x - 70, _arena.position.y - 6), true)
 	_add_crowd()
 
 	# statlar: Güç hasar, Dayanıklılık can (yorgunsan daha az), Çeviklik hız/kaçış/blok
 	var agi := GameState.player_agility()
 	player = PlayerFighter.new()
-	player.look = "player"
+	player.look = GameState.player_look()
 	player.display_name = "Sen"
 	player.max_hp = GameState.player_max_hp() + (GameState.SIMIT_HP if GameState.simit_buff else 0)
 	player.power = GameState.player_power()
@@ -59,6 +60,8 @@ func _ready() -> void:
 	player.dodge_cooldown = agi["dodge_cd"]
 	player.move_speed = agi["speed"] * 0.5
 	player.arena = _arena
+	player.weapon = GameState.weapon_info()
+	player.weapon_id = GameState.weapon
 	player.position = Vector2(_arena.get_center().x - 45, mid_y)
 
 	enemy = AIFighter.new()
@@ -105,6 +108,13 @@ func _intro() -> void:
 	if GameState.simit_buff:
 		GameState.simit_buff = false
 		_popup("SİMİT GÜCÜ! +%d can" % GameState.SIMIT_HP, player.position + Vector2(0, -40), Color("ffd84a"), 10)
+	if GameState.weapon != "":
+		var w := GameState.weapon_info()
+		var wl := GameState.make_label("Elinde: %s  (%s)" % [w["name"], w["desc"]], 9, Color("f6d86a"))
+		wl.position = Vector2(0, 64)
+		wl.size = Vector2(480, 12)
+		wl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_ui.add_child(wl)
 	var fear := GameState.fear_level(GameState.fight_rival)
 	if fear > 0:
 		var nam := GameState.make_label("Namın yürüyor! Rakip çekiniyor (Nam %d): daha az can, daha az saldırı" % fear, 9, Color("7dd3fc"))
@@ -136,7 +146,7 @@ func _process(delta: float) -> void:
 	_update_focus()
 	if _room.cam:
 		_room.cam.offset = Vector2(roundf(randf_range(-1, 1) * _shake), roundf(randf_range(-1, 1) * _shake)) / ZOOM
-	_shake = move_toward(_shake, 0.0, 25.0 * delta)
+	_shake = move_toward(_shake, 0.0, 25.0 * delta) if GameState.screen_shake else 0.0
 
 
 func _update_focus() -> void:
@@ -149,11 +159,13 @@ func _on_hit(target: Fighter, attack: String, _damage: float, blocked: bool) -> 
 	var attacker := target.opponent
 	var pos := Vector2((attacker.position.x + target.position.x) / 2.0, target.position.y - 22)
 	if blocked:
+		Audio.sfx("block")
 		_popup("BLOK", pos, Color("cbd5e1"), 10)
 		_hitstop(0.03)
 		_shake = 1.0
 		return
 	var big := attack == "special"
+	Audio.sfx("kick" if attack != "punch" else "punch")
 	_popup(HIT_WORDS[attack].pick_random(), pos, Color("ff5a3c") if big else Color("ffd84a"), 22 if big else 14)
 	_sparks(pos, 12 if big else 6)
 	_hitstop({"punch": 0.05, "kick": 0.08, "special": 0.15}[attack])
@@ -161,6 +173,7 @@ func _on_hit(target: Fighter, attack: String, _damage: float, blocked: bool) -> 
 
 
 func _on_dodged(target: Fighter) -> void:
+	Audio.sfx("whoosh")
 	_popup("ISKA!", target.position + Vector2(0, -36), Color("7dd3fc"), 10)
 
 
@@ -172,6 +185,7 @@ func _on_ko(target: Fighter) -> void:
 	enemy.active = false
 	var won := target == enemy
 	_shake = 8.0
+	Audio.sfx("ko", 1.0, 0.0)
 	Engine.time_scale = 0.3
 	_center_text("K.O.!", 40, Color("ff5a3c"), 0.9)
 	await get_tree().create_timer(0.9, true, false, true).timeout
@@ -213,7 +227,7 @@ func _show_result(res: Dictionary) -> void:
 		box.add_child(GameState.make_label("Yeni araba: %s! Garaja çekildi." % GameState.car_info(res["car_won"])["name"], 11, Color("e6b428")))
 	if res["car_lost"] != "":
 		box.add_child(GameState.make_label("Araban gitti: %s..." % GameState.car_info(res["car_lost"])["name"], 11, Color("ff6a4a")))
-	for key in ["seat", "station"]:
+	for key in ["seat", "station", "police"]:
 		if res.has(key):
 			box.add_child(GameState.make_label(res[key], 10, Color("7dd3fc")))
 	if res["no_car"]:

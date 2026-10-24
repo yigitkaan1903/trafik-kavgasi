@@ -52,7 +52,7 @@ func _ready() -> void:
 		add_child(car)
 
 	_player = Person.new()
-	_player.look = "player"
+	_player.look = GameState.player_look()
 	_player.marker = true
 	_player.scale_px = 1.0
 	_player.position = _door(GameState.place)

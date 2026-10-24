@@ -62,6 +62,8 @@ func _process(delta: float) -> void:
 	if absf(GameState.money - _money) >= 1.0 and _money_pop_t <= 0.0:
 		_money_pop = GameState.money - int(round(_money))
 		_money_pop_t = 1.6
+		if _money_pop > 0:
+			Audio.sfx("coin", 0.5)
 	_money = move_toward(_money, GameState.money, maxf(40.0, absf(GameState.money - _money) * 4.0) * delta)
 	_money_pop_t = maxf(0.0, _money_pop_t - delta)
 	queue_redraw()

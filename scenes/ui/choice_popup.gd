@@ -23,9 +23,9 @@ func add_rival_choices(rival_id: String, fight_text: String) -> void:
 	var r := GameState.rival(rival_id)
 	if GameState.is_scared(rival_id):
 		add_choice("Gözdağı ver: \"Bir dahakine dikkat et.\"  (+%d TL)" % GameState.intimidate_reward(rival_id), "intimidate")
-		add_choice("Yine de dövüş  (kazanırsan +%d TL)" % r["reward"], "fight")
+		add_choice("Yine de dövüş  (kazanırsan +%d TL)" % GameState.fight_reward(rival_id), "fight")
 	else:
-		add_choice("%s  (kazanırsan +%d TL)" % [fight_text, r["reward"]], "fight")
+		add_choice("%s  (kazanırsan +%d TL)" % [fight_text, GameState.fight_reward(rival_id)], "fight")
 
 
 ## Rakip korkuyorsa araya küçük bir anlatım satırı ekler.

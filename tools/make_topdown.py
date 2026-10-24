@@ -40,6 +40,28 @@ STYLE = {
     "hipster": dict(hair_style="bun", top="jacket", inner=(236, 230, 214), height=0),
     "elif": dict(hair_style="ponytail", top="tee", height=2, backpack=(120, 180, 220)),
     "simitci": dict(hair_style="short", top="tee", height=1, sleeves="short"),
+    "eren": dict(hair_style="curly", top="tee", height=1, sleeves="short"),
+    "kaan": dict(hair_style="sidepart", top="hoodie", height=0),
+    "ebu": dict(hair_style="short", top="coat", inner=(230, 226, 210), height=1),
+    "hakan": dict(hair_style="short", top="jacket", inner=(220, 220, 215), height=0),
+    "furth": dict(hair_style="sidepart", top="jacket", inner=(40, 40, 46), height=0),
+    "mert": dict(hair_style="short", top="hoodie", height=1, backpack=(250, 200, 40)),
+}
+
+# Oyuncunun kıyafetleri (data/shop.gd OUTFITS ile aynı id): oyuncunun görünüşünün üstüne yazılır.
+# None verilen özellik kaldırılır. Her biri ayrı sayfa: td_player_<id>.png ("esofman" = td_player.png).
+OUTFITS = {
+    "kapson": dict(shirt=(30, 30, 34), top="hoodie", stripe=None, pants=(36, 36, 40), shoes=(44, 44, 48)),
+    "hawaii": dict(shirt=(236, 120, 60), stripe=(60, 180, 170), top="tee", sleeves="short", pants=(200, 186, 150),
+                   shoes=(150, 90, 50), backpack=None),
+    "forma": dict(shirt=(200, 40, 50), stripe=(240, 240, 240), top="tee", sleeves="short", pants=(240, 240, 240),
+                  shoes=(30, 30, 34)),
+    "kot": dict(shirt=(70, 100, 160), top="jacket", inner=(240, 240, 236), stripe=None, pants=(40, 44, 70)),
+    "deri": dict(shirt=(44, 32, 30), top="jacket", inner=(214, 210, 200), stripe=None, pants=(36, 36, 44),
+                 shoes=(30, 26, 26), backpack=None),
+    "mont": dict(shirt=(70, 96, 64), top="coat", inner=(200, 190, 170), stripe=None, beanie=(180, 40, 40)),
+    "takim": dict(shirt=(40, 42, 60), top="suit", pants=(40, 42, 60), tie=(180, 30, 40), stripe=None,
+                  shoes=(20, 20, 22), backpack=None),
 }
 
 
@@ -682,6 +704,14 @@ def civilians(count=CIVILIAN_COUNT, seed=42):
 
 def all_looks():
     looks = {who: look_of(who, L) for who, L in ms.LOOKS.items()}
+    for oid, over in OUTFITS.items():
+        L = dict(looks["player"])
+        for k, v in over.items():
+            if v is None:
+                L.pop(k, None)
+            else:
+                L[k] = v
+        looks["player_" + oid] = L
     for who, L in civilians().items():
         looks[who] = look_of(who, L)
     return looks

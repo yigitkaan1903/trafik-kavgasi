@@ -34,6 +34,7 @@ var _bus_layer: Node2D
 var _bus_sprite: Sprite2D
 var _player
 var _simitci
+var _night := false
 var _queue: Array = []             # sıradaki yolcular, önden arkaya
 var _slots: Array = []             # yığın içindeki yerler (kapıya yakından uzağa)
 var _paused := false
@@ -76,7 +77,11 @@ var _at_school := false         # Davutpaşa'dan eve dönüş: daha küçük kal
 func _ready() -> void:
 	GameState.metro_on_board = false
 	_at_school = GameState.metro_station != 0
-	_max_crowd = 26 if _at_school else 40
+	# gece seyrek: simitçi yok, kalabalık az; sabah ve akşam iş çıkışı en yoğun
+	var m: float = GameState.minute
+	_night = m >= 21 * 60 + 30 or m < 6 * 60 + 30
+	var rush := (m >= 7 * 60 and m < 10 * 60) or (m >= 17 * 60 and m < 20 * 60)
+	_max_crowd = 8 if _night else (26 if _at_school else (40 if rush else 28))
 	_make_slots()
 	_room = Room.new().build("durak")
 	add_child(_room)
@@ -93,11 +98,11 @@ func _ready() -> void:
 	_room.top_layer.add_child(_overlay)
 	_people = _room.actors
 
-	for i in (16 if _at_school else 30):
+	for i in (4 if _night else (16 if _at_school else (30 if rush else 18))):
 		var p = _spawn_person(_slot(i))
 		p.position = _slot(i) + p.jitter
 	_player = Person.new()
-	_player.look = "player"
+	_player.look = GameState.player_look()
 	_player.state = "player"
 	_player.marker = true
 	_people.add_child(_player)
@@ -107,6 +112,7 @@ func _ready() -> void:
 	_simitci.position = _room.mark("simitci")
 	_simitci.target = _simitci.position
 	_people.add_child(_simitci)
+	_simitci.visible = not _night   # gece simitçi evine gitmiş
 
 	match GameState.station_return:
 		"front":
@@ -216,7 +222,7 @@ func _update_queue(delta: float) -> void:
 	# arkadan yeni yolcular gelir
 	_spawn_t -= delta
 	if _spawn_t <= 0.0:
-		_spawn_t = randf_range(0.9, 2.0)
+		_spawn_t = randf_range(0.9, 2.0) * (4.0 if _night else 1.0)
 		if _queue.size() < _max_crowd:
 			_spawn_person(Vector2(TURNSTILE_X + 30, randf_range(142, 162)))
 	# binenler kapıya yürüyüp kaybolur
@@ -456,7 +462,7 @@ func _interact() -> void:
 				_confront()
 			return
 		_board()
-	elif _player.position.distance_to(_simitci.position) < 20.0:
+	elif not _night and _player.position.distance_to(_simitci.position) < 20.0:
 		_buy_simit()
 
 
@@ -474,6 +480,8 @@ func _board() -> void:
 # ---------------------------------------------------------------- Simitçi ve laf atmalar
 
 func _update_simitci(delta: float) -> void:
+	if _night:
+		return
 	if _simitci.step_to(_simitci.target, 22.0, delta):
 		if randf() < 0.01:
 			_simitci.target = Vector2(randf_range(120, 840), randf_range(150, FLOOR_MAX - 4))
@@ -601,7 +609,7 @@ func _update_hud() -> void:
 		hint = "Sıran gelmedi, önünde ~%d kişi var · Bekle ya da kalabalığı yar" % _fair_rank
 	elif _near_door():
 		hint = "E: Metrobüse bin (%s)" % ("boş, koltuk kapabilirsin" if _bus_type == "bos" else "yarı dolu, ayakta gidersin")
-	elif _player.position.distance_to(_simitci.position) < 20.0 and not GameState.simit_buff:
+	elif not _night and _player.position.distance_to(_simitci.position) < 20.0 and not GameState.simit_buff:
 		hint = "E: Simit al (%d TL, sonraki kavgada +%d can)" % [GameState.SIMIT_PRICE, GameState.SIMIT_HP]
 	elif _my_turn():
 		hint = "Sıran geldi! Kapıya git, E'ye bas" + (" · ya da bekle, sonraki boş gelir" if _bus_type == "dolu" else "")

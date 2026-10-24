@@ -74,6 +74,46 @@ const RIVALS := {
 			"lose": ["Acile... kendim gideyim..."],
 		},
 	},
+	"eren": {
+		"name": "Ayyaş Eren", "venue": "metro", "look": "eren", "weight": 2,
+		"hp": 80, "power": 1.0, "speed": 0.75, "aggro": 0.6, "block": 0.08, "reward": 40, "bet": false,
+		"lines": {
+			"laf": ["Kankaa... sen benim en yakın arkadaşımsın... ama ayağıma bastın.", "Bu metrobüs niye dönüyo ya... sen mi döndürüyon?!"],
+			"scared": ["Abi sen o videodaki adamsın... Gel sarılalım kanka.", "Tamam tamam... ben zaten iniyodum... hangi duraktayız?"],
+			"win": ["Hık! Ben bile ayakta duramıyorum, sen nasıl düştün?"],
+			"lose": ["Yarın hiçbir şey hatırlamıycam... iyi ki..."],
+		},
+	},
+	"kaan": {
+		"name": "Kaan Hardal", "venue": "metro", "look": "kaan", "weight": 2,
+		"hp": 75, "power": 1.0, "speed": 1.15, "aggro": 0.5, "block": 0.3, "reward": 45, "bet": false,
+		"lines": {
+			"laf": ["Hardal gibi yakarım kardeşim, uzak dur!", "Ne bakıyon? Sarı mont mu görmedin?"],
+			"scared": ["Tamam abi, hardalı ketçapla karıştırmayalım.", "Seni Ebu Hazretleri anlatmıştı... Geç."],
+			"win": ["Acı mı? Hardal o, alışırsın."],
+			"lose": ["Hardalım... döküldü..."],
+		},
+	},
+	"ebu": {
+		"name": "Ebu Hazretleri", "venue": "metro", "look": "ebu", "weight": 1,
+		"hp": 100, "power": 1.15, "speed": 0.8, "aggro": 0.35, "block": 0.55, "reward": 70, "bet": false,
+		"lines": {
+			"laf": ["Evlat, sabır acıdır... ama benim sabrım taştı.", "Bu vagonda edep kalmamış, sana öğretelim."],
+			"scared": ["Hikmet senden yana evlat. Geç, yolun açık olsun.", "Senin namın kervanlarda anlatılıyor. Buyur."],
+			"win": ["Nasihat kâr etmeyince... böyle oluyor işte."],
+			"lose": ["Bu da bir imtihandı... geçemedim..."],
+		},
+	},
+	"hakan": {
+		"name": "Güvenlikçi Hakan", "venue": "metro", "look": "hakan", "weight": 1,
+		"hp": 95, "power": 1.1, "speed": 0.95, "aggro": 0.45, "block": 0.4, "reward": 55, "bet": false,
+		"lines": {
+			"laf": ["Kartını basmadan mı bindin sen? Gel bakalım.", "Burada olay çıkaran sen misin?"],
+			"scared": ["Tamam, ben bir şey görmedim. Telsizim de bozuk zaten.", "Mesaim bitti, karışmıyorum."],
+			"win": ["Tutanak tutuyorum, kıpırdama."],
+			"lose": ["Merkez... merkez... destek gönderin..."],
+		},
+	},
 	# ------------------------------------------------------------ Trafik
 	"necati": {
 		"name": "Tofaşlı Necati Amca", "venue": "traffic", "car": "tofas", "look": "necati", "tier": 0, "weight": 3,
@@ -128,6 +168,28 @@ const RIVALS := {
 			"scared": ["Tamam abi, sen haklısın. Kamyonun arkasına adını yazdıracağım."],
 			"win": ["Bir dahaki sefere arkamda yazanı oku."],
 			"lose": ["Annem... beni... bekler..."],
+		},
+	},
+	"furth": {
+		"name": "Furth Man", "venue": "traffic", "car": "passat", "look": "furth", "tier": 1, "weight": 2,
+		"hp": 110, "power": 1.2, "speed": 1.2, "aggro": 0.55, "block": 0.45, "reward": 180, "bet": false,
+		"lines": {
+			"carpma": ["Do you know who I am? I am FURTH MAN!", "Furth Man'in arabasına kimse dokunmaz!"],
+			"korna": ["Furth Man'e korna çalınmaz, Furth Man korna çalar!", "Bu korna sesi... meydan okuma mı bu?"],
+			"scared": ["Even Furth Man knows when to retreat. Geç dostum."],
+			"win": ["Furth Man never loses. Never."],
+			"lose": ["Furth Man... will... return..."],
+		},
+	},
+	"mert": {
+		"name": "Kuryeci Mert", "venue": "traffic", "car": "doblo", "look": "mert", "tier": 0, "weight": 2,
+		"hp": 65, "power": 0.9, "speed": 1.3, "aggro": 0.5, "block": 0.2, "reward": 60, "bet": false,
+		"lines": {
+			"carpma": ["Kardeşim 12 dakikada teslim etmem lazım, çekil!", "Siparişin soğudu, senin yüzünden!"],
+			"korna": ["Korna çalma bana, puanım düşüyor!", "Müşteri beni yıldızlıyor, sen beni kornalıyorsun!"],
+			"scared": ["Tamam abi, ben başka yoldan giderim."],
+			"win": ["Teslim edildi. Bir yıldız ver bari."],
+			"lose": ["Sipariş... iptal..."],
 		},
 	},
 }

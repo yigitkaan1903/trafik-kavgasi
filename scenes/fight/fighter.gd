@@ -17,8 +17,9 @@ const DEPTH := 6.0             # vuruşun tutması için derinlik farkı en fazl
 const ATTACKS := {
 	"punch": {"pose": "punch", "startup": 0.07, "active": 0.08, "recovery": 0.14,
 		"damage": 6.0, "range": 18.0, "knock": 30.0, "stun": 0.22},
-	"kick": {"pose": "kick", "startup": 0.14, "active": 0.1, "recovery": 0.26,
-		"damage": 10.0, "range": 22.0, "knock": 55.0, "stun": 0.3},
+	# tekme: yumruktan sert ama yavaş ve uzun toparlanma (ıskalarsan cezası büyük)
+	"kick": {"pose": "kick", "startup": 0.18, "active": 0.08, "recovery": 0.38,
+		"damage": 8.0, "range": 20.0, "knock": 40.0, "stun": 0.26},
 	"special": {"pose": "special", "startup": 0.22, "active": 0.12, "recovery": 0.35,
 		"damage": 22.0, "range": 24.0, "knock": 110.0, "stun": 0.55},
 }
@@ -34,6 +35,8 @@ var move_speed := 35.0
 var block_chip := 0.2          # bloklanan vuruşta alınan hasar oranı
 var dodge_cooldown := 0.7
 var arena := Rect2(20, 80, 440, 70)
+var weapon := {}               # elindeki silah (data/shop.gd WEAPONS): yumruk hasarı, menzili, hızı
+var weapon_id := ""
 
 var opponent: Fighter
 var facing := 1
@@ -55,6 +58,7 @@ var special_cd := 0.0
 var _flash := 0.0
 
 var _sprite: Sprite2D
+var _weapon_fx: Node2D
 
 
 func _ready() -> void:
@@ -64,6 +68,9 @@ func _ready() -> void:
 	_sprite.centered = false
 	_sprite.offset = -Vector2(CELL.x / 2.0, CELL.y)
 	add_child(_sprite)
+	_weapon_fx = Node2D.new()
+	_weapon_fx.draw.connect(_draw_weapon)
+	add_child(_weapon_fx)
 	hp = max_hp
 
 
@@ -107,7 +114,7 @@ func _physics_process(delta: float) -> void:
 			if not want_block:
 				state = S.IDLE
 		S.ATTACK:
-			var a: Dictionary = ATTACKS[attack_name]
+			var a := attack_data(attack_name)
 			if not _attack_hit and _t >= a["startup"] and _t < a["startup"] + a["active"]:
 				_try_hit(a)
 			if _t >= a["startup"] + a["active"] + a["recovery"]:
@@ -175,6 +182,17 @@ func in_line(other: Fighter) -> bool:
 	return absf(other.position.y - position.y) <= DEPTH
 
 
+## Saldırının değerleri; yumruk ve özel harekette silah menzil ve hazırlanma süresini değiştirir.
+func attack_data(name: String) -> Dictionary:
+	var a: Dictionary = ATTACKS[name]
+	if weapon.is_empty() or name == "kick":
+		return a
+	a = a.duplicate()
+	a["range"] += weapon.get("range", 0.0)
+	a["startup"] += weapon.get("startup", 0.0)
+	return a
+
+
 func _try_hit(a: Dictionary) -> void:
 	var dx := (opponent.position.x - position.x) * facing
 	if dx > 0.0 and dx <= a["range"] and in_line(opponent):
@@ -190,6 +208,8 @@ func receive_hit(attacker: Fighter, name: String) -> void:
 		return
 	var a: Dictionary = ATTACKS[name]
 	var dmg: float = a["damage"] * attacker.power
+	if name != "kick":
+		dmg *= attacker.weapon.get("damage", 1.0)
 	var blocked := state == S.BLOCK and facing == -attacker.facing and name != "special"
 	if blocked:
 		dmg *= block_chip
@@ -239,3 +259,27 @@ func _update_pose() -> void:
 	if state == S.ATTACK and _t < ATTACKS[attack_name]["startup"]:
 		lean = -1.0
 	_sprite.position = Vector2(lean * facing, 1 if state == S.IDLE and int(Time.get_ticks_msec() / 400) % 2 == 0 else 0)
+	_weapon_fx.queue_redraw()
+
+
+## Eldeki silah: hücre koordinatından (yan görünüş, sağa bakan) dünyaya çevirip çizer.
+func _draw_weapon() -> void:
+	if weapon_id == "" or state == S.KO:
+		return
+	var striking := state == S.ATTACK and attack_name != "kick"
+	var hand := Vector2(24, 14) if striking else Vector2(14, 20)
+	var p := func(c: Vector2) -> Vector2:
+		return Vector2(facing * (c.x - 14.0) + _sprite.position.x, c.y - 30.0 + _sprite.position.y)
+	match weapon_id:
+		"sopa":
+			var tip := Vector2(37, 11) if striking else Vector2(8, 6)
+			_weapon_fx.draw_line(p.call(hand), p.call(tip), Color("2a1a10"), 3.0)
+			_weapon_fx.draw_line(p.call(hand), p.call(tip), Color("b07d50"), 2.0)
+			_weapon_fx.draw_circle(p.call(tip), 1.6, Color("d0a070"))
+		"bicak":
+			var tip := Vector2(31, 14) if striking else Vector2(14, 26)
+			_weapon_fx.draw_line(p.call(hand), p.call(tip), Color("1b1024"), 2.0)
+			_weapon_fx.draw_line(p.call(hand), p.call(tip), Color("dfe4ee"), 1.0)
+		"musta":
+			var c: Vector2 = p.call(hand)
+			_weapon_fx.draw_rect(Rect2(c - Vector2(1.5, 2), Vector2(3, 4)), Color("e6b428"))

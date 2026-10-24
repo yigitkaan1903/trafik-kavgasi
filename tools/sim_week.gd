@@ -59,5 +59,8 @@ func _act(place: String, id: String) -> void:
 		if a["id"] == id:
 			var why: String = gs.action_block_reason(a)
 			if why == "" and not gs.action_hidden(a):
+				if a.has("per_order"):   # garsonluk: ortalama 9 sipariş + bahşiş
+					a = a.duplicate()
+					a["money"] = a["per_order"] * 9 + 25
 				gs.do_action(a)
 			return

@@ -166,6 +166,7 @@ func _honk() -> void:
 	if _honk_cd > 0.0:
 		return
 	_honk_cd = 0.5
+	Audio.sfx("horn", 0.8)
 	_float_text("DIIIT!", player.position + Vector2(0, -28), Color("7dd3fc"))
 	var best: Node = null
 	for n in npcs:

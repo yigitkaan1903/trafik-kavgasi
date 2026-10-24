@@ -154,5 +154,12 @@ func set_pose(pose: String) -> void:
 	queue_redraw()
 
 
+## Görünüşü değiştir (ör. gardıroptan yeni kıyafet giyince).
+func set_look(new_look: String) -> void:
+	look = new_look
+	if _sprite:
+		_sprite.texture = GameState.td_texture(look)
+
+
 func tint(c: Color) -> void:
 	_sprite.modulate = c

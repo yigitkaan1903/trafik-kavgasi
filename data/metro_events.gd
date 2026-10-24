@@ -18,24 +18,24 @@ const SCHOOL := "Davutpaşa-YTÜ"
 
 const EVENTS := [
 	{"title": "Boş koltuk!", "bg": "bus", "weight": 3, "need": "standing", "seat": "gain",
-		"rivals": ["plaza", "teyze", "kulaklik", "elif"],
+		"rivals": ["plaza", "teyze", "kulaklik", "elif", "kaan", "eren"],
 		"text": "Bir koltuk boşaldı. {r} de aynı koltuğa yöneldi...",
 		"fight": "Koltuğu kap!", "avoid": "Ayakta git"},
 	{"title": "Yer ver!", "bg": "bus", "weight": 3, "need": "seated", "seat": "keep",
-		"rivals": ["teyze", "abi", "elif"],
+		"rivals": ["teyze", "abi", "elif", "ebu"],
 		"text": "{r} tam önünde dikiliyor ve sana bakıyor. Bütün vagon da sana bakıyor.",
 		"fight": "Bu yer benim!", "avoid": "Yer ver (ayakta gidersin)", "avoid_effect": "stand"},
-	{"title": "Omuz attı!", "bg": "bus", "weight": 2, "need": "standing", "rivals": ["abi", "kulaklik", "plaza", "hipster"],
+	{"title": "Omuz attı!", "bg": "bus", "weight": 2, "need": "standing", "rivals": ["abi", "kulaklik", "plaza", "hipster", "eren", "kaan"],
 		"text": "{r} geçerken sana sert bir omuz attı.",
 		"fight": "Dur bakalım!", "avoid": "Özür dile (sen!)"},
-	{"title": "Hoparlörden arabesk", "bg": "bus", "weight": 2, "rivals": ["kulaklik", "abi", "hipster"],
+	{"title": "Hoparlörden arabesk", "bg": "bus", "weight": 2, "rivals": ["kulaklik", "abi", "hipster", "eren"],
 		"text": "{r} telefonundan hoparlörle arabesk açtı. Bütün vagon dinliyor.",
 		"fight": "Kapat şunu!", "avoid": "Kulaklık tak"},
 	{"title": "Çanta koltukta", "bg": "bus", "weight": 2, "need": "standing", "seat": "gain",
 		"rivals": ["teyze", "plaza"],
 		"text": "{r} çantasını yan koltuğa koymuş, kaldırmıyor.",
 		"fight": "Çantayı kaldır!", "avoid": "Boş ver"},
-	{"title": "Kapının önü", "bg": "durak", "weight": 2, "rivals": ["abi", "teyze", "plaza", "kulaklik", "hipster", "elif"],
+	{"title": "Kapının önü", "bg": "durak", "weight": 2, "rivals": ["abi", "teyze", "plaza", "kulaklik", "hipster", "elif", "hakan", "ebu"],
 		"text": "{r} kapının tam önünde dikiliyor. İnmeyecek ama çekilmiyor da!",
 		"fight": "İtip geç!", "avoid": "Boş ver"},
 	# rakipsiz olaylar
@@ -43,6 +43,15 @@ const EVENTS := [
 		"text": "Koltuğun altında buruşuk bir 10 TL buldun. Kimse görmedi."},
 	{"title": "Sıkışma", "bg": "", "weight": 1, "need": "standing", "money": 0,
 		"text": "Metrobüs o kadar dolu ki ayakların yere değmiyor. Kavga etmeye yer bile yok."},
+	{"title": "Kart kontrolü", "bg": "bus", "weight": 1, "rivals": ["hakan"],
+		"text": "{r} vagonda kart kontrolü yapıyor. Sana takıldı: \"Bu kart öğrenci kartı mı, emin misin?\"",
+		"fight": "Kartım geçerli!", "avoid": "Kartı göster, uğraşma"},
+	{"title": "Vaaz", "bg": "bus", "weight": 1, "rivals": ["ebu"],
+		"text": "{r} vagonun ortasında yüksek sesle nasihat veriyor. Sana dönüp \"Sen de dinle evlat!\" dedi.",
+		"fight": "Biraz sessiz ol!", "avoid": "Başını salla, dinle"},
+	{"title": "Sızmış yolcu", "bg": "bus", "weight": 1, "need": "seated", "seat": "keep", "rivals": ["eren"],
+		"text": "{r} yanına çöktü, başını omzuna koydu ve horlamaya başladı.",
+		"fight": "Kalk üstümden!", "avoid": "Kalk, ayakta git", "avoid_effect": "stand"},
 	{"title": "Uyuyakaldın", "bg": "", "weight": 1, "need": "seated", "money": 0,
 		"text": "Koltuğun sıcaklığı seni aldı götürdü. Yanındakinin omzunda uyandın. Kimse bir şey demedi."},
 ]
@@ -73,7 +82,7 @@ const SHOUT_DOORS_CLOSE := ["Doldu doldu, bir sonrakine!", "Kapı kapanıyor!", 
 ## Figüranlar: sivil0..sivil39 (tools/make_topdown.py civilians: farklı ten, saç, başörtüsü, kıyafet, boy)
 const CIVILIAN_COUNT := 40
 ## Kalabalıktaki tanıdık yüzler (laf atılabilir, kavga edilebilir)
-const NAMED := ["teyze", "plaza", "kulaklik", "abi", "hipster", "elif", "necati", "cemil", "remzi"]
+const NAMED := ["teyze", "plaza", "kulaklik", "abi", "hipster", "elif", "necati", "cemil", "remzi", "eren", "kaan", "ebu", "hakan"]
 
 
 ## Kalabalık için rastgele bir yüz: çoğu figüran, bazıları tanıdık.

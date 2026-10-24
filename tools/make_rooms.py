@@ -693,6 +693,20 @@ def dashboard():
     return c
 
 
+def wheelchair():
+    """Sağa bakan tekerlekli sandalye (yandan): büyük arka tekerlek, küçük ön tekerlek, itme kolu."""
+    c = Painter(22, 24)
+    c.fill(2, 0, 2, 12, STONE[2]); c.fill(0, 0, 4, 2, BLACK)              # itme kolu ve arkalık
+    c.fill(3, 10, 13, 3, H("2f4a8e")); c.fill(3, 10, 13, 1, H("4a68b0"))   # oturak
+    c.fill(15, 12, 2, 8, STONE[3]); c.fill(15, 19, 5, 2, STONE[3])          # ayaklık
+    c.circle(8, 16, 7, H("24242c")); c.circle(8, 16, 5, STONE[4]); c.circle(8, 16, 4, (0, 0, 0, 0))
+    for (x, y) in ((8, 12), (8, 20), (4, 16), (12, 16)):
+        c.set(x, y, STONE[5])
+    c.circle(8, 16, 1, STONE[2])
+    c.circle(19, 21, 2, H("24242c"))
+    return c
+
+
 def pillar():
     c = Painter(12, 72)
     c.fill(0, 0, 12, 70, STONE[4]); c.fill(0, 0, 3, 70, STONE[5]); c.fill(9, 0, 3, 70, STONE[3])
@@ -815,6 +829,7 @@ def room_ev():
     r.prop("plant", plant, 236, 150, foot=4)
     r.mark("spawn", 41, 170); r.mark("exit", 41, 188)
     r.mark("desk", 92, 92); r.mark("bed", 64, 96); r.mark("fridge", 268, 82); r.mark("stove", 228, 82)
+    r.mark("wardrobe", 135, 78)
     r.add("lamps", [144, 96])
     return r.finish()
 
@@ -903,12 +918,13 @@ def room_gym():
 
 
 def room_carsi():
-    r = Room("carsi", 640, 224, wall_h=96)
+    r = Room("carsi", 1024, 224, wall_h=96)
     c = r.c
     c.fill(0, 0, r.W, 96, H("3a3346"))
     c.grad_v(0, 0, r.W, 8, [H("221c2a"), H("3a3346")])
     shops = [(16, 208, H("e2cfa8"), "KAFE YILDIZ", GREEN[1]), (224, 416, H("9aa0aa"), "KARGO DEPOSU", NAVY[2]),
-             (432, 624, H("b8c8e0"), "DERSHANE", RED[1])]
+             (432, 624, H("b8c8e0"), "DERSHANE", RED[1]), (640, 816, H("ecd2da"), "BUTİK MODA", H("6e2850")),
+             (832, 1008, H("cbb88e"), "SPOR & HIRDAVAT", H("3a3a44"))]
     for (x0, x1, face, name, sign) in shops:
         c.fill(x0, 6, x1 - x0, 90, face)
         c.bricks(x0, 30, x1 - x0, 66, [shade(face, 0.7), shade(face, 0.9), face, shade(face, 1.08)], seed=x0)
@@ -933,7 +949,25 @@ def room_carsi():
     c.fill(510, 44, 30, 52, H("8fb4cc")); c.fill(512, 46, 26, 48, H("cfe7f5"))
     c.fill(450, 44, 50, 34, H("cfe7f5")); c.fill(550, 44, 60, 34, H("cfe7f5"))
     c.fill(456, 50, 14, 18, GOLD[3]); c.fill(474, 50, 18, 12, RED[3]); c.fill(560, 50, 22, 16, GREEN[3]); c.fill(588, 52, 14, 20, NAVY[4])
+    # butik: vitrinde mankenler, cam kapı
+    c.fill(652, 40, 110, 50, H("fff4f8")); c.fill(652, 40, 110, 2, H("c8a0b0"))
+    for k, (col, top) in enumerate(((H("c84060"), RED[1]), (H("3a6ab8"), NAVY[2]), (H("e6b428"), GOLD[1]), (H("2a2a30"), BLACK))):
+        mx = 662 + k * 26
+        c.circle(mx + 5, 50, 3, H("e8d8c8")); c.fill(mx + 1, 54, 9, 14, col); c.fill(mx + 2, 68, 7, 12, top)
+        c.fill(mx + 5, 80, 1, 8, STONE[2]); c.fill(mx + 2, 87, 7, 2, STONE[2])
+    c.fill(774, 44, 30, 52, H("8fb4cc")); c.fill(776, 46, 26, 48, H("cfe7f5")); c.fill(788, 46, 1, 48, STONE[3])
+    for k, x in enumerate(range(644, 812, 8)):
+        c.fill(x, 30, 8, 7, H("6e2850") if k % 2 else H("f0c8d8"))
+    # hırdavat: vitrinde sopa, çekiç, eldiven; açık kapı
+    c.fill(842, 42, 100, 44, H("e8e4d6")); c.fill(842, 42, 100, 2, H("8a7a5a"))
+    for k in range(4):
+        c.fill(850 + k * 4, 50, 2, 30, WOOD[2 + k % 2]); c.fill(850 + k * 4, 50, 2, 3, WOOD[1])      # sopalar
+    c.fill(876, 52, 14, 4, STONE[2]); c.fill(882, 56, 2, 16, WOOD[2])                                 # çekiç
+    c.fill(900, 54, 10, 10, RED[2]); c.fill(914, 54, 10, 10, RED[2])                                    # boks eldiveni
+    c.fill(898, 70, 30, 10, GOLD[2]); c.fill(902, 72, 22, 2, GOLD[4])                                  # alet çantası
+    c.fill(954, 44, 32, 52, H("2a2620")); c.fill(956, 46, 28, 50, H("4a4030"))
     r.rect("windows", 30, 46, 90, 40); r.rect("windows", 450, 44, 50, 34); r.rect("windows", 550, 44, 60, 34)
+    r.rect("windows", 652, 40, 110, 50); r.rect("windows", 842, 42, 100, 44)
     # kaldırım, bordür, yol
     for y in range(96, 176, 8):
         off = 8 if (y // 8) % 2 else 0
@@ -958,12 +992,17 @@ def room_carsi():
     r.prop("boxes", boxes, 384, 92, foot=14)
     r.prop("park_bench", park_bench, 452, 138, foot=8)
     r.prop("street_tree", street_tree, 592, 100, foot=8)
+    r.prop("lamp_post", lamp_post, 822, 104, foot=4)
+    r.prop("park_bench", park_bench, 680, 140, foot=8)
+    r.prop("trash_bin", trash_bin, 990, 150, foot=4)
     r.prop("trash_bin", trash_bin, 196, 150, foot=4)
     r.mark("spawn", 22, 140); r.mark("exit", 4, 140)
     r.mark("melek", 160, 110); r.mark("talk_melek", 160, 136)
     r.mark("bayram", 320, 110); r.mark("talk_bayram", 320, 136)
     r.mark("mudur", 526, 110); r.mark("talk_mudur", 526, 136)
-    r.add("lamps", [221, 108]); r.add("lamps", [427, 108])
+    r.mark("selin", 790, 110); r.mark("talk_selin", 790, 136)
+    r.mark("kemal", 970, 110); r.mark("talk_kemal", 966, 136)
+    r.add("lamps", [221, 108]); r.add("lamps", [427, 108]); r.add("lamps", [829, 108])
     return r.finish()
 
 
@@ -1312,6 +1351,7 @@ def main():
         data = fn()
         rooms[fn.__name__[5:]] = data
     PROPS["bus"] = outlined(bus_3q())
+    PROPS["wheelchair"] = outlined(wheelchair())
     for cid, b in CAR_COLORS.items():
         if "car_" + cid not in PROPS:
             PROPS["car_" + cid] = outlined(car_3q(*b))

@@ -27,9 +27,10 @@ const DRIVE_METERS := 1600.0       # trafik sahnesinde gidilecek yol
 const DRIVE_MINUTES := 35.0        # bu yolun oyun içi süresi
 const FUEL_COST := 30              # her yolculukta benzin
 const FIGHT_ENERGY := 15
+const FIGHT_REWARD_MULT := 0.6     # kavgadan kazanılan para (rivals.gd reward x bu)
 
 # Antrenman: kazanç = TRAIN_BASE * enerji verimi * tokluk verimi * protein * TRAIN_SOFT / (TRAIN_SOFT + stat)
-const TRAIN_BASE := 4.5
+const TRAIN_BASE := 3.2          # statlar zor gelişsin (eskiden 4.5)
 const TRAIN_SOFT := 25.0
 const PROTEIN_BONUS := 1.25
 ## Aynı gün aynı kası tekrar çalıştırınca verim düşer (Punch Club gibi). Listeyi aşınca o gün çalışılamaz.
@@ -78,6 +79,8 @@ const PLACES := {
 				"lines": ["Ödevler bekliyor... Sonra bakarız.", "Laptopun fanı uçak gibi ses çıkarıyor."]},
 			{"kind": "object", "name": "Yatak", "at": "bed", "dir": "left", "actions": ["sleep", "nap"],
 				"lines": ["Yay sesleri gıcırdıyor ama yatak yatak.", "Biraz uzansan mı?"]},
+			{"kind": "object", "name": "Gardırop", "at": "wardrobe", "dir": "up", "wardrobe": true,
+				"lines": ["Kıyafetlerin ve çantan burada.", "Bugün ne giysem?"]},
 			{"kind": "object", "name": "Buzdolabı", "at": "fridge", "dir": "up", "actions": ["eat_home"],
 				"lines": ["Bir yarım limon, bir de makarna.", "Buzdolabının ışığı bile yanmıyor."]},
 		],
@@ -88,7 +91,7 @@ const PLACES := {
 		],
 	},
 	"market": {
-		"name": "Market", "desc": "Köşedeki market. 08:00-23:00 açık.",
+		"name": "Market", "desc": "Köşedeki market. 07:00-01:00 açık.",
 		"pos": Vector2(196, 74), "color": Color("3f8f5a"),
 		"spots": [
 			{"kind": "exit", "name": "Kapı", "at": "exit"},
@@ -97,18 +100,18 @@ const PLACES := {
 				"lines": ["Hoş geldin evladım, ne lazım?", "Öğrenciye veresiye yok ama gülümseme bedava.", "Taze simit geldi, sıcak sıcak!"]},
 		],
 		"actions": [
-			{"id": "simit", "name": "Simit", "time": 10, "food": 12, "money": -5, "needs": {"open": [480, 1380]}},
-			{"id": "tost", "name": "Kaşarlı tost", "time": 20, "food": 30, "money": -30, "needs": {"open": [480, 1380]}},
+			{"id": "simit", "name": "Simit", "time": 10, "food": 12, "money": -5, "needs": {"open": [420, 1500]}},
+			{"id": "tost", "name": "Kaşarlı tost", "time": 20, "food": 30, "money": -30, "needs": {"open": [420, 1500]}},
 			{"id": "pasta", "name": "Makarna paketi (eve 3 öğün)", "time": 10, "money": -35,
-				"effect": "fridge_add", "needs": {"open": [480, 1380]}},
+				"effect": "fridge_add", "needs": {"open": [420, 1500]}},
 			{"id": "energy_drink", "name": "Enerji içeceği", "time": 5, "energy": 25, "food": -3, "money": -40,
-				"needs": {"open": [480, 1380]}},
+				"needs": {"open": [420, 1500]}},
 			{"id": "protein", "name": "Protein tozu (7 gün +%25 antrenman)",
-				"time": 10, "money": -300, "effect": "protein", "needs": {"open": [480, 1380]}},
+				"time": 10, "money": -300, "effect": "protein", "needs": {"open": [420, 1500]}},
 		],
 	},
 	"gym": {
-		"name": "Rıza'nın Salonu", "desc": "Mahallenin spor salonu. 07:00-23:00 açık.",
+		"name": "Rıza'nın Salonu", "desc": "Mahallenin spor salonu. 06:00-24:00 açık.",
 		"pos": Vector2(330, 84), "color": Color("4a5fb0"),
 		"spots": [
 			{"kind": "exit", "name": "Kapı", "at": "exit"},
@@ -127,22 +130,22 @@ const PLACES := {
 		],
 		"actions": [
 			{"id": "gym_day", "name": "Günlük giriş", "money": -20,
-				"effect": "gym_day", "needs": {"open": [420, 1380], "no_gym": true}},
+				"effect": "gym_day", "needs": {"open": [360, 1440], "no_gym": true}},
 			{"id": "gym_month", "name": "Aylık üyelik (30 gün)", "money": -250,
-				"effect": "gym_month", "needs": {"open": [420, 1380], "no_month": true}},
+				"effect": "gym_month", "needs": {"open": [360, 1440], "no_month": true}},
 			{"id": "lift", "name": "Ağırlık çalış", "time": 60, "energy": -12, "food": -6,
-				"train": "str", "needs": {"open": [420, 1380], "gym": true, "min_energy": 12}},
+				"train": "str", "needs": {"open": [360, 1440], "gym": true, "min_energy": 12}},
 			{"id": "bag", "name": "Kum torbası + ip", "time": 60, "energy": -12, "food": -6, "train": "agi",
-				"needs": {"open": [420, 1380], "gym": true, "min_energy": 12}},
+				"needs": {"open": [360, 1440], "gym": true, "min_energy": 12}},
 			{"id": "run", "name": "Koşu bandı", "time": 60, "energy": -12, "food": -7,
-				"train": "sta", "needs": {"open": [420, 1380], "gym": true, "min_energy": 12}},
+				"train": "sta", "needs": {"open": [360, 1440], "gym": true, "min_energy": 12}},
 			{"id": "technique", "name": "Direksiyon Kilidi öğren (Güç 30)",
 				"time": 120, "energy": -20, "money": -800, "effect": "technique",
-				"needs": {"open": [420, 1380], "min_str": 30, "no_technique": true, "min_energy": 20}},
+				"needs": {"open": [360, 1440], "min_str": 30, "no_technique": true, "min_energy": 20}},
 		],
 	},
 	"carsi": {
-		"name": "Çarşı", "desc": "Kafeler, kargo deposu, dershaneler. İş burada.",
+		"name": "Çarşı", "desc": "Kafe, kargo deposu, dershane, butik, hırdavat. İş ve alışveriş burada.",
 		"pos": Vector2(212, 180), "color": Color("b8902a"),
 		"spots": [
 			{"kind": "exit", "name": "Mahalleye dön", "at": "exit"},
@@ -152,15 +155,19 @@ const PLACES := {
 				"lines": ["Koliler ağır, bilek lazım!", "Güçsüzsen hiç başlama, bel fıtığı olursun."]},
 			{"kind": "npc", "name": "Dershane müdürü", "look": "plaza", "stand": "mudur", "at": "talk_mudur", "actions": ["tutor"],
 				"lines": ["Matematik bilen düzgün bir öğrenci arıyoruz.", "Önce kendi derslerine düzenli git, sonra konuşalım."]},
+			{"kind": "npc", "name": "Butikçi Selin", "look": "sivil13", "stand": "selin", "at": "talk_selin", "shop": "outfits",
+				"lines": ["Yeni sezon geldi canım, bak bak!", "Bu ceket tam sana göre, yemin ederim.", "Öğrenciye indirim yok ama gülümseme var."]},
+			{"kind": "npc", "name": "Hırdavatçı Kemal", "look": "sivil31", "stand": "kemal", "at": "talk_kemal", "shop": "weapons",
+				"lines": ["Kendini korumak lazım evlat, devir kötü.", "Sopa beyzbol için, ona göre.", "Polise benden aldığını söyleme."]},
 		],
 		"actions": [
-			{"id": "waiter", "name": "Garsonluk vardiyası (4 sa, 70 TL + bahşiş)", "time": 240, "energy": -25,
-				"food": -10, "money": 70, "scene": "waiter", "needs": {"open": [540, 1320], "min_energy": 25}},
+			{"id": "waiter", "name": "Garsonluk vardiyası (4 sa, sipariş başı 12 TL + bahşiş)", "time": 240, "energy": -25,
+				"food": -10, "per_order": 12, "scene": "waiter", "needs": {"open": [480, 1440], "min_energy": 25}},
 			{"id": "cargo", "name": "Koli taşı (4 sa, +güç)", "time": 240, "energy": -40, "food": -16, "money": 180, "gain": {"str": 0.6},
-				"needs": {"open": [480, 1260], "min_energy": 40, "min_str": 15}},
+				"needs": {"open": [420, 1380], "min_energy": 40, "min_str": 15}},
 			{"id": "tutor", "name": "Özel ders ver (2 sa)",
 				"time": 120, "energy": -10, "food": -5, "money": 150,
-				"needs": {"open": [900, 1320], "min_energy": 10, "good_weeks": 2}},
+				"needs": {"open": [600, 1380], "min_energy": 10, "good_weeks": 2}},
 		],
 	},
 	"kampus_kafe": {
@@ -178,10 +185,10 @@ const PLACES := {
 				"lines": ["Kampüsün çimleri yemyeşil. Biraz nefes alsan?"]},
 		],
 		"actions": [
-			{"id": "coffee", "name": "Filtre kahve", "time": 10, "energy": 20, "food": -2, "money": -30, "needs": {"open": [480, 1260]}},
-			{"id": "tea", "name": "Çay + poğaça", "time": 20, "energy": 8, "food": 18, "money": -20, "needs": {"open": [480, 1260]}},
-			{"id": "chat", "name": "Sohbet et (1 sa, günde bir kez)", "time": 60, "energy": 14, "food": -3,
-				"needs": {"open": [480, 1320], "once_per_day": "chat"}},
+			{"id": "coffee", "name": "Filtre kahve", "time": 10, "energy": 20, "food": -2, "money": -30, "needs": {"open": [420, 1440]}},
+			{"id": "tea", "name": "Çay + poğaça", "time": 20, "energy": 8, "food": 18, "money": -20, "needs": {"open": [420, 1440]}},
+			{"id": "chat", "name": "Sohbet et (1 sa)", "time": 60, "energy": 10, "food": -3,
+				"needs": {"open": [420, 1440]}},
 		],
 	},
 	"galeri": {
@@ -206,7 +213,7 @@ const CAMPUS_ACTIONS := {
 		"time": 120, "energy": -10, "food": -6, "effect": "lecture", "scene": "lecture",
 		"needs": {"weekday": true, "open": [540, 1020], "once_per_day": "lecture", "min_energy": 10}},
 	"cafeteria": {"id": "cafeteria", "name": "Yemekhane", "time": 30, "food": 50, "money": -15, "scene": "cafeteria",
-		"needs": {"open": [690, 900]}},
+		"needs": {"open": [660, 1200]}},
 }
 
 ## Haritalar. go: tıklanınca ne olur
@@ -219,10 +226,10 @@ const MAPS := {
 		"line": [Vector2(170, 236), "metrobüs hattı → Davutpaşa"],
 		"spots": {
 			"ev": {"name": "Ev", "desc": "Küçük, rutubetli ama senin.", "pos": Vector2(78, 92), "go": "place"},
-			"market": {"name": "Market", "desc": "Köşedeki market. 08:00-23:00 açık.", "pos": Vector2(196, 74), "go": "place"},
-			"gym": {"name": "Rıza'nın Salonu", "desc": "Mahallenin spor salonu. 07:00-23:00 açık.", "pos": Vector2(330, 84), "go": "place"},
+			"market": {"name": "Market", "desc": "Köşedeki market. 07:00-01:00 açık.", "pos": Vector2(196, 74), "go": "place"},
+			"gym": {"name": "Rıza'nın Salonu", "desc": "Mahallenin spor salonu. 06:00-24:00 açık.", "pos": Vector2(330, 84), "go": "place"},
 			"galeri": {"name": "Necdet Oto Galeri", "desc": "Araba al, sat, yükselt.", "pos": Vector2(400, 186), "go": "place"},
-			"carsi": {"name": "Çarşı", "desc": "Kafe, kargo deposu, dershane. İş burada.", "pos": Vector2(212, 180), "go": "place"},
+			"carsi": {"name": "Çarşı", "desc": "İş (kafe, kargo, dershane) ve alışveriş (butik, hırdavat).", "pos": Vector2(212, 180), "go": "place"},
 			"durak": {"name": "Metrobüs Durağı", "desc": "Okula (YTÜ Davutpaşa) metrobüsle gidilir.", "pos": Vector2(102, 196), "go": "metro"},
 			"otopark": {"name": "Otopark", "desc": "Arabanla okula git: ~35 dk, 30 TL benzin. Trafikte kavga çıkabilir.", "pos": Vector2(332, 186), "go": "drive"},
 		},
@@ -235,7 +242,7 @@ const MAPS := {
 			"eef": {"name": "Elektrik-Elektronik Fak.", "desc": "Devre Analizi dersi.", "pos": Vector2(108, 84), "go": "lecture", "course": "Devre Analizi"},
 			"mak": {"name": "Makine Fakültesi", "desc": "Termodinamik dersi.", "pos": Vector2(254, 66), "go": "lecture", "course": "Termodinamik"},
 			"fen": {"name": "Fen-Edebiyat Fakültesi", "desc": "Diferansiyel Denklemler dersi.", "pos": Vector2(396, 104), "go": "lecture", "course": "Diferansiyel Denklemler"},
-			"yemekhane": {"name": "Merkez Yemekhane", "desc": "11:30-15:00. Ucuz ve doyurucu.", "pos": Vector2(330, 186), "go": "cafeteria"},
+			"yemekhane": {"name": "Merkez Yemekhane", "desc": "11:00-20:00. Ucuz ve doyurucu.", "pos": Vector2(330, 186), "go": "cafeteria"},
 			"kampus_kafe": {"name": "Kampüs Kafe", "desc": "Kahve, çay, sohbet. Enerji toplamanın yolu.", "pos": Vector2(196, 176), "go": "place"},
 			"otopark": {"name": "Otopark", "desc": "Arabanla eve dön: ~35 dk, 30 TL benzin.", "pos": Vector2(446, 52), "go": "drive"},
 		},

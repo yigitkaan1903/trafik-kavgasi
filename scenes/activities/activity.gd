@@ -60,7 +60,7 @@ func _ready() -> void:
 		_occupied[i] = s
 		_students.append(s)
 
-	_player = _person("player", _room.mark("spawn"))
+	_player = _person(GameState.player_look(), _room.mark("spawn"))
 	_player.marker = true
 	_player.face_dir("up")
 	_room.follow(_player)

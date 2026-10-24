@@ -53,7 +53,8 @@ func _ready() -> void:
 		box.add_child(b)
 		if first == null and not b.disabled:
 			first = b
-	first.grab_focus.call_deferred()
+	if first:
+		first.grab_focus.call_deferred()
 
 
 func _unhandled_input(event: InputEvent) -> void:
