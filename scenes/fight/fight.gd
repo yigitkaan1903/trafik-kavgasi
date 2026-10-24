@@ -61,6 +61,18 @@ func _ready() -> void:
 	player.move_speed = agi["speed"] * 0.5
 	player.arena = _arena
 	player.weapon = GameState.weapon_info()
+	# yetenek ağacı (data/skills.gd)
+	var gs := GameState
+	player.dmg_bonus = {"punch": (1.0 if gs.has_skill("sert_yumruk") else 0.0) + (2.0 if gs.has_skill("kemik_kiran") else 0.0),
+			"kick": 2.0 if gs.has_skill("agir_tekme") else 0.0, "special": 6.0 if gs.has_skill("son_darbe") else 0.0}
+	if gs.has_skill("hizli_ayak"):
+		player.move_speed *= 1.1
+	if gs.has_skill("siyrilma"):
+		player.dodge_cooldown *= 0.75
+	if gs.has_skill("kontra"):
+		player.block_chip *= 0.5
+	player.evade_chance = 0.12 if gs.has_skill("golge") else 0.0
+	player.stun_mult = 0.65 if gs.has_skill("tas_cene") else 1.0
 	player.weapon_id = GameState.weapon
 	player.position = Vector2(_arena.get_center().x - 45, mid_y)
 

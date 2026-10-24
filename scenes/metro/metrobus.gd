@@ -26,7 +26,7 @@ const QUIET_MIN := 3          # bir olaydan sonra en az bu kadar durak sakin ge�
 const QUIET_MAX := 6
 const LEAVE_CHANCE := 0.4    # durakta oturan birinin inme ihtimali
 const WALK_SPEED := 60.0
-const PLAYER_SEAT := 21      # olaylarla oturtulunca oyuncunun koltuğu
+const PLAYER_SEAT := 21      # kayıtlı koltuk yoksa oyuncunun oturduğu koltuk
 const WHEELCHAIR_SPOT := Vector2(396, 104)   # tekerlekli sandalye alanı (orta kapının karşısı)
 const AISLE_Y := 134.0       # koridorun ortası
 const PROVOKE := ["Ne bakıyorsun?", "Biraz ilerler misin?", "Ayağıma bastın!", "Çantan sırtıma giriyor!"]
@@ -218,11 +218,17 @@ func _provoke(p) -> void:
 		return true)
 
 
+## Oyuncunun koltuğu: koltuk kaparken ya da önceki sahnede oturduğu yer (GameState.metro_seat).
+func _my_seat() -> int:
+	return GameState.metro_seat if GameState.metro_seat >= 0 and GameState.metro_seat < _seat_pos.size() else PLAYER_SEAT
+
+
 func _sit_player(i: int) -> void:
 	_seats[i] = _player
 	_player.position = _seat_pos[i]
 	_player.sit("right")
 	GameState.metro_seated = true
+	GameState.metro_seat = i
 
 
 func _stand_player() -> void:
@@ -233,6 +239,7 @@ func _stand_player() -> void:
 	_player.position = Vector2(_seat_pos[i].x, AISLE_Y)
 	_player.set_moving(false)
 	GameState.metro_seated = false
+	GameState.metro_seat = -1
 	_schedule_grab(i, 0.8)
 
 
@@ -240,10 +247,13 @@ func _stand_player() -> void:
 func _refresh_player() -> void:
 	var seat: int = _seats.find(_player)
 	if GameState.metro_seated and seat < 0:
-		seat = _seats.find(null)
+		# en yakın boş koltuğa (yoksa kendi koltuğuna; oradaki kalkar gider)
+		for i in _seat_pos.size():
+			if _seats[i] == null and (seat < 0 or _seat_pos[i].distance_to(_player.position) < _seat_pos[seat].distance_to(_player.position)):
+				seat = i
 		if seat < 0:
-			seat = PLAYER_SEAT
-			_seats[seat].queue_free()   # koltuğu kaptırdı, indi gitti
+			seat = _my_seat()
+			_seats[seat].queue_free()
 		_sit_player(seat)
 	elif not GameState.metro_seated and seat >= 0:
 		_stand_player()
@@ -350,7 +360,7 @@ func _add_passengers() -> void:
 	_player.marker = true
 	_player.face_dir("down")
 	for i in _seat_pos.size():
-		if (GameState.metro_seated and i == PLAYER_SEAT) or randf() > _seat_fill:
+		if (GameState.metro_seated and i == _my_seat()) or randf() > _seat_fill:
 			continue
 		var s = _person(MetroEvents.random_look(), _seat_pos[i])
 		s.sit("right")
@@ -362,7 +372,7 @@ func _add_passengers() -> void:
 	var driver = _person("sivil35", _room.mark("driver"))
 	driver.sit("right")
 	if GameState.metro_seated:
-		_sit_player(PLAYER_SEAT)
+		_sit_player(_my_seat())
 
 
 func _add_standing(at: Vector2):
@@ -436,6 +446,7 @@ func _calm_down() -> void:
 func _arrive_destination() -> void:
 	GameState.metro_on_board = false
 	GameState.metro_seated = false
+	GameState.metro_seat = -1
 	set_physics_process(false)
 	if GameState.metro_station == 0:
 		GameState.enter_map("mahalle", "durak")

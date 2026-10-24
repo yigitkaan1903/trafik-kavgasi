@@ -707,6 +707,76 @@ def wheelchair():
     return c
 
 
+def clothes_rack(o):
+    """Askılık: üstte krom çubuk, iki askıda kıyafet (kıyafetin renkleriyle), altta katlanmış pantolon."""
+    c = Painter(26, 36)
+    chrome, chrome_d = STONE[5], STONE[3]
+    c.fill(0, 2, 26, 2, chrome); c.fill(0, 2, 26, 1, WHITE)
+    c.fill(0, 2, 2, 32, chrome_d); c.fill(24, 2, 2, 32, chrome_d)
+    c.fill(0, 33, 7, 2, chrome_d); c.fill(19, 33, 7, 2, chrome_d)
+    shirt, pants = o["shirt"], o.get("pants", (40, 44, 70))
+    top = o.get("top", "tee")
+    for k, gx in enumerate((3, 13)):
+        c.fill(gx + 4, 0, 2, 4, chrome_d)                                      # askı
+        c.fill(gx, 5, 10, 3, shirt); c.fill(gx + 2, 8, 6, 12, shirt)          # omuzlar ve gövde
+        c.fill(gx, 8, 2, 6 if top in ("tee",) and o.get("sleeves") == "short" else 10, shirt)
+        c.fill(gx + 8, 8, 2, 6 if top in ("tee",) and o.get("sleeves") == "short" else 10, shirt)
+        c.fill(gx + 2, 5, 6, 1, shade(shirt, 1.15))
+        if top in ("jacket", "suit", "coat"):
+            c.fill(gx + 4, 6, 2, 13 if top == "coat" else 11, o.get("inner", (230, 230, 230)))
+            if top == "suit":
+                c.fill(gx + 4, 7, 2, 6, o.get("tie", (180, 30, 40)))
+        if top == "coat":
+            c.fill(gx + 2, 20, 6, 4, shirt)
+        if o.get("stripe"):
+            c.fill(gx + 2, 13, 6, 1, o["stripe"])
+        if top == "hoodie":
+            c.fill(gx + 3, 4, 4, 2, shade(shirt, 0.8))
+    c.fill(4, 27, 18, 5, pants); c.fill(4, 27, 18, 1, shade(pants, 1.2)); c.fill(4, 31, 18, 1, shade(pants, 0.7))
+    return c
+
+
+def weapon_display(wid):
+    """Duvardaki delikli pano üstünde silah."""
+    c = Painter(32, 34)
+    c.fill(0, 0, 32, 28, H("8a6a44")); c.fill(1, 1, 30, 26, H("b08a5a"))
+    for y in range(4, 26, 5):
+        for x in range(4, 30, 5):
+            c.set(x, y, H("6a5034"))
+    c.fill(14, 28, 4, 6, STONE[2]); c.fill(8, 32, 16, 2, STONE[2])
+    if wid == "sopa":
+        for k in range(20):
+            c.fill(5 + k, 22 - k, 3 if k > 8 else 2, 2, WOOD[3] if k % 3 else WOOD[4])
+        c.fill(4, 22, 3, 3, BLACK)
+    elif wid == "musta":
+        for k in range(4):
+            c.circle(9 + k * 5, 12, 2, GOLD[3]); c.circle(9 + k * 5, 12, 1, H("b08a5a"))
+        c.fill(7, 15, 20, 4, GOLD[2]); c.fill(7, 15, 20, 1, GOLD[4])
+    else:
+        c.fill(6, 12, 9, 4, BLACK); c.fill(7, 13, 7, 1, STONE[2])
+        c.fill(15, 12, 13, 3, H("dfe4ee")); c.fill(15, 12, 13, 1, WHITE); c.fill(27, 13, 2, 1, H("dfe4ee"))
+    return c
+
+
+def tool_shelf():
+    c = block(96, 10, 24, STONE[4], STONE[3])
+    rng = random.Random(4)
+    for row in range(3):
+        y = 11 + row * 7
+        c.fill(1, y + 5, 94, 1, STONE[1])
+        x = 2
+        while x < 92:
+            kind = rng.choice(["box", "can", "tool"])
+            col = rng.choice([RED[3], GOLD[3], NAVY[4], GREEN[3], STONE[5], H("e8745a")])
+            if kind == "box":
+                c.fill(x, y, 7, 5, col); c.fill(x, y, 7, 1, shade(col, 1.25)); x += 8
+            elif kind == "can":
+                c.fill(x, y + 1, 4, 4, col); c.fill(x, y + 1, 4, 1, WHITE); x += 5
+            else:
+                c.fill(x, y + 3, 6, 1, STONE[1]); c.fill(x + 5, y + 1, 2, 4, col); x += 8
+    return c
+
+
 def pillar():
     c = Painter(12, 72)
     c.fill(0, 0, 12, 70, STONE[4]); c.fill(0, 0, 3, 70, STONE[5]); c.fill(9, 0, 3, 70, STONE[3])
@@ -1000,8 +1070,8 @@ def room_carsi():
     r.mark("melek", 160, 110); r.mark("talk_melek", 160, 136)
     r.mark("bayram", 320, 110); r.mark("talk_bayram", 320, 136)
     r.mark("mudur", 526, 110); r.mark("talk_mudur", 526, 136)
-    r.mark("selin", 790, 110); r.mark("talk_selin", 790, 136)
-    r.mark("kemal", 970, 110); r.mark("talk_kemal", 966, 136)
+    r.mark("door_butik", 789, 104); r.mark("from_butik", 789, 122)
+    r.mark("door_hirdavat", 970, 104); r.mark("from_hirdavat", 970, 122)
     r.add("lamps", [221, 108]); r.add("lamps", [427, 108]); r.add("lamps", [829, 108])
     return r.finish()
 
@@ -1041,6 +1111,79 @@ def room_kampus_kafe():
         r.add("crowd_stand", [x, y])
     r.mark("spawn", 35, 194); r.mark("exit", 35, 212)
     for x in (120, 240, 360, 480, 590):
+        r.add("lamps", [x, 120])
+    return r.finish()
+
+
+def room_butik():
+    """Butik Moda: iki sıra askılık (her birinde bir kıyafet), ayna, deneme kabini, kasa."""
+    import make_topdown as td
+    looks = td.all_looks()
+    outfits = [k for k in td.OUTFITS]
+    r = Room("butik", 456, 216, wall_h=64)
+    c = r.c
+    r.back_wall(H("ecd2da"), base=H("8a4a64"))
+    for x in range(0, r.W, 14):
+        c.fill(x, 10, 1, 46, H("e0c0cc"))
+    c.fill(150, 12, 120, 14, H("6e2850")); c.fill(150, 12, 120, 1, H("a04878"))
+    r.text(150, 23, 120, "BUTİK MODA", 9, "f6d0e0")
+    c.fill(24, 14, 40, 44, STONE[4]); c.grad_v(26, 16, 36, 40, [H("dfe8f2"), H("c8d4e4"), H("aab8cc")])   # ayna
+    for d in range(20):
+        if d % 5 < 3:
+            c.set(34 + d // 2, 18 + d, WHITE)
+    c.fill(392, 10, 52, 50, H("6e2850")); c.fill(394, 12, 48, 46, H("8a3a66"))                         # kabin perdesi
+    for x in range(396, 442, 6):
+        c.fill(x, 12, 2, 46, H("a04878"))
+    checker(c, 0, 64, r.W, 152, H("f2ece6"), H("e2d8d2"), size=16)
+    rug(c, 300, 150, 96, 40, RED, GOLD[4])
+    r.borders(door=(20, 30))
+    r.prop("butik_counter", lambda: reception_desk(64), 334, 84, foot=16)
+    r.prop("plant_big", lambda: plant(True), 290, 46, foot=4)
+    rows = [(24, 80), (24, 140)]
+    k = 0
+    for (x0, y0) in rows:
+        for col in range(8):
+            if k >= len(outfits):
+                break
+            oid = outfits[k]
+            x = x0 + col * 36
+            r.prop("rack_" + oid, lambda o=looks["player_" + oid]: clothes_rack(o), x, y0, foot=6)
+            r.mark("item_" + oid, x + 13, y0 + 44)
+            k += 1
+    r.mark("selin", 366, 98); r.mark("talk_selin", 366, 136)
+    r.mark("spawn", 35, 194); r.mark("exit", 35, 212)
+    for x in (100, 220, 340):
+        r.add("lamps", [x, 120])
+    return r.finish()
+
+
+def room_hirdavat():
+    """Spor & Hırdavat: duvarda silah panoları, alet rafları, eldiven ve top kutuları, kasa."""
+    r = Room("hirdavat", 384, 200, wall_h=56)
+    c = r.c
+    r.back_wall(H("8a96a8"), base=H("3a4250"))
+    c.fill(200, 8, 170, 40, H("b08a5a"))                       # duvar boyu alet panosu
+    for y in range(12, 46, 5):
+        for x in range(204, 368, 5):
+            c.set(x, y, H("6a5034"))
+    rng = random.Random(9)
+    for k in range(12):
+        x, y = 208 + k * 13, 14 + (k % 3) * 10
+        c.fill(x, y, 2, 10, WOOD[2]); c.fill(x - 2, y, 6, 3, rng.choice([STONE[2], RED[2], GOLD[2]]))
+    c.fill(110, 12, 80, 14, H("3a3a44")); c.fill(110, 12, 80, 1, H("6a6a74"))
+    r.text(110, 23, 80, "SPOR & HIRDAVAT", 7, "f6d86a")
+    concrete(c, 0, 56, r.W, 144, H("b8b4aa"), 3, grid=32)
+    r.borders(door=(20, 30))
+    for k, wid in enumerate(("musta", "sopa", "bicak")):
+        x = 18 + k * 30
+        r.prop("wdisp_" + wid, lambda w=wid: weapon_display(w), x, 50, foot=4)
+        r.mark("item_" + wid, x + 16, 96)
+    r.prop("tool_shelf", tool_shelf, 120, 110, foot=10)
+    r.prop("boxes", boxes, 40, 128, foot=14)
+    r.prop("hirdavat_counter", lambda: reception_desk(64), 290, 98, foot=16)
+    r.mark("kemal", 322, 112); r.mark("talk_kemal", 322, 150)
+    r.mark("spawn", 35, 178); r.mark("exit", 35, 196)
+    for x in (100, 260):
         r.add("lamps", [x, 120])
     return r.finish()
 
@@ -1346,7 +1489,7 @@ def gd(v):
 def main():
     os.makedirs(PROP_OUT, exist_ok=True)
     rooms = {}
-    for fn in (room_ev, room_market, room_gym, room_carsi, room_kampus_kafe, room_galeri, room_amfi,
+    for fn in (room_ev, room_market, room_gym, room_carsi, room_butik, room_hirdavat, room_kampus_kafe, room_galeri, room_amfi,
                room_yemekhane, room_restoran, room_durak, room_metrobus, room_sokak):
         data = fn()
         rooms[fn.__name__[5:]] = data

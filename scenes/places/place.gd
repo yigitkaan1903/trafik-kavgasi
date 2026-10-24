@@ -26,6 +26,8 @@ const LIGHTS := {
 	"carsi": [true, 90.0, false],
 	"galeri": [false, 100.0, true],
 	"kampus_kafe": [false, 90.0, true],
+	"butik": [false, 100.0, true],
+	"hirdavat": [false, 100.0, true],
 }
 ## Spotun tıklama alanı hangi eşyanın görseli (işaret adı -> [eşya, kaçıncısı]); yoksa duruş noktasından hesaplanır.
 const SPOT_PROPS := {
@@ -74,7 +76,7 @@ var _top: Node2D              # en üstte: fareyle gelinen şeyin çerçevesi ve
 func _ready() -> void:
 	_id = GameState.open_place
 	_data = Places.PLACES[_id]
-	GameState.place = _id
+	GameState.place = _data.get("parent", _id)   # dükkanların içi: haritada çarşı
 
 	_room = Room.new().build(_id)
 	add_child(_room)
@@ -111,7 +113,9 @@ func _ready() -> void:
 
 	var fill := _add_crowd()
 
-	_player = _person(GameState.player_look(), _room.mark("spawn"))
+	var spawn := GameState.place_spawn if _room.has_mark(GameState.place_spawn) else "spawn"
+	GameState.place_spawn = ""
+	_player = _person(GameState.player_look(), _room.mark(spawn))
 	_player.face_dir("up")
 	_player.marker = _id == "gym" or _id == "carsi"
 	_room.follow(_player)
@@ -226,6 +230,8 @@ func _spot_rect(i: int) -> Rect2:
 	var s: Dictionary = _spots[i]
 	var pos: Vector2 = s["pos"]
 	var body := Rect2(pos - Vector2(8, 30), Vector2(16, 32))
+	if s.has("prop"):
+		return _prop_rect(s["prop"], 0)
 	match s["kind"]:
 		"npc":
 			var n: Node2D = s["node"]
@@ -270,7 +276,7 @@ func _process(delta: float) -> void:
 		# kapıdan çıkınca haritaya dön
 		var exit_pos: Vector2 = _spots[0]["pos"]
 		if _player.position.distance_to(exit_pos) < 8.0 and not _spots[0].has("actions"):
-			_leave()
+			_exit(_spots[0])
 	_update_hover()
 	_update_hint()
 	_animate(delta)
@@ -300,7 +306,17 @@ func _nearest_spot() -> int:
 	return best
 
 
+func _item_info(s: Dictionary) -> Dictionary:
+	return (Shop.OUTFITS if s["shop"] == "outfits" else Shop.WEAPONS)[s["item"]]
+
+
+func _item_owned(s: Dictionary) -> bool:
+	return (GameState.outfits_owned if s["shop"] == "outfits" else GameState.weapons_owned).has(s["item"])
+
+
 func _spot_name(s: Dictionary) -> String:
+	if s["kind"] == "item":
+		return _item_info(s)["name"]
 	if s["kind"] == "car":
 		return Cars.CARS[s["car"]]["name"]
 	return s["name"]
@@ -312,7 +328,8 @@ func _update_hint() -> void:
 		var i := _nearest_spot()
 		if i >= 0:
 			var s: Dictionary = _spots[i]
-			var verb: String = {"npc": "konuş", "exit": "çık", "machine": "çalış", "car": "incele", "object": "bak"}[s["kind"]]
+			var verb: String = {"npc": "konuş", "exit": "çık", "machine": "çalış", "car": "incele", "object": "bak",
+					"door": "gir", "item": "incele"}[s["kind"]]
 			text = "E: %s (%s)" % [verb.capitalize(), _spot_name(s)]
 		else:
 			text = ""   # boşken kontroller görünür
@@ -359,7 +376,7 @@ func _interact(i: int) -> void:
 			if s.has("actions"):
 				_open_dialog(s, i)
 			else:
-				_leave()
+				_exit(s)
 		"machine":
 			if s.has("user"):
 				_say(_player, "Dolu, boş bir alet bulayım.")
@@ -372,6 +389,13 @@ func _interact(i: int) -> void:
 			_train(i)
 		"car":
 			_car_dialog(s)
+		"door":
+			_busy = true
+			GameState.save_game()
+			GameState.open_place_scene(s["to"])
+		"item":
+			_player.face_dir("up")
+			_item_dialog(s)
 		_:
 			if s.has("shop"):
 				_open_shop(s, 0)
@@ -390,6 +414,19 @@ func _coach():
 
 func _say(who: Node2D, text: String, seconds: float = 2.4) -> void:
 	Bubble.say(self, who, text, 34.0, seconds)
+
+
+## Çıkış: dükkanlardan çarşıya (kapının önünde), diğerlerinden haritaya.
+func _exit(s: Dictionary) -> void:
+	if not s.has("to"):
+		_leave()
+		return
+	if _busy:
+		return
+	_busy = true
+	GameState.place_spawn = s.get("spawn", "")
+	GameState.save_game()
+	GameState.open_place_scene(s["to"])
 
 
 func _leave() -> void:
@@ -472,6 +509,56 @@ func _paged_dialog(speaker: String, line: String, choices: Array, page: int, on_
 			on_pick.call(id))
 
 
+## Askıdaki kıyafet ya da panodaki silah: incele, satın al, hemen giy / çantaya koy.
+func _item_dialog(s: Dictionary) -> void:
+	var it := _item_info(s)
+	var id: String = s["item"]
+	var outfits: bool = s["shop"] == "outfits"
+	var price := GameState.shop_price(it["price"])
+	var d := DialogBox.new()
+	d.speaker = "%s  ·  %d TL" % [it["name"], price] + ("  (Pazarlıkçı indirimi)" if price < it["price"] else "")
+	d.line = it["desc"] if outfits else "%s  Yumruk hasarı x%.2f%s." % [it["desc"], it["damage"],
+			", menzil +%d" % it["range"] if it["range"] > 0 else ""]
+	if _item_owned(s):
+		if outfits:
+			d.add_choice("Hemen giy" if GameState.outfit != id else "Zaten üzerinde", "wear", GameState.outfit == id)
+		else:
+			d.add_choice("Çantaya koy" if GameState.weapon != id else "Zaten çantanda", "arm", GameState.weapon == id)
+	else:
+		var poor: bool = GameState.money < price
+		d.add_choice("Satın al  (%d TL)" % price if not poor else "Paran yetmiyor  (%d TL)" % price, "buy", poor)
+		if outfits:
+			d.add_choice("Satın al ve hemen giy", "buy_wear", poor)
+	_show_dialog(d, _on_item_pick.bind(s))
+
+
+func _on_item_pick(choice: String, s: Dictionary) -> void:
+	var it := _item_info(s)
+	var id: String = s["item"]
+	var outfits: bool = s["shop"] == "outfits"
+	match choice:
+		"buy", "buy_wear":
+			var ok := GameState.buy_outfit(id) if outfits else GameState.buy_weapon(id)
+			if ok:
+				Audio.sfx("buy")
+				_say(_player, "%s benim oldu!" % it["name"], 2.0)
+				if choice == "buy_wear":
+					_wear(id)
+		"wear":
+			_wear(id)
+		"arm":
+			GameState.weapon = id
+			GameState.save_game()
+			_say(_player, "%s çantada." % it["name"])
+
+
+func _wear(id: String) -> void:
+	GameState.outfit = id
+	GameState.save_game()
+	_player.set_look(GameState.player_look())
+	_say(_player, "Yakıştı mı? Bence yakıştı.")
+
+
 ## Butik (kıyafet) ya da hırdavat (silah): alınanlar gardıroba gelir.
 func _open_shop(s: Dictionary, page: int) -> void:
 	var items: Dictionary = Shop.OUTFITS if s["shop"] == "outfits" else Shop.WEAPONS
@@ -481,12 +568,13 @@ func _open_shop(s: Dictionary, page: int) -> void:
 		var it: Dictionary = items[id]
 		if it["price"] <= 0:
 			continue
-		var text := "%s  (%d TL)  %s" % [it["name"], it["price"], it["desc"]]
+		var price := GameState.shop_price(it["price"])
+		var text := "%s  (%d TL)  %s" % [it["name"], price, it["desc"]]
 		if owned.has(id):
 			text = "%s  (sende var)" % it["name"]
-		elif GameState.money < it["price"]:
-			text = "%s  (%d TL, paran yetmiyor)" % [it["name"], it["price"]]
-		choices.append([text, id, owned.has(id) or GameState.money < it["price"]])
+		elif GameState.money < price:
+			text = "%s  (%d TL, paran yetmiyor)" % [it["name"], price]
+		choices.append([text, id, owned.has(id) or GameState.money < price])
 	_paged_dialog(_spot_name(s), s.get("lines", [""]).pick_random(), choices, page, func(id: String):
 		var ok := GameState.buy_outfit(id) if s["shop"] == "outfits" else GameState.buy_weapon(id)
 		if ok:
@@ -770,6 +858,15 @@ func _draw_top() -> void:
 				_top.draw_rect(Rect2(t.x - 1, t.y - 1, 40, 11), Color("1b1024"))
 				_top.draw_rect(Rect2(t.x, t.y, 38, 9), Color("e6b428"))
 				_top.draw_string(font, Vector2(t.x, t.y + 8), price, HORIZONTAL_ALIGNMENT_CENTER, 38, 7, Color("1b1024"))
+	for s in _spots:   # dükkanlarda askı ve panoların üstünde fiyat
+		if s["kind"] == "item":
+			var r := _prop_rect(s["prop"], 0)
+			var owned := _item_owned(s)
+			var tag := "SENDE" if owned else "%d TL" % GameState.shop_price(_item_info(s)["price"])
+			var tw := font.get_string_size(tag, HORIZONTAL_ALIGNMENT_LEFT, -1, 6).x + 6.0
+			var tp := Vector2(roundf(r.get_center().x - tw / 2.0), r.position.y - 9)
+			UIDraw.box(_top, Rect2(tp, Vector2(tw, 9)), Color("16a34a") if owned else Color("e6b428"), Color(0, 0, 0, 0), 3)
+			_top.draw_string(font, tp + Vector2(3, 7), tag, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, Color.WHITE if owned else Color("1b1024"))
 	if _id == "ev":
 		var f := _room.mark("fridge") + Vector2(-10, -30)
 		_top.draw_string(font, f, "%d öğün" % GameState.fridge, HORIZONTAL_ALIGNMENT_CENTER, 24, 6, Color("6e6454"))

@@ -472,6 +472,7 @@ func _board() -> void:
 	GameState.board_ahead = _boarded_this_bus
 	GameState.metro_on_board = true
 	GameState.metro_seated = false
+	GameState.metro_seat = -1
 	GameState.metro_dir = -1 if _at_school else 1
 	GameState.save_game()
 	GameState.go_to(GameState.SCENE_SEATS)

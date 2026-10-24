@@ -1,6 +1,6 @@
 # Trafik Kavgası
 
-Beylikdüzü'nde yaşayan, okulu Davutpaşa'da olan bir YTÜ öğrencisisin. Punch Club tarzı bir günlük hayat: zamanın, enerjin ve tokluğun kısıtlı. Gymde antrenman yaparak güçlen, çarşıda çalışarak para kazan, haftada en az 3 gün derse git ki pazartesi harçlık gelsin, yemek yemeyi unutma. Okula metrobüsle gidiyorsun: durakta insan yığını, kaynakçılar, koltuk kavgaları ve yolda sataşmalar seni bekliyor. Güçlendikçe kavgalar kolaylaşır; yendiğin rakipler senden korkmaya başlar (Nam). Çarşıdaki butikten kıyafet, hırdavatçıdan kavga için silah (muşta, beyzbol sopası, bıçak) alabilir, evdeki gardıroptan giyip çantana koyabilirsin. Para biriktirip araba alınca haritadaki otoparktan arabayla okula gidip gelebilirsin: metrobüsten hızlı (~35 dk) ama benzin parası var ve trafikte kavga çıkabilir.
+Beylikdüzü'nde yaşayan, okulu Davutpaşa'da olan bir YTÜ öğrencisisin. Punch Club tarzı bir günlük hayat: zamanın, enerjin ve tokluğun kısıtlı. Gymde antrenman yaparak güçlen, çarşıda çalışarak para kazan, haftada en az 3 gün derse git ki pazartesi harçlık gelsin, yemek yemeyi unutma. Okula metrobüsle gidiyorsun: durakta insan yığını, kaynakçılar, koltuk kavgaları ve yolda sataşmalar seni bekliyor. Güçlendikçe kavgalar kolaylaşır; yendiğin rakipler senden korkmaya başlar (Nam). Çarşıdaki butikten kıyafet, hırdavatçıdan kavga için silah (muşta, beyzbol sopası, bıçak) alabilir, evdeki gardıroptan giyip çantana koyabilirsin. Başarım açtıkça yetenek puanı kazanır, telefondan ya da Y tuşuyla açılan yetenek ağacında harcarsın. Para biriktirip araba alınca haritadaki otoparktan arabayla okula gidip gelebilirsin: metrobüsten hızlı (~35 dk) ama benzin parası var ve trafikte kavga çıkabilir.
 
 **Zorluk** (yeni oyunda seçilir): antrenman yapmadığın statların gece ne kadar azalacağını belirler. Rahat: hiç, Gerçekçi: 1 puan, Punch Club: 3 puan.
 Godot 4.7, GDScript, 480×270 pixel art, Stardew / RPG Maker gibi 3/4 üstten bakış (16 piksellik karolar, dört yöne yürüyen karakterler).
@@ -45,6 +45,7 @@ Godot → **İçe Aktar** → bu klasördeki `project.godot` → **F5** ile oyna
 | `tools/make_backgrounds.py` | Haritalar ve arayüz çerçeveleri |
 | `tools/make_audio.py` | Müzik (sakin lo-fi, dövüş müziği) ve ses efektleri, saf Python sentezi (`assets/audio`) |
 | `scripts/autoload/audio.gd` | Müzik/efekt çalma, sahneye göre müzik seçimi, ses ayarları |
+| `data/skills.gd` | Yetenek ağacı (4 dal, gereken stat ve puan) ve puan veren başarımlar |
 | `data/shop.gd` | Butik kıyafetleri ve hırdavattaki silahlar (fiyat, hasar, menzil) |
 | `data/messages.gd` | Telefona her gün gelen mesajlar (anne, arkadaşlar, reklamlar) |
 | `scenes/ui/lighting.gd` | Saate göre sahne rengi ve gece yanan lambalar |

@@ -5,6 +5,8 @@ extends Control
 
 signal toggled(open: bool)
 
+const SkillTree = preload("res://scenes/ui/skill_tree.gd")
+
 const BODY_POS := Vector2(356, 44)
 const BODY_SIZE := Vector2(118, 220)
 const ICON_RECT := Rect2(452, 202, 22, 30)
@@ -56,6 +58,7 @@ var _icon: Control
 var _body: Control
 var _font: Font
 var _seen := false
+var _skills: Control
 
 var _zep_state := "bet"    # bet, fly, crashed, cashed
 var _bet_i := 1
@@ -99,6 +102,8 @@ func _ready() -> void:
 	_new_blocks()
 	# test kısayolu: -- --phone=home|zep|zep-fly|blocks|msg
 	for a in OS.get_cmdline_user_args():
+		if a == "--skilltree":
+			open_skills.call_deferred()
 		if a.begins_with("--phone="):
 			var app := a.trim_prefix("--phone=")
 			_app = app.get_slice("-", 0)
@@ -119,10 +124,22 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("phone"):
 		toggle()
 		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("skills") and not is_instance_valid(_skills):
+		open_skills()
+		get_viewport().set_input_as_handled()
+
+
+## Yetenek ağacı (tam ekran). Açıkken sahne telefona bakıyormuşsun gibi durur.
+func open_skills() -> void:
+	if is_instance_valid(_skills):
+		return
+	close()
+	_skills = SkillTree.new()
+	get_parent().add_child(_skills)
 
 
 func is_open() -> bool:
-	return _open
+	return _open or is_instance_valid(_skills)
 
 
 func toggle() -> void:
@@ -221,7 +238,8 @@ func _title_bar(title: String, color: Color, right: String = "") -> void:
 
 # ---------------------------------------------------------------- Ana ekran ve mesajlar
 
-const HOME_ICONS := {"zep": Rect2(12, 96, 26, 26), "blocks": Rect2(46, 96, 26, 26), "msg": Rect2(80, 96, 26, 26)}
+const HOME_ICONS := {"zep": Rect2(12, 96, 26, 26), "blocks": Rect2(46, 96, 26, 26), "msg": Rect2(80, 96, 26, 26),
+		"skill": Rect2(12, 140, 26, 26)}
 
 
 func _draw_home() -> void:
@@ -248,9 +266,17 @@ func _draw_home() -> void:
 	if GameState.unread > 0:
 		_body.draw_circle(Vector2(r.end.x - 2, r.position.y + 2), 4, Color("ef4444"))
 		_text(Vector2(r.end.x - 6, r.position.y + 5), str(mini(9, GameState.unread)), 6, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, 8)
+	r = HOME_ICONS["skill"]   # yetenek ağacı: altın yıldız, harcanmamış puan varsa rozet
+	_rect(r, Color("5b3c9a"))
+	_body.draw_colored_polygon(PackedVector2Array([r.position + Vector2(13, 4), r.position + Vector2(16, 11), r.position + Vector2(23, 11),
+			r.position + Vector2(17, 15), r.position + Vector2(20, 22), r.position + Vector2(13, 18), r.position + Vector2(6, 22),
+			r.position + Vector2(9, 15), r.position + Vector2(3, 11), r.position + Vector2(10, 11)]), GOLD)
+	if GameState.skill_points > 0:
+		_body.draw_circle(Vector2(r.end.x - 2, r.position.y + 2), 4, Color("ef4444"))
+		_text(Vector2(r.end.x - 6, r.position.y + 5), str(mini(9, GameState.skill_points)), 6, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, 8)
 	for key in HOME_ICONS:
 		var ir: Rect2 = HOME_ICONS[key]
-		var label: String = {"zep": "ZepBet", "blocks": "Block Blast", "msg": "Mesajlar"}[key]
+		var label: String = {"zep": "ZepBet", "blocks": "Block Blast", "msg": "Mesajlar", "skill": "Yetenek"}[key]
 		_text(Vector2(ir.position.x - 6, ir.end.y + 9), label, 6, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, ir.size.x + 12)
 
 
@@ -531,6 +557,9 @@ func _body_input(event: InputEvent) -> void:
 		"home":
 			for key in HOME_ICONS:
 				if HOME_ICONS[key].has_point(p):
+					if key == "skill":
+						open_skills()
+						return
 					_app = key
 					if key == "msg":
 						_read_messages()

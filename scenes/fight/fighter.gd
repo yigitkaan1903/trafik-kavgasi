@@ -37,6 +37,9 @@ var dodge_cooldown := 0.7
 var arena := Rect2(20, 80, 440, 70)
 var weapon := {}               # elindeki silah (data/shop.gd WEAPONS): yumruk hasarı, menzili, hızı
 var weapon_id := ""
+var dmg_bonus := {}            # yeteneklerden gelen ek hasar: {"punch": 1, "kick": 2, "special": 6}
+var stun_mult := 1.0           # darbe sersemletmesi çarpanı (Taş Çene)
+var evade_chance := 0.0        # gelen vuruşun ıskalama ihtimali (Gölge)
 
 var opponent: Fighter
 var facing := 1
@@ -207,17 +210,20 @@ func receive_hit(attacker: Fighter, name: String) -> void:
 		dodged.emit(self)
 		return
 	var a: Dictionary = ATTACKS[name]
-	var dmg: float = a["damage"] * attacker.power
+	var dmg: float = (a["damage"] + attacker.dmg_bonus.get(name, 0.0)) * attacker.power
 	if name != "kick":
 		dmg *= attacker.weapon.get("damage", 1.0)
 	var blocked := state == S.BLOCK and facing == -attacker.facing and name != "special"
+	if not blocked and evade_chance > 0.0 and randf() < evade_chance:
+		dodged.emit(self)
+		return
 	if blocked:
 		dmg *= block_chip
 		_vel_x = attacker.facing * a["knock"] * 0.6
 	else:
 		state = S.HURT
 		_t = 0.0
-		_stun_time = a["stun"]
+		_stun_time = a["stun"] * stun_mult
 		_vel_x = attacker.facing * a["knock"]
 		_flash = 0.1
 	hp = maxf(0.0, hp - dmg)

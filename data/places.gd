@@ -30,7 +30,7 @@ const FIGHT_ENERGY := 15
 const FIGHT_REWARD_MULT := 0.6     # kavgadan kazanılan para (rivals.gd reward x bu)
 
 # Antrenman: kazanç = TRAIN_BASE * enerji verimi * tokluk verimi * protein * TRAIN_SOFT / (TRAIN_SOFT + stat)
-const TRAIN_BASE := 3.2          # statlar zor gelişsin (eskiden 4.5)
+const TRAIN_BASE := 2.6          # statlar yavaş gelişsin (eskiden 4.5)
 const TRAIN_SOFT := 25.0
 const PROTEIN_BONUS := 1.25
 ## Aynı gün aynı kası tekrar çalıştırınca verim düşer (Punch Club gibi). Listeyi aşınca o gün çalışılamaz.
@@ -155,20 +155,54 @@ const PLACES := {
 				"lines": ["Koliler ağır, bilek lazım!", "Güçsüzsen hiç başlama, bel fıtığı olursun."]},
 			{"kind": "npc", "name": "Dershane müdürü", "look": "plaza", "stand": "mudur", "at": "talk_mudur", "actions": ["tutor"],
 				"lines": ["Matematik bilen düzgün bir öğrenci arıyoruz.", "Önce kendi derslerine düzenli git, sonra konuşalım."]},
-			{"kind": "npc", "name": "Butikçi Selin", "look": "sivil13", "stand": "selin", "at": "talk_selin", "shop": "outfits",
-				"lines": ["Yeni sezon geldi canım, bak bak!", "Bu ceket tam sana göre, yemin ederim.", "Öğrenciye indirim yok ama gülümseme var."]},
-			{"kind": "npc", "name": "Hırdavatçı Kemal", "look": "sivil31", "stand": "kemal", "at": "talk_kemal", "shop": "weapons",
-				"lines": ["Kendini korumak lazım evlat, devir kötü.", "Sopa beyzbol için, ona göre.", "Polise benden aldığını söyleme."]},
+			{"kind": "door", "name": "Butik Moda", "at": "door_butik", "to": "butik"},
+			{"kind": "door", "name": "Spor & Hırdavat", "at": "door_hirdavat", "to": "hirdavat"},
 		],
 		"actions": [
-			{"id": "waiter", "name": "Garsonluk vardiyası (4 sa, sipariş başı 12 TL + bahşiş)", "time": 240, "energy": -25,
-				"food": -10, "per_order": 12, "scene": "waiter", "needs": {"open": [480, 1440], "min_energy": 25}},
+			{"id": "waiter", "name": "Garsonluk vardiyası (4 sa, sipariş başı 4 TL + bahşiş)", "time": 240, "energy": -25,
+				"food": -10, "per_order": 4, "scene": "waiter", "needs": {"open": [480, 1440], "min_energy": 25}},
 			{"id": "cargo", "name": "Koli taşı (4 sa, +güç)", "time": 240, "energy": -40, "food": -16, "money": 180, "gain": {"str": 0.6},
 				"needs": {"open": [420, 1380], "min_energy": 40, "min_str": 15}},
 			{"id": "tutor", "name": "Özel ders ver (2 sa)",
 				"time": 120, "energy": -10, "food": -5, "money": 150,
 				"needs": {"open": [600, 1380], "min_energy": 10, "good_weeks": 2}},
 		],
+	},
+	"butik": {
+		"name": "Butik Moda", "desc": "Çarşıdaki giyim mağazası.", "parent": "carsi",
+		"spots": [
+			{"kind": "exit", "name": "Çarşıya çık", "at": "exit", "to": "carsi", "spawn": "from_butik"},
+			{"kind": "npc", "name": "Butikçi Selin", "look": "sivil13", "stand": "selin", "at": "talk_selin", "shop": "outfits",
+				"lines": ["Yeni sezon geldi canım, bak bak!", "Bu ceket tam sana göre, yemin ederim.", "Askılara bak, beğendiğini getir."]},
+			{"kind": "item", "shop": "outfits", "item": "kapson", "at": "item_kapson", "prop": "rack_kapson"},
+			{"kind": "item", "shop": "outfits", "item": "hawaii", "at": "item_hawaii", "prop": "rack_hawaii"},
+			{"kind": "item", "shop": "outfits", "item": "forma", "at": "item_forma", "prop": "rack_forma"},
+			{"kind": "item", "shop": "outfits", "item": "kot", "at": "item_kot", "prop": "rack_kot"},
+			{"kind": "item", "shop": "outfits", "item": "deri", "at": "item_deri", "prop": "rack_deri"},
+			{"kind": "item", "shop": "outfits", "item": "mont", "at": "item_mont", "prop": "rack_mont"},
+			{"kind": "item", "shop": "outfits", "item": "takim", "at": "item_takim", "prop": "rack_takim"},
+			{"kind": "item", "shop": "outfits", "item": "pembe", "at": "item_pembe", "prop": "rack_pembe"},
+			{"kind": "item", "shop": "outfits", "item": "gomlek", "at": "item_gomlek", "prop": "rack_gomlek"},
+			{"kind": "item", "shop": "outfits", "item": "kazak", "at": "item_kazak", "prop": "rack_kazak"},
+			{"kind": "item", "shop": "outfits", "item": "kirmizi", "at": "item_kirmizi", "prop": "rack_kirmizi"},
+			{"kind": "item", "shop": "outfits", "item": "metal", "at": "item_metal", "prop": "rack_metal"},
+			{"kind": "item", "shop": "outfits", "item": "yagmurluk", "at": "item_yagmurluk", "prop": "rack_yagmurluk"},
+			{"kind": "item", "shop": "outfits", "item": "kamuflaj", "at": "item_kamuflaj", "prop": "rack_kamuflaj"},
+			{"kind": "item", "shop": "outfits", "item": "smokin", "at": "item_smokin", "prop": "rack_smokin"},
+		],
+		"actions": [],
+	},
+	"hirdavat": {
+		"name": "Spor & Hırdavat", "desc": "Alet, spor malzemesi ve... başka şeyler.", "parent": "carsi",
+		"spots": [
+			{"kind": "exit", "name": "Çarşıya çık", "at": "exit", "to": "carsi", "spawn": "from_hirdavat"},
+			{"kind": "npc", "name": "Hırdavatçı Kemal", "look": "sivil31", "stand": "kemal", "at": "talk_kemal", "shop": "weapons",
+				"lines": ["Kendini korumak lazım evlat, devir kötü.", "Sopa beyzbol için, ona göre.", "Polise benden aldığını söyleme."]},
+			{"kind": "item", "shop": "weapons", "item": "musta", "at": "item_musta", "prop": "wdisp_musta"},
+			{"kind": "item", "shop": "weapons", "item": "sopa", "at": "item_sopa", "prop": "wdisp_sopa"},
+			{"kind": "item", "shop": "weapons", "item": "bicak", "at": "item_bicak", "prop": "wdisp_bicak"},
+		],
+		"actions": [],
 	},
 	"kampus_kafe": {
 		"name": "Kampüs Kafe", "desc": "Ders arası herkes burada.",

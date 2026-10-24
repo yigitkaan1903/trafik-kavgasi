@@ -62,6 +62,18 @@ OUTFITS = {
     "mont": dict(shirt=(70, 96, 64), top="coat", inner=(200, 190, 170), stripe=None, beanie=(180, 40, 40)),
     "takim": dict(shirt=(40, 42, 60), top="suit", pants=(40, 42, 60), tie=(180, 30, 40), stripe=None,
                   shoes=(20, 20, 22), backpack=None),
+    "pembe": dict(shirt=(236, 140, 180), top="hoodie", stripe=None, pants=(60, 84, 136)),
+    "gomlek": dict(shirt=(236, 240, 248), top="tee", sleeves="long", stripe=None, pants=(40, 50, 90),
+                   shoes=(60, 40, 30), backpack=None),
+    "kazak": dict(shirt=(130, 36, 50), top="tee", sleeves="long", stripe=(160, 60, 70), pants=(70, 60, 50)),
+    "kirmizi": dict(shirt=(200, 36, 44), top="hoodie", stripe=(240, 240, 240), pants=(200, 36, 44)),
+    "metal": dict(shirt=(26, 26, 30), top="tee", sleeves="short", stripe=(200, 200, 210), pants=(40, 40, 50),
+                  shoes=(30, 30, 30), chain=(180, 180, 190)),
+    "yagmurluk": dict(shirt=(240, 200, 40), top="coat", inner=(60, 60, 70), stripe=None, pants=(40, 44, 70)),
+    "kamuflaj": dict(shirt=(96, 104, 64), top="coat", inner=(70, 76, 50), stripe=None, pants=(80, 84, 60),
+                     shoes=(60, 50, 40), beanie=(70, 76, 50)),
+    "smokin": dict(shirt=(20, 20, 24), top="suit", pants=(20, 20, 24), tie=(20, 20, 24), stripe=None,
+                   shoes=(14, 14, 16), backpack=None),
 }
 
 

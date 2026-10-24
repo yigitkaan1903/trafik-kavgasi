@@ -92,7 +92,7 @@ func _physics_process(delta: float) -> void:
 	if _done:
 		return
 	var dir := Vector2(Input.get_axis("move_left", "move_right"), Input.get_axis("move_up", "move_down"))
-	var spd: float = 70.0 + 0.4 * GameState.stats["agi"]
+	var spd: float = (70.0 + 0.4 * GameState.stats["agi"]) * (1.2 if GameState.has_skill("metro_kurdu") else 1.0)
 	_room.walk(_player, dir, spd, delta)
 	if Input.is_action_just_pressed("interact"):
 		_try_sit()
@@ -195,6 +195,8 @@ func _try_sit() -> void:
 			_reserved[i] = null
 			_say(other, "Ben oturacaktım!")
 		_occupied[i] = _player
+		GameState.metro_seat = i   # metrobüs sahnesinde aynı koltukta devam
+		GameState.seat_grabs += 1
 		_player.position = _seat_pos[i]
 		_player.sit("right")
 		_say(_player, "Oh be! Oturdum.")

@@ -13,6 +13,14 @@ const OUTFITS := {
 	"deri": {"name": "Deri ceket", "price": 480, "desc": "Taksiciler bile saygı duyar."},
 	"mont": {"name": "Kışlık mont", "price": 560, "desc": "Davutpaşa'nın ayazına karşı."},
 	"takim": {"name": "Takım elbise", "price": 900, "desc": "Plaza Kerem kıskançlıktan çatlar."},
+	"pembe": {"name": "Pembe kapüşonlu", "price": 200, "desc": "Özgüven meselesi."},
+	"gomlek": {"name": "Ofis gömleği", "price": 260, "desc": "Staj mülakatına hazır."},
+	"kazak": {"name": "Bordo örgü kazak", "price": 300, "desc": "Anneannenin elinden çıkmış gibi."},
+	"kirmizi": {"name": "Kırmızı eşofman", "price": 320, "desc": "Mahallenin abisi havası."},
+	"metal": {"name": "Metalci tişörtü", "price": 240, "desc": "Kulaklıktan Metallica sızar."},
+	"yagmurluk": {"name": "Sarı yağmurluk", "price": 380, "desc": "Davutpaşa'da yağmur eksik olmaz."},
+	"kamuflaj": {"name": "Kamuflaj mont", "price": 620, "desc": "Metrobüste görünmez olursun (olmazsın)."},
+	"smokin": {"name": "Smokin", "price": 1200, "desc": "Mezuniyet balosu ya da trafik kavgası."},
 }
 
 ## damage: yumruk (ve özel hareket) hasar çarpanı. range: yumruğun ek menzili (piksel).

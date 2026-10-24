@@ -72,7 +72,7 @@ func _ready() -> void:
 	_button(_menu, "Çıkış", func(): get_tree().quit())
 	(first if first else new_btn).grab_focus.call_deferred()
 
-	var foot := GameState.make_label("%s   ·   F11: tam ekran   ·   YTÜ Oyunlar" % VERSION, 8, Color(1, 1, 1, 0.45))
+	var foot := GameState.make_label("%s   ·   F11: tam ekran" % VERSION, 8, Color(1, 1, 1, 0.45))
 	foot.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	foot.position = Vector2(0, 256)
 	foot.size = Vector2(480, 12)

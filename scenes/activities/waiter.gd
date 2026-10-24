@@ -247,7 +247,9 @@ func _autopilot(delta: float) -> void:
 
 func _finish() -> void:
 	_done = true
-	var pay: int = _served * int(_action.get("per_order", 12))
+	var per: int = int(_action.get("per_order", 4)) + (2 if GameState.has_skill("garson_ustasi") else 0)
+	var pay: int = _served * per
+	GameState.waiter_total += _served
 	var a := _action.duplicate()
 	a["money"] = pay + _tips
 	GameState.do_action(a)
@@ -257,7 +259,7 @@ func _finish() -> void:
 	popup.add_line("Melek Hanım: \"%s\"" % ("Harikaydın, yarın yine gel!" if _missed == 0 and _served >= 6 else
 			"Fena değil, ama müşteri bekletme!" if _missed < 3 else "Bu böyle olmaz, daha hızlı olmalısın!"))
 	popup.add_line("Servis: %d   ·   Kızıp giden: %d" % [_served, _missed], 9, Color(1, 1, 1, 0.7))
-	popup.add_line("%d sipariş x %d TL = %d TL  +  bahşiş %d TL  =  %d TL" % [_served, int(_action.get("per_order", 12)), pay, _tips, pay + _tips], 10, Color("4ade80"))
+	popup.add_line("%d sipariş x %d TL = %d TL  +  bahşiş %d TL  =  %d TL" % [_served, per, pay, _tips, pay + _tips], 10, Color("4ade80"))
 	popup.add_choice("Çarşıya dön", "ok")
 	_ui.add_child(popup)
 	popup.chosen.connect(func(_c): GameState.open_place_scene("carsi"))

@@ -8,6 +8,7 @@ const MetroEvents = preload("res://data/metro_events.gd")
 const Places = preload("res://data/places.gd")
 const Shop = preload("res://data/shop.gd")
 const Messages = preload("res://data/messages.gd")
+const Skills = preload("res://data/skills.gd")
 
 const SAVE_VERSION := 2
 const SAVE_PATH := "user://save.json"
@@ -73,6 +74,14 @@ var outfit := "esofman"       # üzerindeki kıyafet (data/shop.gd OUTFITS)
 var outfits_owned: Array = ["esofman"]
 var weapons_owned: Array = []
 var weapon := ""              # çantadaki silah ("" yok)
+var skills_owned: Array = []  # açılan yetenekler (data/skills.gd)
+var skill_points := 0         # harcanmamış yetenek puanı (başarımlardan)
+var achievements: Array = []  # açılan başarımlar
+var waiter_total := 0         # toplam servis edilen sipariş
+var seat_grabs := 0           # metrobüste kapılan koltuk
+var night_owl := false        # gece 01:00'de ayaktaydın
+var metro_seat := -1          # metrobüste oturduğun koltuk (sahne değişince aynı yer)
+var place_spawn := ""         # mekan açılınca nerede başlanır (ör. butikten çıkınca çarşıda kapının önü)
 var pending_notice := ""      # haritaya dönünce gösterilecek uyarı (ör. bayıldın)
 
 # ---- para, arabalar, kavgalar
@@ -159,6 +168,13 @@ func new_game(diff: String = "normal") -> void:
 	outfits_owned = ["esofman"]
 	weapons_owned = []
 	weapon = ""
+	skills_owned = []
+	skill_points = 0
+	achievements = []
+	waiter_total = 0
+	seat_grabs = 0
+	night_owl = false
+	metro_seat = -1
 	pending_notice = ""
 	add_message("Annem", "Okulun ilk haftası! Haftada en az %d gün derse git, harçlığın pazartesi yatsın." % Places.ATTEND_NEEDED)
 	money = START_MONEY
@@ -182,6 +198,7 @@ func has_save() -> bool:
 
 
 func save_game() -> void:
+	check_achievements()
 	if _no_save:
 		return
 	var data := {
@@ -198,6 +215,8 @@ func save_game() -> void:
 		"metro_on_board": metro_on_board, "metro_seated": metro_seated, "simit_buff": simit_buff,
 		"blast_best": blast_best, "drive_dest": drive_dest, "drive_left": drive_left, "unread": unread,
 		"outfit": outfit, "outfits_owned": outfits_owned, "weapons_owned": weapons_owned, "weapon": weapon,
+		"skills_owned": skills_owned, "skill_points": skill_points, "achievements": achievements,
+		"waiter_total": waiter_total, "seat_grabs": seat_grabs, "night_owl": night_owl, "metro_seat": metro_seat,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
@@ -289,6 +308,13 @@ func load_game() -> bool:
 	outfit = data.get("outfit", "esofman") if outfits_owned.has(data.get("outfit", "")) else "esofman"
 	weapons_owned = data.get("weapons_owned", []).filter(func(w): return Shop.WEAPONS.has(w))
 	weapon = data.get("weapon", "") if weapons_owned.has(data.get("weapon", "")) else ""
+	skills_owned = data.get("skills_owned", []).filter(func(k): return Skills.SKILLS.has(k))
+	skill_points = int(data.get("skill_points", 0))
+	achievements = data.get("achievements", []).filter(func(k): return Skills.ACHIEVEMENTS.has(k))
+	waiter_total = int(data.get("waiter_total", 0))
+	seat_grabs = int(data.get("seat_grabs", 0))
+	night_owl = bool(data.get("night_owl", false))
+	metro_seat = int(data.get("metro_seat", -1))
 	return true
 
 
@@ -363,6 +389,8 @@ func spend_time(mins: float, sleeping: bool = false) -> void:
 			energy = maxf(0.0, energy - hours * Places.STARVE_ENERGY_PER_HOUR * (1.5 if difficulty == "zor" else 1.0))
 		minute += step
 		left -= step
+		if not sleeping and minute >= 60.0 and minute < 120.0:
+			night_owl = true
 		if minute >= 1440.0:
 			minute -= 1440.0
 			_new_day()
@@ -608,7 +636,8 @@ func cheapest_car() -> Dictionary:
 
 ## Dayanıklılık can verir; yorgunsan kavgaya daha az canla başlarsın (en az %70).
 func player_max_hp() -> float:
-	return (70.0 + 3.0 * stats["sta"]) * lerpf(0.7, 1.0, energy / 100.0)
+	var bonus := (10.0 if has_skill("kalin_deri") else 0.0) + (25.0 if has_skill("demir_adam") else 0.0)
+	return (70.0 + 3.0 * stats["sta"]) * lerpf(0.7, 1.0, energy / 100.0) + bonus
 
 
 ## Güç hasarı artırır.
@@ -741,13 +770,14 @@ func can_intimidate(id: String) -> bool:
 	return fear_level(id) >= INTIMIDATE_FEAR
 
 
-## Kavgayı kazanınca alınan para (rivals.gd ödülü x FIGHT_REWARD_MULT).
+## Kavgayı kazanınca alınan para: rivals.gd ödülü x FIGHT_REWARD_MULT, galibiyet arttıkça yavaşça artar
+## (her galibiyet +%4, en fazla 25 galibiyette 2 katı).
 func fight_reward(id: String = "") -> int:
-	return int(rival(id)["reward"] * Places.FIGHT_REWARD_MULT)
+	return int(rival(id)["reward"] * Places.FIGHT_REWARD_MULT * (1.0 + 0.04 * mini(wins, 25)))
 
 
 func intimidate_reward(id: String) -> int:
-	return int(fight_reward(id) / 3)
+	return int(fight_reward(id) / 3) * (2 if has_skill("karizma") else 1)
 
 
 func intimidate(id: String) -> void:
@@ -826,8 +856,9 @@ func apply_fight_result(won: bool) -> Dictionary:
 		station_return = "front" if won else "back"
 		result["station"] = "Kalabalık yol verdi, en öndesin!" if won else "Seni sıranın en sonuna ittiler..."
 	# kavga yorar ve zaman alır
-	energy = maxf(0.0, energy - Places.FIGHT_ENERGY)
-	result["tired"] = "-%d enerji, +%d dakika" % [Places.FIGHT_ENERGY, Places.FIGHT_MINUTES]
+	var tired: int = Places.FIGHT_ENERGY - (5 if has_skill("nefes") else 0)
+	energy = maxf(0.0, energy - tired)
+	result["tired"] = "-%d enerji, +%d dakika" % [tired, Places.FIGHT_MINUTES]
 	fight_rival = ""
 	fight_bet = false
 	fight_seat_stake = ""
@@ -872,7 +903,7 @@ func _setup_input() -> void:
 		"move_up": [KEY_UP, KEY_W], "move_down": [KEY_DOWN, KEY_S],
 		"horn": [KEY_H], "garage": [KEY_G],
 		"punch": [KEY_J], "kick": [KEY_K], "block": [KEY_L], "dodge": [KEY_SPACE], "special": [KEY_U],
-		"back": [KEY_ESCAPE], "fullscreen": [KEY_F11], "interact": [KEY_E], "phone": [KEY_T],
+		"back": [KEY_ESCAPE], "fullscreen": [KEY_F11], "interact": [KEY_E], "phone": [KEY_T], "skills": [KEY_Y],
 	}
 	for action in keys:
 		if InputMap.has_action(action):
@@ -963,8 +994,13 @@ func player_look() -> String:
 	return "player" if outfit == "esofman" else "player_" + outfit
 
 
+## Mağaza fiyatı (Pazarlıkçı yeteneğiyle %15 indirimli).
+func shop_price(base: int) -> int:
+	return int(round(base * (0.85 if has_skill("pazarlikci") else 1.0)))
+
+
 func buy_outfit(id: String) -> bool:
-	if outfits_owned.has(id) or not try_spend(Shop.OUTFITS[id]["price"]):
+	if outfits_owned.has(id) or not try_spend(shop_price(Shop.OUTFITS[id]["price"])):
 		return false
 	outfits_owned.append(id)
 	save_game()
@@ -972,13 +1008,128 @@ func buy_outfit(id: String) -> bool:
 
 
 func buy_weapon(id: String) -> bool:
-	if weapons_owned.has(id) or not try_spend(Shop.WEAPONS[id]["price"]):
+	if weapons_owned.has(id) or not try_spend(shop_price(Shop.WEAPONS[id]["price"])):
 		return false
 	weapons_owned.append(id)
 	if weapon == "":
 		weapon = id
 	save_game()
 	return true
+
+
+# ---------------------------------------------------------------- Yetenekler ve başarımlar
+
+func has_skill(id: String) -> bool:
+	return skills_owned.has(id)
+
+
+## Yetenek neden açılamaz? ("" ise açılabilir)
+func skill_block_reason(id: String) -> String:
+	var sk: Dictionary = Skills.SKILLS[id]
+	if has_skill(id):
+		return "Açık"
+	if sk.has("needs") and not has_skill(sk["needs"]):
+		return "Önce: " + Skills.SKILLS[sk["needs"]]["name"]
+	if sk.has("stat") and stats[sk["stat"][0]] < sk["stat"][1]:
+		return "%s %d gerekir" % [Places.STAT_NAMES[sk["stat"][0]], sk["stat"][1]]
+	if skill_points < sk["cost"]:
+		return "%d puan gerekir" % sk["cost"]
+	return ""
+
+
+func buy_skill(id: String) -> bool:
+	if skill_block_reason(id) != "":
+		return false
+	skill_points -= Skills.SKILLS[id]["cost"]
+	skills_owned.append(id)
+	save_game()
+	return true
+
+
+## Başarımın ilerlemesi: [şu an, hedef].
+func achievement_progress(id: String) -> Array:
+	var goal: int = Skills.ACHIEVEMENTS[id]["goal"]
+	var cur := 0
+	match id:
+		"ilk_kan", "kavgaci", "efsane":
+			cur = wins
+		"nam":
+			for r in nam:
+				cur = maxi(cur, fear_level(r))
+		"guclu":
+			cur = int(stats["str"])
+		"cevik":
+			cur = int(stats["agi"])
+		"dayanikli":
+			cur = int(stats["sta"])
+		"usta":
+			cur = int(maxf(stats["str"], maxf(stats["agi"], stats["sta"])))
+		"devamli":
+			cur = good_weeks
+		"garson":
+			cur = waiter_total
+		"zengin":
+			cur = money
+		"arabali":
+			cur = cars.size()
+		"sik":
+			cur = outfits_owned.size() - 1
+		"koltuk":
+			cur = seat_grabs
+		"gece_kusu":
+			cur = 1 if night_owl else 0
+	return [mini(cur, goal), goal]
+
+
+## Yeni açılan başarımları işler: yetenek puanı verir, telefona mesaj ve ekranda bildirim.
+func check_achievements() -> void:
+	if stats.is_empty():
+		return
+	for id in Skills.ACHIEVEMENTS:
+		if achievements.has(id):
+			continue
+		var p := achievement_progress(id)
+		if p[0] >= p[1]:
+			var a: Dictionary = Skills.ACHIEVEMENTS[id]
+			achievements.append(id)
+			skill_points += a["sp"]
+			add_message("Başarım", "%s: %s  +%d yetenek puanı (telefon > Yetenek)" % [a["name"], a["desc"], a["sp"]])
+			toast("BAŞARIM: %s   +%d yetenek puanı" % [a["name"], a["sp"]])
+
+
+var _toast_layer: CanvasLayer
+
+
+## Ekranın üstünde kısa süre görünen altın renkli bildirim.
+func toast(text: String) -> void:
+	if not is_inside_tree():
+		return
+	if _toast_layer == null:
+		_toast_layer = CanvasLayer.new()
+		_toast_layer.layer = 90
+		add_child(_toast_layer)
+	var l := make_label(text, 10, Color("1b1024"))
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color("e6b428")
+	sb.set_corner_radius_all(6)
+	sb.content_margin_left = 10
+	sb.content_margin_right = 10
+	sb.content_margin_top = 3
+	sb.content_margin_bottom = 3
+	l.add_theme_stylebox_override("normal", sb)
+	l.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0))
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_toast_layer.add_child(l)
+	l.reset_size()
+	l.position = Vector2(roundf(240 - l.size.x / 2.0), -20 - 22 * (_toast_layer.get_child_count() - 1))
+	var tw := create_tween()
+	tw.tween_property(l, "position:y", l.position.y + 48, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_interval(2.8)
+	tw.tween_property(l, "modulate:a", 0.0, 0.4)
+	tw.tween_callback(l.queue_free)
+	var au := _audio()
+	if au:
+		au.sfx("buy", 0.8, 0.0)
 
 
 func weapon_info() -> Dictionary:
@@ -1066,6 +1217,8 @@ func _debug_args() -> void:
 	if args.has("seated"):
 		metro_on_board = true
 		metro_seated = true
+	if args.has("sp"):   # --sp=5  yetenek puanı
+		skill_points = int(args["sp"])
 	if args.has("weapon"):   # --weapon=sopa  (alıp çantaya koyar)
 		weapons_owned.append(args["weapon"])
 		weapon = args["weapon"]

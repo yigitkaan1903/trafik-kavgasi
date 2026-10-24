@@ -5,6 +5,7 @@ extends Node
 
 const MUSIC := {"chill": "res://assets/audio/music_chill.wav", "fight": "res://assets/audio/music_fight.wav"}
 const FADE := 0.8
+const MUSIC_GAIN := {"chill": 1.0, "fight": 0.5}   # dövüş müziği daha kısık
 
 var music_volume := 0.6:
 	set(v):
@@ -88,7 +89,7 @@ func _load(path: String):
 
 
 func _music_db() -> float:
-	return linear_to_db(maxf(0.0001, music_volume * 0.8))
+	return linear_to_db(maxf(0.0001, music_volume * 0.8 * MUSIC_GAIN.get(_current, 1.0)))
 
 
 func _apply_volume() -> void:
