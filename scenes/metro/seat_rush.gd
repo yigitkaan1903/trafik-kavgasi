@@ -96,6 +96,8 @@ func _physics_process(delta: float) -> void:
 	_room.walk(_player, dir, spd, delta)
 	if Input.is_action_just_pressed("interact"):
 		_try_sit()
+		if _done:
+			return   # oturdun: aynı karede "hepsi doldu" kontrolü oturuşu ezmesin
 
 	_spawn_t -= delta
 	if _spawn_t <= 0.0 and _to_spawn > 0:
@@ -196,7 +198,6 @@ func _try_sit() -> void:
 			_say(other, "Ben oturacaktım!")
 		_occupied[i] = _player
 		GameState.metro_seat = i   # metrobüs sahnesinde aynı koltukta devam
-		GameState.seat_grabs += 1
 		_player.position = _seat_pos[i]
 		_player.sit("right")
 		_say(_player, "Oh be! Oturdum.")
@@ -206,6 +207,8 @@ func _try_sit() -> void:
 
 
 func _finish(seated: bool, wait: float) -> void:
+	if _done:
+		return
 	_done = true
 	GameState.metro_seated = seated
 	GameState.metro_on_board = true

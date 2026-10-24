@@ -6,6 +6,7 @@ extends Node
 const MUSIC := {"chill": "res://assets/audio/music_chill.wav", "fight": "res://assets/audio/music_fight.wav"}
 const FADE := 0.8
 const MUSIC_GAIN := {"chill": 1.0, "fight": 0.5}   # dövüş müziği daha kısık
+const SFX_GAIN := 0.3        # efektler müziğin altında kalsın (ayardaki %100 = bu kadar)
 
 var music_volume := 0.6:
 	set(v):
@@ -76,7 +77,7 @@ func sfx(name: String, volume: float = 1.0, pitch_var: float = 0.06) -> void:
 	for p in _sfx_pool:
 		if not p.playing:
 			p.stream = stream
-			p.volume_db = linear_to_db(maxf(0.0001, sfx_volume * volume))
+			p.volume_db = linear_to_db(maxf(0.0001, sfx_volume * volume * SFX_GAIN))
 			p.pitch_scale = 1.0 + randf_range(-pitch_var, pitch_var)
 			p.play()
 			return

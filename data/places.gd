@@ -29,8 +29,17 @@ const FUEL_COST := 30              # her yolculukta benzin
 const FIGHT_ENERGY := 15
 const FIGHT_REWARD_MULT := 0.6     # kavgadan kazanılan para (rivals.gd reward x bu)
 
+# Seviye: XP dolunca seviye atlanır, her seviye 1 yetenek puanı verir.
+# Tipik bir gün (2-3 antrenman + ders + bazen kavga) ~70-90 XP: ilk seviyeler günde bir, sonra yavaşlar.
+const XP_FIGHT_WIN := 30           # + rakibin zorluğuna göre (trafik tier x 10, canı yüksekse fazlası)
+const XP_FIGHT_LOSS := 8
+const XP_TRAIN := 12
+const XP_LECTURE := 25
+const XP_BASE := 80                # 1'den 2'ye; her seviye 40 fazlası
+const XP_STEP := 40
+
 # Antrenman: kazanç = TRAIN_BASE * enerji verimi * tokluk verimi * protein * TRAIN_SOFT / (TRAIN_SOFT + stat)
-const TRAIN_BASE := 2.6          # statlar yavaş gelişsin (eskiden 4.5)
+const TRAIN_BASE := 3.6          # antrenman başına temel kazanç
 const TRAIN_SOFT := 25.0
 const PROTEIN_BONUS := 1.25
 ## Aynı gün aynı kası tekrar çalıştırınca verim düşer (Punch Club gibi). Listeyi aşınca o gün çalışılamaz.

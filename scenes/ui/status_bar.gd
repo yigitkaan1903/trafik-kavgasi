@@ -108,6 +108,12 @@ func _draw() -> void:
 		var up := (1.6 - _money_pop_t) * 4.0
 		draw_string(font, Vector2(214, 10 - up), ("+%d" if _money_pop > 0 else "%d") % _money_pop, HORIZONTAL_ALIGNMENT_LEFT, -1, 8,
 				Color(0.3, 0.9, 0.5, a) if _money_pop > 0 else Color(1, 0.4, 0.3, a))
+	# seviye rozeti ve XP çubuğu
+	var mw := font.get_string_size("%d TL" % int(round(_money)), HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x
+	var lx := minf(184.0 + mw, BADGE_X - 34.0)
+	UIDraw.box(self, Rect2(lx, 4, 26, 12), Color("1e3a5f"), Color("7dd3fc", 0.6), 4)
+	draw_string(font, Vector2(lx, 13), "Sv %d" % gs.level, HORIZONTAL_ALIGNMENT_CENTER, 26, 7, Color.WHITE)
+	UIDraw.meter(self, Rect2(lx + 1, 18, 24, 2), float(gs.xp) / gs.xp_needed(), Color("7dd3fc"))
 	_divider(BADGE_X - 5)
 
 	# stat kartları: renkli simge, değer, ad ve bir sonraki puana ilerleme

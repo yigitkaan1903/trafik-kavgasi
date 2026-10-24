@@ -239,7 +239,7 @@ func _show_result(res: Dictionary) -> void:
 		box.add_child(GameState.make_label("Yeni araba: %s! Garaja çekildi." % GameState.car_info(res["car_won"])["name"], 11, Color("e6b428")))
 	if res["car_lost"] != "":
 		box.add_child(GameState.make_label("Araban gitti: %s..." % GameState.car_info(res["car_lost"])["name"], 11, Color("ff6a4a")))
-	for key in ["seat", "station", "police"]:
+	for key in ["xp", "seat", "station", "police"]:
 		if res.has(key):
 			box.add_child(GameState.make_label(res[key], 10, Color("7dd3fc")))
 	if res["no_car"]:

@@ -75,11 +75,9 @@ var outfits_owned: Array = ["esofman"]
 var weapons_owned: Array = []
 var weapon := ""              # çantadaki silah ("" yok)
 var skills_owned: Array = []  # açılan yetenekler (data/skills.gd)
-var skill_points := 0         # harcanmamış yetenek puanı (başarımlardan)
-var achievements: Array = []  # açılan başarımlar
-var waiter_total := 0         # toplam servis edilen sipariş
-var seat_grabs := 0           # metrobüste kapılan koltuk
-var night_owl := false        # gece 01:00'de ayaktaydın
+var skill_points := 0         # harcanmamış yetenek puanı (seviye atlayınca)
+var level := 1
+var xp := 0                   # bu seviyedeki XP
 var metro_seat := -1          # metrobüste oturduğun koltuk (sahne değişince aynı yer)
 var place_spawn := ""         # mekan açılınca nerede başlanır (ör. butikten çıkınca çarşıda kapının önü)
 var pending_notice := ""      # haritaya dönünce gösterilecek uyarı (ör. bayıldın)
@@ -170,10 +168,8 @@ func new_game(diff: String = "normal") -> void:
 	weapon = ""
 	skills_owned = []
 	skill_points = 0
-	achievements = []
-	waiter_total = 0
-	seat_grabs = 0
-	night_owl = false
+	level = 1
+	xp = 0
 	metro_seat = -1
 	pending_notice = ""
 	add_message("Annem", "Okulun ilk haftası! Haftada en az %d gün derse git, harçlığın pazartesi yatsın." % Places.ATTEND_NEEDED)
@@ -198,7 +194,6 @@ func has_save() -> bool:
 
 
 func save_game() -> void:
-	check_achievements()
 	if _no_save:
 		return
 	var data := {
@@ -215,8 +210,8 @@ func save_game() -> void:
 		"metro_on_board": metro_on_board, "metro_seated": metro_seated, "simit_buff": simit_buff,
 		"blast_best": blast_best, "drive_dest": drive_dest, "drive_left": drive_left, "unread": unread,
 		"outfit": outfit, "outfits_owned": outfits_owned, "weapons_owned": weapons_owned, "weapon": weapon,
-		"skills_owned": skills_owned, "skill_points": skill_points, "achievements": achievements,
-		"waiter_total": waiter_total, "seat_grabs": seat_grabs, "night_owl": night_owl, "metro_seat": metro_seat,
+		"skills_owned": skills_owned, "skill_points": skill_points, "level": level, "xp": xp,
+		"metro_seat": metro_seat,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
@@ -310,10 +305,8 @@ func load_game() -> bool:
 	weapon = data.get("weapon", "") if weapons_owned.has(data.get("weapon", "")) else ""
 	skills_owned = data.get("skills_owned", []).filter(func(k): return Skills.SKILLS.has(k))
 	skill_points = int(data.get("skill_points", 0))
-	achievements = data.get("achievements", []).filter(func(k): return Skills.ACHIEVEMENTS.has(k))
-	waiter_total = int(data.get("waiter_total", 0))
-	seat_grabs = int(data.get("seat_grabs", 0))
-	night_owl = bool(data.get("night_owl", false))
+	level = maxi(1, int(data.get("level", 1)))
+	xp = int(data.get("xp", 0))
 	metro_seat = int(data.get("metro_seat", -1))
 	return true
 
@@ -389,8 +382,6 @@ func spend_time(mins: float, sleeping: bool = false) -> void:
 			energy = maxf(0.0, energy - hours * Places.STARVE_ENERGY_PER_HOUR * (1.5 if difficulty == "zor" else 1.0))
 		minute += step
 		left -= step
-		if not sleeping and minute >= 60.0 and minute < 120.0:
-			night_owl = true
 		if minute >= 1440.0:
 			minute -= 1440.0
 			_new_day()
@@ -537,6 +528,7 @@ func do_action(a: Dictionary) -> Array:
 		stats[train] = minf(Places.STAT_MAX, stats[train] + gain)
 		trained_today[train] = train_count(train) + 1
 		lines.append("+%.1f %s" % [gain, Places.STAT_NAMES[train]])
+		lines.append(add_xp(Places.XP_TRAIN))
 		if trained_today[train] >= 2 and trained_today[train] < Places.TRAIN_FATIGUE.size():
 			lines.append("(kas yoruluyor)")
 	for k in a.get("gain", {}):
@@ -575,6 +567,7 @@ func do_action(a: Dictionary) -> Array:
 			week_attended += 1
 			last_lecture_day = day
 			lines.append("Devam: bu hafta %d/%d gün" % [week_attended, Places.ATTEND_NEEDED])
+			lines.append(add_xp(Places.XP_LECTURE))
 	if a.get("needs", {}).has("once_per_day"):
 		done_today[a["needs"]["once_per_day"]] = day
 	if a.get("money", 0) > 0:
@@ -852,6 +845,10 @@ func apply_fight_result(won: bool) -> Dictionary:
 			cars.remove_at(active_car)
 			active_car = 0 if not cars.is_empty() else -1
 			result["no_car"] = cars.is_empty()
+	var gain_xp: int = Places.XP_FIGHT_LOSS
+	if won:
+		gain_xp = Places.XP_FIGHT_WIN + 10 * int(r.get("tier", 0)) + maxi(0, int((r["hp"] - 60) / 10))
+	result["xp"] = add_xp(gain_xp)
 	if station_fight:
 		station_return = "front" if won else "back"
 		result["station"] = "Kalabalık yol verdi, en öndesin!" if won else "Seni sıranın en sonuna ittiler..."
@@ -1046,55 +1043,23 @@ func buy_skill(id: String) -> bool:
 	return true
 
 
-## Başarımın ilerlemesi: [şu an, hedef].
-func achievement_progress(id: String) -> Array:
-	var goal: int = Skills.ACHIEVEMENTS[id]["goal"]
-	var cur := 0
-	match id:
-		"ilk_kan", "kavgaci", "efsane":
-			cur = wins
-		"nam":
-			for r in nam:
-				cur = maxi(cur, fear_level(r))
-		"guclu":
-			cur = int(stats["str"])
-		"cevik":
-			cur = int(stats["agi"])
-		"dayanikli":
-			cur = int(stats["sta"])
-		"usta":
-			cur = int(maxf(stats["str"], maxf(stats["agi"], stats["sta"])))
-		"devamli":
-			cur = good_weeks
-		"garson":
-			cur = waiter_total
-		"zengin":
-			cur = money
-		"arabali":
-			cur = cars.size()
-		"sik":
-			cur = outfits_owned.size() - 1
-		"koltuk":
-			cur = seat_grabs
-		"gece_kusu":
-			cur = 1 if night_owl else 0
-	return [mini(cur, goal), goal]
+## Bir sonraki seviye için gereken XP.
+func xp_needed() -> int:
+	return Places.XP_BASE + Places.XP_STEP * (level - 1)
 
 
-## Yeni açılan başarımları işler: yetenek puanı verir, telefona mesaj ve ekranda bildirim.
-func check_achievements() -> void:
-	if stats.is_empty():
-		return
-	for id in Skills.ACHIEVEMENTS:
-		if achievements.has(id):
-			continue
-		var p := achievement_progress(id)
-		if p[0] >= p[1]:
-			var a: Dictionary = Skills.ACHIEVEMENTS[id]
-			achievements.append(id)
-			skill_points += a["sp"]
-			add_message("Başarım", "%s: %s  +%d yetenek puanı (telefon > Yetenek)" % [a["name"], a["desc"], a["sp"]])
-			toast("BAŞARIM: %s   +%d yetenek puanı" % [a["name"], a["sp"]])
+## XP ekler; dolarsa seviye atlar (her seviye 1 yetenek puanı). Ekranda gösterilecek satırı döndürür.
+func add_xp(amount: int) -> String:
+	xp += amount
+	var line := "+%d XP" % amount
+	while xp >= xp_needed():
+		xp -= xp_needed()
+		level += 1
+		skill_points += 1
+		line += "  SEVİYE %d!" % level
+		add_message("Seviye", "Seviye %d oldun! +1 yetenek puanı. Telefon > Yetenek (ya da Y) ile harca." % level)
+		toast("SEVİYE %d!   +1 yetenek puanı" % level)
+	return line
 
 
 var _toast_layer: CanvasLayer
@@ -1217,6 +1182,8 @@ func _debug_args() -> void:
 	if args.has("seated"):
 		metro_on_board = true
 		metro_seated = true
+	if args.has("level"):   # --level=4
+		level = int(args["level"])
 	if args.has("sp"):   # --sp=5  yetenek puanı
 		skill_points = int(args["sp"])
 	if args.has("weapon"):   # --weapon=sopa  (alıp çantaya koyar)

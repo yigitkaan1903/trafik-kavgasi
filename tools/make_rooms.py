@@ -707,32 +707,101 @@ def wheelchair():
     return c
 
 
-def clothes_rack(o):
-    """Askılık: üstte krom çubuk, iki askıda kıyafet (kıyafetin renkleriyle), altta katlanmış pantolon."""
-    c = Painter(26, 36)
+def clothes_rack(o, oid=""):
+    """Askılık: krom çubuk; askıda üst (tişört, kapüşonlu, ceket, takım, palto...), mandallı askıda pantolon.
+    Kıyafetin kesimi ve detayları (yaka, cep, düğme, fermuar, desen) make_topdown.OUTFITS bilgisinden çizilir."""
+    c = Painter(32, 48)
     chrome, chrome_d = STONE[5], STONE[3]
-    c.fill(0, 2, 26, 2, chrome); c.fill(0, 2, 26, 1, WHITE)
-    c.fill(0, 2, 2, 32, chrome_d); c.fill(24, 2, 2, 32, chrome_d)
-    c.fill(0, 33, 7, 2, chrome_d); c.fill(19, 33, 7, 2, chrome_d)
+    c.fill(0, 1, 32, 2, chrome); c.fill(0, 1, 32, 1, WHITE)
+    c.fill(0, 1, 2, 45, chrome_d); c.fill(30, 1, 2, 45, chrome_d)
+    c.fill(0, 45, 8, 2, chrome_d); c.fill(24, 45, 8, 2, chrome_d)
     shirt, pants = o["shirt"], o.get("pants", (40, 44, 70))
     top = o.get("top", "tee")
-    for k, gx in enumerate((3, 13)):
-        c.fill(gx + 4, 0, 2, 4, chrome_d)                                      # askı
-        c.fill(gx, 5, 10, 3, shirt); c.fill(gx + 2, 8, 6, 12, shirt)          # omuzlar ve gövde
-        c.fill(gx, 8, 2, 6 if top in ("tee",) and o.get("sleeves") == "short" else 10, shirt)
-        c.fill(gx + 8, 8, 2, 6 if top in ("tee",) and o.get("sleeves") == "short" else 10, shirt)
-        c.fill(gx + 2, 5, 6, 1, shade(shirt, 1.15))
-        if top in ("jacket", "suit", "coat"):
-            c.fill(gx + 4, 6, 2, 13 if top == "coat" else 11, o.get("inner", (230, 230, 230)))
-            if top == "suit":
-                c.fill(gx + 4, 7, 2, 6, o.get("tie", (180, 30, 40)))
-        if top == "coat":
-            c.fill(gx + 2, 20, 6, 4, shirt)
+    long_sl = o.get("sleeves", "long" if top in ("hoodie", "jacket", "suit", "coat") else "short") == "long"
+    dk, lt = shade(shirt, 0.72), shade(shirt, 1.15)
+    hem = 30 if top == "coat" else 24
+    # askı
+    c.fill(15, 0, 2, 4, STONE[2]); c.fill(8, 4, 16, 1, WOOD[3])
+    if top == "hoodie":   # kapüşon (ensede toplanmış)
+        c.fill(11, 3, 10, 5, dk); c.fill(13, 4, 6, 3, shade(shirt, 0.5))
+    # gövde ve omuzlar
+    c.fill(9, 5, 14, 2, shirt); c.fill(8, 6, 16, hem - 5, shirt)
+    c.fill(8, 6, 1, hem - 5, lt); c.fill(23, 6, 1, hem - 5, dk)
+    # kollar
+    if long_sl:
+        c.fill(4, 6, 4, hem - 8 if top != "coat" else 18, shirt); c.fill(24, 6, 4, hem - 8 if top != "coat" else 18, shirt)
+        cuff = (hem - 3) if top != "coat" else 23
+        c.fill(4, cuff, 4, 2, dk); c.fill(24, cuff, 4, 2, dk)
+        c.fill(4, 6, 1, cuff - 6, lt)
+    else:
+        c.fill(5, 6, 3, 6, shirt); c.fill(24, 6, 3, 6, shirt)
+        c.fill(5, 11, 3, 1, dk); c.fill(24, 11, 3, 1, dk)
+    for x in (12, 19):    # kumaş kıvrımları
+        c.fill(x, 9, 1, hem - 12, shade(shirt, 0.9))
+    c.fill(8, hem - 1, 16, 1, dk)                                      # etek ucu
+    inner = o.get("inner", (230, 230, 230))
+    if top == "tee":
+        c.fill(13, 5, 6, 2, shade(shirt, 0.5)); c.fill(12, 5, 1, 1, dk); c.fill(19, 5, 1, 1, dk)   # yuvarlak yaka
+        if oid == "hawaii":   # çiçek deseni
+            for (x, y) in ((10, 9), (16, 12), (20, 8), (11, 16), (18, 19), (14, 21), (21, 15)):
+                c.set(x, y, o.get("stripe", WHITE)); c.set(x + 1, y, WHITE); c.set(x, y + 1, o.get("stripe", WHITE))
+        elif oid == "forma":  # dikey şerit ve sırt numarası
+            c.fill(15, 6, 2, hem - 7, o.get("stripe", WHITE)); c.fill(11, 12, 2, 5, WHITE); c.fill(19, 12, 2, 5, WHITE)
+        elif oid == "metal":  # göğüste kafatası baskısı
+            c.fill(13, 10, 6, 5, (220, 220, 225)); c.set(14, 12, shirt); c.set(17, 12, shirt); c.fill(14, 15, 4, 2, (220, 220, 225))
+        elif oid == "gomlek":  # gömlek yakası ve düğmeler
+            c.fill(12, 5, 3, 3, WHITE); c.fill(17, 5, 3, 3, WHITE); c.fill(15, 7, 2, hem - 8, shade(shirt, 0.92))
+            for y in range(9, hem - 2, 4):
+                c.set(15, y, STONE[3])
+        elif oid == "kazak":   # örgü dokusu, lastikli yaka ve etek
+            c.fill(12, 5, 8, 2, dk)
+            for y in range(9, hem - 2, 3):
+                for x in range(9, 23, 2):
+                    c.set(x + (y // 3) % 2, y, shade(shirt, 1.08))
+            c.fill(8, hem - 3, 16, 2, dk)
+        elif o.get("stripe"):
+            c.fill(8, 13, 16, 2, o["stripe"])
+    elif top == "hoodie":
+        c.fill(14, 7, 1, 5, WHITE); c.fill(17, 7, 1, 5, WHITE)        # bağcıklar
+        c.fill(11, 16, 10, 5, shade(shirt, 0.88)); c.fill(11, 16, 10, 1, dk)   # kanguru cebi
+        c.fill(8, hem - 3, 16, 2, dk)                                  # lastikli etek
         if o.get("stripe"):
-            c.fill(gx + 2, 13, 6, 1, o["stripe"])
-        if top == "hoodie":
-            c.fill(gx + 3, 4, 4, 2, shade(shirt, 0.8))
-    c.fill(4, 27, 18, 5, pants); c.fill(4, 27, 18, 1, shade(pants, 1.2)); c.fill(4, 31, 18, 1, shade(pants, 0.7))
+            c.fill(4, 10, 4, 1, o["stripe"]); c.fill(24, 10, 4, 1, o["stripe"])
+            c.fill(8, 11, 1, hem - 12, o["stripe"]); c.fill(23, 11, 1, hem - 12, o["stripe"])
+    elif top in ("jacket", "suit", "coat"):
+        c.fill(14, 6, 4, hem - 7, inner)                               # içteki gömlek/tişört
+        for k in range(5):                                              # yaka ve klapalar
+            c.set(13 - (k // 2), 6 + k, lt); c.set(18 + (k // 2), 6 + k, lt)
+        c.fill(12, 5, 2, 2, lt); c.fill(18, 5, 2, 2, lt)
+        if top == "suit":
+            c.fill(14, 6, 4, 6, WHITE); c.fill(15, 7, 2, 7, o.get("tie", (180, 30, 40))); c.set(15, 6, o.get("tie", (180, 30, 40)))
+            c.set(13, 16, STONE[1]); c.set(13, 19, STONE[1])
+        elif top == "coat":
+            for y in range(10, hem - 2, 4):
+                c.set(12, y, dk); c.set(19, y, dk)
+            c.fill(8, 19, 16, 2, dk)                                    # kemer
+            c.fill(14, 19, 4, 2, GOLD[2])
+        else:
+            c.fill(13, 6, 1, hem - 7, STONE[4] if oid == "kot" else dk)   # fermuar / düğme hattı
+        c.fill(9, 16, 3, 1, dk); c.fill(20, 16, 3, 1, dk)              # cep kapakları
+        if oid == "kot":
+            for y in range(8, hem - 1, 4):
+                c.set(9, y, GOLD[3]); c.set(22, y, GOLD[3])             # turuncu dikiş
+    if o.get("chain"):
+        for k in range(5):
+            c.set(13 + k, 8 + abs(k - 2), o["chain"])
+    if o.get("beanie"):   # askının üstünde bere
+        c.fill(11, 0, 10, 3, o["beanie"]); c.fill(11, 2, 10, 1, shade(o["beanie"], 0.75))
+    # pantolon (mandallı askı)
+    py = hem + 2
+    c.fill(9, py - 1, 14, 1, STONE[2]); c.set(10, py, STONE[1]); c.set(21, py, STONE[1])
+    plen = 45 - py
+    c.fill(10, py, 12, 3, pants); c.fill(10, py + 1, 12, 1, shade(pants, 0.7))         # bel ve kemer
+    c.fill(10, py + 3, 5, plen - 3, pants); c.fill(17, py + 3, 5, plen - 3, pants)
+    c.fill(15, py + 3, 2, 2, pants)
+    c.fill(12, py + 3, 1, plen - 3, shade(pants, 0.85)); c.fill(19, py + 3, 1, plen - 3, shade(pants, 0.85))   # ütü çizgisi
+    c.fill(10, 44, 5, 1, shade(pants, 0.7)); c.fill(17, 44, 5, 1, shade(pants, 0.7))
+    c.volume(1.06, 0.88)
     return c
 
 
@@ -1139,7 +1208,7 @@ def room_butik():
     r.borders(door=(20, 30))
     r.prop("butik_counter", lambda: reception_desk(64), 334, 84, foot=16)
     r.prop("plant_big", lambda: plant(True), 290, 46, foot=4)
-    rows = [(24, 80), (24, 140)]
+    rows = [(24, 74), (24, 136)]
     k = 0
     for (x0, y0) in rows:
         for col in range(8):
@@ -1147,8 +1216,8 @@ def room_butik():
                 break
             oid = outfits[k]
             x = x0 + col * 36
-            r.prop("rack_" + oid, lambda o=looks["player_" + oid]: clothes_rack(o), x, y0, foot=6)
-            r.mark("item_" + oid, x + 13, y0 + 44)
+            r.prop("rack_" + oid, lambda o=looks["player_" + oid], i=oid: clothes_rack(o, i), x, y0, foot=6)
+            r.mark("item_" + oid, x + 16, y0 + 56)
             k += 1
     r.mark("selin", 366, 98); r.mark("talk_selin", 366, 136)
     r.mark("spawn", 35, 194); r.mark("exit", 35, 212)

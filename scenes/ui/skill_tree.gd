@@ -1,7 +1,7 @@
 extends Control
-## Yetenek ağacı ve başarımlar (tam ekran panel). Telefondan "Yetenek" ya da Y tuşuyla açılır.
+## Yetenek ağacı (tam ekran panel). Telefondan "Yetenek" ya da Y tuşuyla açılır.
 ## Dört dal: Güç, Çeviklik, Dayanıklılık (stat ister) ve Hayat. Yetenek açmak için gereken stat + yetenek
-## puanı + önceki yetenek. Puanlar başarımlardan gelir (data/skills.gd).
+## puanı + önceki yetenek. Puanlar seviye atlayınca gelir (XP: kavga, antrenman, ders).
 
 signal closed
 
@@ -11,9 +11,8 @@ const PANEL := Rect2(8, 24, 464, 240)
 const COL_W := 110.0
 const NODE_H := 40.0
 
-var _tab := "skills"
 var _hover := ""
-var _rects := {}            # tıklanabilir alanlar: id -> Rect2 ("tab_skills", "tab_ach", "close", yetenek id'leri)
+var _rects := {}            # tıklanabilir alanlar: id -> Rect2 ("close" ve yetenek id'leri)
 var _msg := ""
 var _msg_col := Color.WHITE
 var _msg_t := 0.0
@@ -59,10 +58,6 @@ func _click(id: String) -> void:
 	match id:
 		"close":
 			close()
-		"tab_skills":
-			_tab = "skills"
-		"tab_ach":
-			_tab = "ach"
 		_:
 			if not Skills.SKILLS.has(id):
 				return
@@ -98,30 +93,20 @@ func _draw() -> void:
 			Color(UIDraw.GOLD, 0.25 + 0.15 * absf(sin(_t * 2.0))) if GameState.skill_points > 0 else Color(1, 1, 1, 0.08),
 			Color(UIDraw.GOLD, 0.7), 6)
 	_text(PANEL.position + Vector2(118, 14.5), sp, 8, Color.WHITE, 88, HORIZONTAL_ALIGNMENT_CENTER)
-	# sekmeler ve kapat
-	var done := GameState.achievements.size()
-	_tab_button("tab_skills", Rect2(PANEL.position.x + 222, PANEL.position.y + 4, 80, 14), "Yetenekler", _tab == "skills")
-	_tab_button("tab_ach", Rect2(PANEL.position.x + 306, PANEL.position.y + 4, 116, 14),
-			"Başarımlar  %d/%d" % [done, Skills.ACHIEVEMENTS.size()], _tab == "ach")
+	# seviye ve XP
+	var lr := Rect2(PANEL.position.x + 214, PANEL.position.y + 4, 210, 14)
+	UIDraw.box(self, lr, Color(1, 1, 1, 0.06), Color(1, 1, 1, 0.15), 6)
+	_text(lr.position + Vector2(7, 10.5), "Seviye %d" % GameState.level, 8, Color.WHITE)
+	UIDraw.meter(self, Rect2(lr.position.x + 58, lr.position.y + 5, 100, 4), float(GameState.xp) / GameState.xp_needed(), Color("7dd3fc"))
+	_text(lr.position + Vector2(162, 10.5), "%d/%d XP" % [GameState.xp, GameState.xp_needed()], 7, UIDraw.TEXT_DIM, 44, HORIZONTAL_ALIGNMENT_RIGHT)
 	var cr := Rect2(PANEL.end.x - 20, PANEL.position.y + 4, 14, 14)
 	_rects["close"] = cr
 	UIDraw.box(self, cr, Color("c84438") if _hover == "close" else Color(1, 1, 1, 0.1), Color(0, 0, 0, 0), 3)
 	_text(cr.position + Vector2(0, 10.5), "X", 8, Color.WHITE, 14, HORIZONTAL_ALIGNMENT_CENTER)
-	if _tab == "skills":
-		_draw_skills()
-	else:
-		_draw_achievements()
-	var foot := _msg if _msg_t > 0.0 else ("Bir yeteneğe tıkla: stat ve puan yetiyorsa açılır.  ·  Y / Esc: kapat" if _tab == "skills"
-			else "Başarım açtıkça yetenek puanı kazanırsın.  ·  Y / Esc: kapat")
+	_draw_skills()
+	var foot := _msg if _msg_t > 0.0 else "Kavga kazan, spor yap, derse gir: XP dolunca seviye atlarsın (+1 puan).  ·  Y / Esc: kapat"
 	_text(Vector2(PANEL.position.x, PANEL.end.y - 6), foot, 8, _msg_col if _msg_t > 0.0 else UIDraw.TEXT_DIM, PANEL.size.x,
 			HORIZONTAL_ALIGNMENT_CENTER)
-
-
-func _tab_button(id: String, r: Rect2, label: String, on: bool) -> void:
-	_rects[id] = r
-	UIDraw.box(self, r, Color(UIDraw.GOLD, 0.85) if on else (Color(1, 1, 1, 0.15) if _hover == id else Color(1, 1, 1, 0.06)),
-			Color(0, 0, 0, 0), 6)
-	_text(r.position + Vector2(0, 10.5), label, 8, Color("1b1024") if on else Color.WHITE, r.size.x, HORIZONTAL_ALIGNMENT_CENTER)
 
 
 func _draw_skills() -> void:
@@ -178,23 +163,3 @@ func _draw_node(id: String, sk: Dictionary, r: Rect2, color: Color) -> void:
 func _check(p: Vector2) -> void:
 	draw_line(p + Vector2(0, 3), p + Vector2(3, 6), Color("4ade80"), 2.0)
 	draw_line(p + Vector2(3, 6), p + Vector2(8, 0), Color("4ade80"), 2.0)
-
-
-func _draw_achievements() -> void:
-	var i := 0
-	for id in Skills.ACHIEVEMENTS:
-		var a: Dictionary = Skills.ACHIEVEMENTS[id]
-		var x := PANEL.position.x + 10 + (i % 2) * 224
-		var y := PANEL.position.y + 26 + (i / 2) * 24
-		var r := Rect2(x, y, 218, 21)
-		var got := GameState.achievements.has(id)
-		var p := GameState.achievement_progress(id)
-		UIDraw.box(self, r, Color("1f3a2a") if got else Color("1a1726"), Color("4ade80", 0.6) if got else Color(1, 1, 1, 0.12), 4)
-		_text(r.position + Vector2(5, 9), a["name"], 8, Color("4ade80") if got else Color.WHITE, 120)
-		_text(r.position + Vector2(5, 18), a["desc"], 6, Color(1, 1, 1, 0.65), 140)
-		var sp := "+%d puan" % a["sp"]
-		_text(r.position + Vector2(150, 9), "Alındı  " + sp if got else sp, 7, Color("4ade80") if got else UIDraw.GOLD, 64, HORIZONTAL_ALIGNMENT_RIGHT)
-		if not got:
-			UIDraw.meter(self, Rect2(r.position.x + 150, r.position.y + 13, 62, 3), float(p[0]) / maxf(1.0, p[1]), UIDraw.GOLD)
-			_text(r.position + Vector2(146, 20), "%d/%d" % [p[0], p[1]], 5, UIDraw.TEXT_DIM, 70, HORIZONTAL_ALIGNMENT_RIGHT)
-		i += 1

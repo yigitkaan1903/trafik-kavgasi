@@ -249,7 +249,6 @@ func _finish() -> void:
 	_done = true
 	var per: int = int(_action.get("per_order", 4)) + (2 if GameState.has_skill("garson_ustasi") else 0)
 	var pay: int = _served * per
-	GameState.waiter_total += _served
 	var a := _action.duplicate()
 	a["money"] = pay + _tips
 	GameState.do_action(a)
