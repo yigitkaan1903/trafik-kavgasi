@@ -180,7 +180,7 @@ def city_map():
     p.fill(0, 0, 480, 270, GREEN[3])
     p.speckle(0, 0, 480, 270, [GREEN[2], GREEN[4]], 0.07, 1)
     for (x, y, w, h) in [(20, 30, 40, 30), (420, 30, 50, 40), (10, 220, 60, 40), (180, 220, 50, 30)]:
-        p.fill(x, y, w, h, GREEN[2])
+        small_park(p, x, y, w, h)
     # yollar ve kaldırımlar
     def road_h(y):
         p.fill(0, y - 2, 480, 20, STONE[5]); p.fill(0, y, 480, 16, STONE[2])
@@ -207,11 +207,9 @@ def city_map():
             continue
         p.circle(x, y + 2, 5, GREEN[0]); p.circle(x, y, 5, GREEN[1]); p.circle(x - 1, y - 1, 3, GREEN[2]); p.set(x - 2, y - 2, GREEN[4])
     for name, ((cx, cy), ramp) in MAP_SPOTS.items():
-        map_building(p, cx, cy, ramp)
+        draw_place(p, name, cx, cy, ramp)
     # durak
-    x, y = 70, 176
-    p.fill(x, y + 12, 64, 4, STONE[1]); p.fill(x + 4, y + 16, 3, 22, STONE[3]); p.fill(x + 57, y + 16, 3, 22, STONE[3])
-    p.fill(x + 18, y + 20, 28, 12, RED[3]); p.fill(x + 22, y + 22, 20, 4, SKY[3])
+    bus_shelter(p, 70, 180)
     p.save("bg_map.png")
 
 
@@ -223,6 +221,229 @@ def parking_lot(p, cx, cy):
     for k in range(x + 4, x + w, 14):
         p.fill(k, y + 3, 1, 12, WHITE); p.fill(k, y + h - 15, 1, 12, WHITE)
     p.fill(x + w - 12, y + 2, 9, 9, NAVY[3]); p.fill(x + w - 10, y + 4, 2, 5, WHITE); p.fill(x + w - 8, y + 4, 2, 2, WHITE)
+
+
+# ---------------------------------------------------------------- Harita binaları (3/4 açı, mekana özel)
+# Her bina hover alanına (merkez cx, cy; 64x40) sığar: üstte çatı yüzeyi, altta cephe, sağ altta gölge.
+
+def _shade(c, k):
+    return tuple(max(0, min(255, int(v * k))) for v in c)
+
+
+def _ground_shadow(p, x, y, w, h):
+    for k in range(5):   # sağa-aşağı düşen yumuşak gölge
+        p.darken(x + 3 + k, y + h + k // 2, w, 1, 0.82, dither=k > 2)
+        p.darken(x + w + k // 2, y + 4 + k, 1, h - 4, 0.82, dither=k > 2)
+
+
+def _windows(p, x, y, cols, rows, ww, wh, gx, gy, frame, glass, sill=None, lit=0.0, seed=1):
+    import random as _r
+    rng = _r.Random(seed)
+    for r in range(rows):
+        for c in range(cols):
+            wx, wy = x + c * (ww + gx), y + r * (wh + gy)
+            p.fill(wx - 1, wy - 1, ww + 2, wh + 2, frame)
+            p.fill(wx, wy, ww, wh, glass)
+            p.fill(wx, wy, ww, 1, _shade(glass, 1.25))
+            if ww >= 4:
+                p.fill(wx + ww // 2, wy, 1, wh, frame)
+            if lit and rng.random() < lit:
+                p.fill(wx, wy + 1, ww, wh - 1, GOLD[4])
+            if sill:
+                p.fill(wx - 1, wy + wh + 1, ww + 2, 1, sill)
+
+
+def _pitched_roof(p, x, y, w, d, tile):
+    """Kiremit çatı (üstten): mahyaya doğru açılan sıralar, ortada mahya, kenarda saçak."""
+    p.fill(x - 2, y, w + 4, d, _shade(tile, 0.85))
+    for r in range(d):
+        col = tile if (r // 2) % 2 else _shade(tile, 1.12)
+        p.fill(x - 2, y + r, w + 4, 1, col)
+        for k in range(x - 2 + (r // 2 % 2) * 3, x + w + 2, 6):
+            p.set(k, y + r, _shade(tile, 0.75))
+    p.fill(x - 2, y + d // 2, w + 4, 1, _shade(tile, 0.6))      # mahya
+    p.fill(x - 3, y + d, w + 6, 2, _shade(tile, 0.55))          # saçak gölgesi
+
+
+def _flat_roof(p, x, y, w, d, base, units=2, seed=3):
+    import random as _r
+    rng = _r.Random(seed)
+    p.fill(x, y, w, d, base)
+    p.speckle(x + 1, y + 1, w - 2, d - 2, [_shade(base, 0.9), _shade(base, 1.08)], 0.12, seed)
+    p.fill(x, y, w, 1, _shade(base, 1.3)); p.fill(x, y, 1, d, _shade(base, 1.2))      # korkuluk duvarı
+    p.fill(x + w - 1, y, 1, d, _shade(base, 0.75)); p.fill(x, y + d - 1, w, 1, _shade(base, 0.7))
+    for k in range(units):   # klima / havalandırma kutuları
+        ux, uy = x + 4 + rng.randrange(max(1, w - 14)), y + 2 + rng.randrange(max(1, d - 7))
+        p.fill(ux, uy, 8, 5, STONE[5]); p.fill(ux, uy, 8, 1, STONE[6]); p.fill(ux + 1, uy + 2, 6, 1, STONE[3])
+        p.darken(ux + 8, uy + 1, 1, 5, 0.7)
+
+
+def bus_shelter(p, x, y):
+    """Metrobüs durağı sığınağı (3/4): kırmızı-beyaz çatı, cam arka panel, bank, durak tabelası."""
+    _ground_shadow(p, x, y + 6, 64, 24)
+    p.fill(x, y, 64, 8, H("c8102e")); p.fill(x, y, 64, 2, H("e83a50")); p.fill(x, y + 7, 64, 1, H("8e0a20"))
+    for k in range(x + 4, x + 60, 12):
+        p.fill(k, y + 3, 6, 2, WHITE)
+    p.fill(x + 2, y + 8, 60, 16, H("a8c4dc")); p.fill(x + 2, y + 8, 60, 1, WHITE)          # cam panel
+    for k in range(x + 2, x + 62, 15):
+        p.fill(k, y + 8, 2, 22, STONE[1])
+    p.fill(x + 6, y + 12, 18, 9, H("e6b428")); p.fill(x + 8, y + 14, 14, 2, H("1b2a52")); p.fill(x + 8, y + 17, 10, 1, H("1b2a52"))  # reklam
+    p.fill(x + 30, y + 20, 26, 3, WOOD[3]); p.fill(x + 30, y + 23, 26, 1, WOOD[1])          # bank
+    p.fill(x + 32, y + 24, 2, 5, STONE[2]); p.fill(x + 52, y + 24, 2, 5, STONE[2])
+    p.fill(x + 61, y - 8, 2, 38, STONE[2])                                                     # tabela direği
+    p.circle(x + 62, y - 9, 4, H("c8102e")); p.fill(x + 61, y - 11, 3, 4, WHITE)
+
+
+def small_park(p, x, y, w, h):
+    """Küçük park: koyu çim, kıvrımlı yol, çiçek tarhı, bank."""
+    p.fill(x, y, w, h, GREEN[2])
+    p.speckle(x, y, w, h, [GREEN[1], GREEN[3]], 0.1, x + y)
+    p.fill(x, y + h // 2 - 1, w, 3, CREAM[3]); p.fill(x + w // 2 - 1, y, 3, h, CREAM[3])
+    p.fill(x, y + h // 2 - 1, w, 1, CREAM[4])
+    p.circle(x + w // 2, y + h // 2, 5, CREAM[3]); p.circle(x + w // 2, y + h // 2, 3, SKY[2])   # süs havuzu
+    for (fx, fy) in ((x + 4, y + 4), (x + w - 9, y + h - 8)):
+        for k in range(6):
+            p.set(fx + k, fy + (k % 2), [RED[4], GOLD[4], WHITE][k % 3])
+            p.set(fx + k, fy + 2, GREEN[1])
+    p.fill(x + 4, y + h - 6, 10, 2, WOOD[3]); p.fill(x + 5, y + h - 4, 1, 2, STONE[2]); p.fill(x + 12, y + h - 4, 1, 2, STONE[2])
+
+
+def campus_gate(p, cx, y):
+    """Kampüs kapısı: iki taş ayak, üstte kemer ve tabela."""
+    p.fill(cx - 22, y - 10, 8, 18, CREAM[1]); p.fill(cx + 14, y - 10, 8, 18, CREAM[1])
+    p.fill(cx - 22, y - 10, 8, 2, CREAM[4]); p.fill(cx + 14, y - 10, 8, 2, CREAM[4])
+    p.fill(cx - 22, y - 14, 44, 5, H("1b2a52")); p.fill(cx - 22, y - 14, 44, 1, H("4d63a6"))
+    p.fill(cx - 12, y - 13, 24, 2, GOLD[3])
+    p.fill(cx - 14, y - 9, 28, 1, STONE[2])
+    p.darken(cx - 14, y + 8, 40, 3, 0.8, dither=True)
+
+
+def kisla(p, x, y):
+    """Tarihi Davutpaşa Kışlası: kiremit çatı, kum taşı cephe, kemerli pencereler, saat kuleli kapı."""
+    w = 58
+    _ground_shadow(p, x, y + 10, w, 34)
+    _pitched_roof(p, x, y, w, 10, H("a8442e"))
+    p.fill(x, y + 12, w, 32, H("d8b888")); p.fill(x, y + 12, w, 1, H("ecd2a4")); p.fill(x, y + 12, 1, 32, H("ecd2a4"))
+    p.fill(x, y + 27, w, 1, H("b89868"))
+    for ax in list(range(x + 3, x + 22, 6)) + list(range(x + 38, x + w - 3, 6)):    # kemerli pencereler
+        for row in (y + 15, y + 30):
+            p.fill(ax, row + 2, 4, 7, H("3a2a22")); p.fill(ax + 1, row + 1, 2, 1, H("3a2a22"))
+            p.fill(ax, row + 9, 4, 1, H("ecd2a4"))
+    tx = x + w // 2 - 7                                                               # saat kulesi ve kapı
+    p.fill(tx, y - 8, 14, 52, H("c8a878")); p.fill(tx, y - 8, 14, 2, H("ecd2a4"))
+    p.fill(tx - 1, y - 11, 16, 4, H("a8442e")); p.fill(tx + 6, y - 14, 2, 3, GOLD[3])
+    p.circle(tx + 7, y + 2, 4, WHITE); p.fill(tx + 7, y - 1, 1, 3, BLACK); p.fill(tx + 7, y + 2, 3, 1, BLACK)
+    p.fill(tx + 3, y + 30, 8, 14, H("3a2a22")); p.fill(tx + 4, y + 29, 6, 1, H("3a2a22"))
+
+
+def draw_place(p, name, cx, cy, ramp):
+    x0, y0 = cx - 32, cy - 22
+    if name == "ev":   # 4 katlı apartman: kiremit çatı, balkonlar
+        x, w = x0 + 4, 56
+        _ground_shadow(p, x, y0 + 12, w, 30)
+        _pitched_roof(p, x, y0, w, 12, H("b8553a"))
+        p.fill(x + w - 12, y0 + 1, 5, 6, H("8a4a3a")); p.fill(x + w - 12, y0, 5, 1, H("6a3a2e"))      # baca
+        p.fill(x, y0 + 14, w, 28, H("e8dcc4")); p.fill(x, y0 + 14, 1, 28, H("f6eedc")); p.fill(x + w - 1, y0 + 14, 1, 28, H("c8b89c"))
+        for fl in range(3):
+            fy = y0 + 16 + fl * 8
+            _windows(p, x + 5, fy, 4, 1, 5, 4, 8, 0, H("8a7a62"), SKY[2], seed=fl)
+            p.fill(x + 3, fy + 5, 22, 1, STONE[2]); p.fill(x + 31, fy + 5, 22, 1, STONE[2])   # balkon korkuluğu
+            for k in range(x + 3, x + 25, 3):
+                p.set(k, fy + 4, STONE[3])
+        p.fill(cx - 5, y0 + 34, 10, 8, WOOD[1]); p.fill(cx - 4, y0 + 35, 8, 7, WOOD[2]); p.fill(cx - 7, y0 + 33, 14, 1, STONE[3])
+        p.fill(x + 2, y0 + 40, 4, 2, GREEN[1]); p.fill(x + w - 6, y0 + 40, 4, 2, GREEN[1])
+    elif name == "market":   # tek katlı market: düz çatı, yeşil tente, vitrin
+        x, w = x0 + 2, 60
+        _ground_shadow(p, x, y0 + 18, w, 22)
+        _flat_roof(p, x, y0 + 2, w, 18, STONE[4], 2, 5)
+        p.fill(x, y0 + 20, w, 22, H("f0ece2"))
+        p.fill(x, y0 + 20, w, 5, GREEN[1]); p.fill(x + 2, y0 + 21, w - 4, 3, GREEN[3])           # tabela bandı
+        for k in range(x + 6, x + w - 6, 6):
+            p.fill(k, y0 + 22, 3, 1, WHITE)
+        for k, sx in enumerate(range(x, x + w, 6)):                                               # tente
+            p.fill(sx, y0 + 25, 6, 4, GREEN[2] if k % 2 else WHITE)
+        p.fill(x, y0 + 29, w, 1, GREEN[0])
+        p.fill(x + 4, y0 + 31, 34, 10, H("2b3a55"))
+        for k in range(6):
+            p.fill(x + 6 + k * 5, y0 + 34, 3, 6, [RED[3], GOLD[3], GREEN[3], NAVY[4], H("e8745a"), TEAL[3]][k])
+        p.fill(x + 44, y0 + 31, 10, 11, H("8fb4cc")); p.fill(x + 48, y0 + 31, 1, 11, STONE[3])
+        p.fill(x + 40, y0 + 39, 3, 3, WOOD[2])
+    elif name == "gym":   # spor salonu: kemerli metal çatı, cam şerit
+        x, w = x0, 64
+        _ground_shadow(p, x, y0 + 16, w, 26)
+        for r in range(16):   # kemerli çatı: ortası açık, kenarlar koyu
+            k = 0.75 + 0.35 * (1 - abs(r - 7.5) / 7.5)
+            p.fill(x, y0 + r, w, 1, _shade(H("6e7a92"), k))
+        for k in range(x + 2, x + w, 4):
+            p.fill(k, y0, 1, 16, _shade(H("6e7a92"), 0.7))
+        p.fill(x, y0 + 16, w, 26, NAVY[2]); p.fill(x, y0 + 16, w, 1, NAVY[4])
+        p.fill(x + 2, y0 + 19, w - 4, 9, H("9ab0c8"))                                              # cam şerit
+        for k in range(x + 2, x + w - 2, 8):
+            p.fill(k, y0 + 19, 1, 9, NAVY[1])
+        p.fill(x + 14, y0 + 30, 36, 5, GOLD[3]); p.fill(x + 14, y0 + 30, 36, 1, GOLD[4])          # tabela
+        p.fill(cx - 6, y0 + 35, 12, 7, H("8fb4cc")); p.fill(cx, y0 + 35, 1, 7, STONE[3])
+    elif name == "galeri":   # oto galeri: cam vitrin, içinde arabalar, flamalar
+        x, w = x0 + 1, 62
+        _ground_shadow(p, x, y0 + 14, w, 28)
+        _flat_roof(p, x, y0 + 2, w, 12, STONE[3], 1, 7)
+        for k, fx in enumerate(range(x + 2, x + w, 7)):   # flamalar
+            p.fill(fx, y0 + 1, 3, 3, [RED[3], GOLD[3], NAVY[4]][k % 3])
+        p.fill(x, y0 + 14, w, 28, STONE[2])
+        p.fill(x + 2, y0 + 16, w - 4, 4, GOLD[3])
+        p.fill(x + 2, y0 + 21, w - 4, 19, H("bcd4e4")); p.fill(x + 2, y0 + 21, w - 4, 1, WHITE)
+        for k in range(x + 16, x + w - 2, 15):
+            p.fill(k, y0 + 21, 1, 19, STONE[1])
+        for k, col in enumerate((H("e2d4a8"), H("2a3e70"), BLACK)):    # vitrindeki arabalar (yandan)
+            ax = x + 5 + k * 19
+            p.fill(ax, y0 + 33, 14, 4, col); p.fill(ax + 3, y0 + 30, 8, 3, col); p.fill(ax + 4, y0 + 31, 6, 2, SKY[2])
+            p.fill(ax + 2, y0 + 37, 3, 2, BLACK); p.fill(ax + 10, y0 + 37, 3, 2, BLACK)
+    elif name == "carsi":   # çarşı: renkli tenteli üç dükkan
+        _ground_shadow(p, x0, y0 + 14, 64, 28)
+        cols = [(H("e2cfa8"), RED[3]), (H("9aa0aa"), NAVY[3]), (H("ecd2da"), H("a04878"))]
+        for k, (wall_c, awn) in enumerate(cols):
+            x = x0 + k * 21
+            _flat_roof(p, x, y0 + 4, 21, 10, _shade(wall_c, 0.7), 1, 11 + k)
+            p.fill(x, y0 + 14, 21, 28, wall_c); p.fill(x, y0 + 14, 1, 28, _shade(wall_c, 1.1))
+            p.fill(x + 3, y0 + 16, 15, 4, _shade(awn, 0.6))                                         # tabela
+            for j, sx in enumerate(range(x, x + 21, 3)):                                            # tente
+                p.fill(sx, y0 + 21, 3, 4, awn if j % 2 else WHITE)
+            p.fill(x + 3, y0 + 27, 10, 9, H("ffe0a0") if k == 0 else H("cfe7f5"))
+            p.fill(x + 14, y0 + 28, 5, 14, WOOD[2] if k != 1 else STONE[3])
+        p.fill(x0, y0 + 41, 64, 1, STONE[2])
+    else:   # kampüs binaları
+        wall, roof = (ramp[2] if len(ramp) > 2 else ramp[0]), (ramp[1] if len(ramp) > 1 else ramp[0])
+        if name == "kampus_kafe":   # kafe: ahşap cephe, büyük camlar, terasta şemsiyeler
+            x, w = x0 + 4, 50
+            _ground_shadow(p, x, y0 + 12, w, 24)
+            _pitched_roof(p, x, y0 + 2, w, 10, H("6b4530"))
+            p.fill(x, y0 + 14, w, 22, H("b07d50")); p.fill(x, y0 + 14, w, 1, H("d0a070"))
+            for k in range(x, x + w, 4):
+                p.fill(k, y0 + 14, 1, 22, H("8d5e3c"))
+            _windows(p, x + 3, y0 + 18, 3, 1, 10, 10, 4, 0, WOOD[1], H("ffe0a0"))
+            p.fill(x + 41, y0 + 18, 6, 18, WOOD[0])
+            for k, ux in enumerate((x0 + 4, x0 + 22, x0 + 40)):   # teras şemsiyeleri
+                c = [RED[3], GREEN[3], GOLD[3]][k]
+                p.circle(ux + 6, y0 + 39, 5, c); p.circle(ux + 6, y0 + 38, 3, _shade(c, 1.2))
+        elif name == "yemekhane":   # tuğla yemekhane, büyük pencereler, bacalar
+            x, w = x0, 64
+            _ground_shadow(p, x, y0 + 14, w, 28)
+            _flat_roof(p, x, y0 + 2, w, 12, STONE[3], 3, 13)
+            p.fill(x + 50, y0, 4, 5, STONE[2]); p.fill(x + 8, y0, 4, 5, STONE[2])
+            p.bricks(x, y0 + 14, w, 28, [RED[0], RED[1], RED[2], RED[3]], 6, 3, seed=4)
+            _windows(p, x + 4, y0 + 18, 5, 1, 8, 9, 4, 0, H("f4f2ec"), SKY[2])
+            p.fill(cx - 7, y0 + 32, 14, 10, H("8fb4cc")); p.fill(cx, y0 + 32, 1, 10, STONE[3]); p.fill(cx - 9, y0 + 30, 18, 2, STONE[5])
+        else:   # fakülteler: 3 katlı blok, pencere ızgarası, sütunlu giriş
+            x, w = x0, 64
+            _ground_shadow(p, x, y0 + 12, w, 30)
+            _flat_roof(p, x, y0 + 1, w, 11, _shade(roof, 1.05), 2, len(name))
+            p.fill(x, y0 + 12, w, 30, wall); p.fill(x, y0 + 12, 1, 30, _shade(wall, 1.2)); p.fill(x + w - 1, y0 + 12, 1, 30, _shade(wall, 0.75))
+            for fl in range(3):
+                p.fill(x, y0 + 21 + fl * 7, w, 1, _shade(wall, 0.85))                                # kat çizgileri
+            _windows(p, x + 3, y0 + 14, 9, 3, 4, 4, 3, 3, _shade(wall, 0.6), SKY[3], seed=len(name))
+            p.fill(cx - 10, y0 + 33, 20, 2, STONE[6]); p.fill(cx - 10, y0 + 35, 20, 7, _shade(wall, 0.7))    # giriş saçağı
+            for k in range(cx - 9, cx + 10, 6):
+                p.fill(k, y0 + 35, 2, 7, STONE[6])
+            p.fill(cx - 3, y0 + 36, 6, 6, H("8fb4cc"))
 
 
 def map_building(p, cx, cy, ramp):
@@ -266,25 +487,21 @@ def campus_map():
                 p.set(170 + xx, 105 + yy, SKY[1] if (xx + yy) % 5 else SKY[3])
     # kampüs duvarı ve kapı
     p.fill(0, 228, 480, 6, CREAM[2]); p.fill(0, 228, 480, 1, CREAM[4])
-    p.fill(54, 222, 32, 14, CREAM[1]); p.fill(58, 226, 24, 10, STONE[2])
-    # metrobüs durağı (kapının yanında)
-    p.fill(36, 184, 64, 4, STONE[1]); p.fill(40, 188, 3, 22, STONE[3]); p.fill(93, 188, 3, 22, STONE[3])
-    p.fill(54, 192, 28, 12, RED[3]); p.fill(58, 194, 20, 4, SKY[3])
+    campus_gate(p, 70, 228)
+    bus_shelter(p, 38, 184)
     parking_lot(p, 446, 52)
     # tarihi kışla (süs)
-    p.fill(420, 176, 54, 34, GOLD[1]); p.fill(418, 172, 58, 5, RED[1])
-    for ax in range(424, 470, 10):
-        p.fill(ax, 188, 6, 14, BLACK); p.fill(ax + 1, 186, 4, 2, BLACK)
+    kisla(p, 418, 168)
     # ağaçlar
     rng = random.Random(9)
     for _ in range(40):
         x, y = rng.randrange(8, 472), rng.randrange(20, 224)
-        if any(abs(x - sx) < 42 and abs(y - sy) < 32 for (sx, sy), _ in CAMPUS_SPOTS.values()) or 132 < y < 148 or (x > 405 and y < 80) \
+        if any(abs(x - sx) < 42 and abs(y - sy) < 32 for (sx, sy), _ in CAMPUS_SPOTS.values()) or 132 < y < 148 or (x > 405 and y < 80) or (x > 405 and y > 160) \
                 or (140 < x < 200 and 88 < y < 122) or (30 < x < 110 and y > 175):
             continue
         p.circle(x, y + 2, 5, GREEN[0]); p.circle(x, y, 5, GREEN[1]); p.circle(x - 1, y - 1, 3, GREEN[2]); p.set(x - 2, y - 2, GREEN[4])
     for name, ((cx, cy), ramp) in CAMPUS_SPOTS.items():
-        map_building(p, cx, cy, ramp)
+        draw_place(p, name, cx, cy, ramp)
     p.save("bg_campus.png")
 
 
