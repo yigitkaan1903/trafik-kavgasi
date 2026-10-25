@@ -25,6 +25,20 @@ const OUTFITS := {
 
 ## damage: yumruk (ve özel hareket) hasar çarpanı. range: yumruğun ek menzili (piksel).
 ## startup: yumruğun ek hazırlanma süresi (ağır silah yavaştır).
+## Berber: saç modelleri (tools/make_topdown.py PLAYER_HAIRS ile aynı id'ler; "sidepart" başlangıç saçı).
+const HAIRCUTS := {
+	"sidepart": {"name": "Klasik yan ayrık", "price": 60},
+	"short": {"name": "Kısa kesim", "price": 60},
+	"buzz": {"name": "Asker tıraşı", "price": 40},
+	"curly": {"name": "Kıvırcık perma", "price": 120},
+	"long": {"name": "Uzun saç (protez)", "price": 180},
+	"bun": {"name": "Topuz", "price": 90},
+	"ponytail": {"name": "At kuyruğu", "price": 90},
+	"bald": {"name": "Sıfır numara", "price": 40},
+}
+const HAIRCUT_MINUTES := 30
+const BARBER_HOURS := [540, 1260]   # 09:00-21:00
+
 const WEAPONS := {
 	"musta": {"name": "Muşta", "price": 260, "damage": 1.3, "range": 0.0, "startup": 0.0,
 		"desc": "Yumruklar %30 daha sert."},

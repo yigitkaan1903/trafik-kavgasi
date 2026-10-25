@@ -307,10 +307,11 @@ def glasses(c, L):
     c.r(CX - 11, 20, CX - 9, 20, g); c.r(CX + 8, 20, CX + 10, 20, g)
 
 
-def portrait(L, seed, mood="normal"):
+def portrait(L, seed, mood="normal", fem=None):
     c = P(S, S)
     st = L.get("hair_style", "short")
-    fem = st in FEMININE or L.get("top") == "dress" or "skirt" in L
+    if fem is None:   # oyuncu uzun saç seçse de rimel/ruj almaz
+        fem = st in FEMININE or L.get("top") == "dress" or "skirt" in L
     iris = IRISES[seed % len(IRISES)] if seed % 4 else IRISES[0]
     if L.get("hood"):
         hood_back(c, L)
@@ -343,7 +344,7 @@ def main():
     looks = td.all_looks()
     for who, L in looks.items():
         seed = zlib.crc32(who.encode())
-        ms.write_png(os.path.join(OUT, "portrait_%s.png" % who), portrait(L, seed).px)
+        ms.write_png(os.path.join(OUT, "portrait_%s.png" % who), portrait(L, seed, fem=False if who.startswith("player") else None).px)
     ms.write_png(os.path.join(OUT, "portrait_player_hurt.png"), portrait(looks["player"], zlib.crc32(b"player"), "hurt").px)
     print("Portreler üretildi:", len(looks) + 1, os.path.normpath(OUT))
 

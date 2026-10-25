@@ -138,6 +138,14 @@ LOOKS = {
                   shoes=(110, 40, 40), glasses=(10, 10, 12), chain=(240, 200, 60)),
     "mert": dict(skin=(200, 146, 106), hair=(30, 24, 20), shirt=(120, 40, 160), stripe=(250, 210, 40),
                  pants=(40, 40, 50), shoes=(240, 240, 240), hat=(120, 40, 160)),
+    # mekan sahipleri (isimleriyle uyumlu kendi görünüşleri)
+    "melek": dict(skin=(226, 180, 146), hair=(62, 36, 28), shirt=(168, 52, 66), pants=(70, 52, 62), shoes=(40, 30, 30)),
+    "selin": dict(skin=(236, 200, 170), hair=(196, 146, 78), shirt=(232, 120, 168), pants=(40, 40, 60), shoes=(30, 30, 34)),
+    "riza": dict(skin=(200, 150, 110), hair=(70, 66, 62), shirt=(40, 44, 124), stripe=(236, 236, 236), pants=(40, 44, 124),
+                 shoes=(236, 236, 236), mustache=True),
+    "berber": dict(skin=(214, 160, 120), hair=(30, 24, 20), shirt=(240, 240, 236), pants=(50, 50, 56), shoes=(30, 26, 26),
+                   mustache=True),
+    "cirak": dict(skin=(226, 180, 140), hair=(40, 28, 22), shirt=(240, 240, 236), pants=(60, 84, 136), shoes=(236, 236, 236)),
     # durak figüranları
     "simitci": dict(skin=(214, 160, 120), hair=(40, 30, 26), shirt=(238, 236, 228), stripe=(200, 60, 50),
                     pants=(70, 60, 52), shoes=(40, 30, 26), mustache=True, tray=True),

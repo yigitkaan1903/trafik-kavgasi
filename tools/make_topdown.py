@@ -46,7 +46,16 @@ STYLE = {
     "hakan": dict(hair_style="short", top="jacket", inner=(220, 220, 215), height=0),
     "furth": dict(hair_style="sidepart", top="jacket", inner=(40, 40, 46), height=0),
     "mert": dict(hair_style="short", top="hoodie", height=1, backpack=(250, 200, 40)),
+    "melek": dict(hair_style="bun", top="dress", skirt=(70, 52, 62), height=2),
+    "selin": dict(hair_style="long", top="jacket", inner=(240, 240, 236), height=1),
+    "riza": dict(hair_style="bald", top="jacket", inner=(236, 236, 236), height=1),
+    "berber": dict(hair_style="sidepart", top="coat", inner=(60, 60, 70), height=1),
+    "cirak": dict(hair_style="buzz", top="tee", height=1, sleeves="short"),
 }
+
+# Berberde seçilebilen saçlar (data/shop.gd HAIRCUTS ile aynı; "sidepart" oyuncunun varsayılanı).
+# Her kıyafetle birleşir: td_player[_<kıyafet>]__<saç>.png
+PLAYER_HAIRS = ["short", "buzz", "curly", "long", "bun", "ponytail", "bald"]
 
 # Oyuncunun kıyafetleri (data/shop.gd OUTFITS ile aynı id): oyuncunun görünüşünün üstüne yazılır.
 # None verilen özellik kaldırılır. Her biri ayrı sayfa: td_player_<id>.png ("esofman" = td_player.png).
@@ -724,6 +733,11 @@ def all_looks():
             else:
                 L[k] = v
         looks["player_" + oid] = L
+    for base in [k for k in looks if k == "player" or k.startswith("player_")]:
+        for hair in PLAYER_HAIRS:
+            L = dict(looks[base])
+            L["hair_style"] = hair
+            looks[base + "__" + hair] = L
     for who, L in civilians().items():
         looks[who] = look_of(who, L)
     return looks

@@ -66,8 +66,8 @@ def glow(cx, cy, r, a=70, c=WARM):
 
 def lamp(x, y):
     """Sokak lambası: küçük sarı hale, ortada parlak nokta."""
-    glow(x, y, 8, 95)
-    light(x, y, (255, 240, 200))
+    glow(x, y, 5, 55)
+    light(x, y, (255, 236, 190))
 
 
 def start_lights():
@@ -119,8 +119,8 @@ def highway(p, y, x0=0, x1=W):
     for k in range(x0, x1, 16):
         p.fill(k, y + 13, 8, 1, _shade(METRO_RED, 0.8))
     for k in range(x0 + 6, x1, 24):    # bariyer üstü direk lambaları
-        glow(k, y + 8, 7, 50, (255, 226, 170)); light(k, y + 8, (255, 245, 215))
-        glow(k + 12, y + 17, 7, 50, (255, 226, 170)); light(k + 12, y + 17, (255, 245, 215))
+        glow(k, y + 8, 5, 35, (255, 226, 170)); light(k, y + 8, (255, 245, 215))
+        glow(k + 12, y + 17, 5, 35, (255, 226, 170)); light(k + 12, y + 17, (255, 245, 215))
 
 
 def grass(p, x, y, w, h, seed, trees=0.012):
@@ -303,7 +303,7 @@ def blit_art(p, px, cx, bottom, outline=True, lit=True):
                 if lit and glass and y > h // 4 and LIGHT_RNG.random() < 0.75:
                     light(ox + x, oy + y, (255, 196, 110), 190)
     if lit:
-        glow(cx, bottom - 1, max(10, w // 3), 80)
+        glow(cx, bottom - 1, max(8, w // 4), 60)
     return oy
 
 
@@ -326,7 +326,7 @@ def place(p, map_id, spot, art, cx, cy, scale=ART_SCALE):
 
 MAHALLE = {   # data/places.gd MAPS["mahalle"]["spots"] ile aynı
     "ev": (64, 108), "market": (186, 114), "gym": (372, 104), "carsi": (212, 176),
-    "galeri": (424, 178), "otopark": (338, 180), "durak": (250, 74),
+    "galeri": (424, 178), "otopark": (338, 180), "durak": (250, 74), "berber": (88, 180),
 }
 
 
@@ -357,7 +357,7 @@ def city_map():
                 seed += 1
     fill_block(p, 0, TOP, W, 14, 99)                 # E-5'in kuzeyi
     # parklar
-    grass(p, 4, 146, 54, 30, 11, 0.03)
+    grass(p, 4, 146, 40, 24, 11, 0.03)
     grass(p, 248, 70, 42, 24, 12, 0.03)
     grass(p, 430, 66, 46, 28, 13, 0.03)
     for (vxx, vw) in vx:
@@ -367,12 +367,12 @@ def city_map():
     highway(p, 36)
     coast(p, coast_y, 3)
     # mekan arsaları ve çizimleri
-    for name in ("ev", "market", "gym", "carsi", "galeri"):
+    for name in ("ev", "market", "gym", "carsi", "galeri", "berber"):
         cx, cy = MAHALLE[name]
         plot(p, cx, cy)
     plot(p, *MAHALLE["otopark"], w=40, h=26)
     parking(p, *MAHALLE["otopark"])
-    for name in ("ev", "market", "gym", "carsi", "galeri"):
+    for name in ("ev", "market", "gym", "carsi", "galeri", "berber"):
         place(p, "mahalle", name, name, *MAHALLE[name])
     # durak (E-5 kenarında) ve hatta bekleyen metrobüs
     place(p, "mahalle", "durak", "durak", *MAHALLE["durak"], scale=0.36)

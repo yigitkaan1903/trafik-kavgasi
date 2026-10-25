@@ -28,6 +28,7 @@ const LIGHTS := {
 	"kampus_kafe": [false, 90.0, true],
 	"butik": [false, 100.0, true],
 	"hirdavat": [false, 100.0, true],
+	"berber": [false, 100.0, true],
 }
 ## Spotun tıklama alanı hangi eşyanın görseli (işaret adı -> [eşya, kaçıncısı]); yoksa duruş noktasından hesaplanır.
 const SPOT_PROPS := {
@@ -156,6 +157,8 @@ func _add_crowd() -> float:
 	if seats.is_empty() and stands.is_empty():
 		return -1.0
 	var fill := _crowd_level()
+	if fill <= 0.0:
+		return 0.0
 	var taken: Array = []
 	for s in _spots:
 		if s.has("node"):
@@ -192,6 +195,12 @@ func _crowd_level() -> float:
 		base = 0.2
 	if GameState.weekday() >= 5 and _id == "kampus_kafe":
 		base *= 0.4
+	if _id == "berber":   # akşamüstü ve hafta sonu kuyruk olur, kapalıyken kimse yok
+		if not GameState.is_open(Shop.BARBER_HOURS):
+			return 0.0
+		base = 0.45 if h < 17.0 else 0.8
+		if GameState.weekday() >= 5:
+			base = 0.9
 	return clampf(base + randf_range(-0.12, 0.12), 0.05, 0.95)
 
 
@@ -424,6 +433,8 @@ func _interact(i: int) -> void:
 		_:
 			if s.has("shop"):
 				_open_shop(s, 0)
+			elif s.has("barber"):
+				_open_barber(s, 0)
 			elif s.get("wardrobe", false):
 				_open_wardrobe(s, 0)
 			else:
@@ -615,6 +626,30 @@ func _open_shop(s: Dictionary, page: int) -> void:
 			_say(s["node"], "Güle güle giy! Gardırobuna koydum." if s["shop"] == "outfits" else "Çantana koydum. Dikkatli ol evlat.")
 			_say(_player, "+ %s" % items[id]["name"], 2.0), func(pg: int): _open_shop(s, pg),
 			GameState.portrait_texture(s["look"]) if s.has("look") else null)
+
+
+## Berber: saç modeli seç (para + 30 dakika); seçilince karakterin saçı hemen değişir.
+func _open_barber(s: Dictionary, page: int) -> void:
+	var choices: Array = []
+	for id in Shop.HAIRCUTS:
+		var h: Dictionary = Shop.HAIRCUTS[id]
+		var mine: bool = id == GameState.hair
+		var text := "%s  (%d TL, %d dk)" % [h["name"], h["price"], Shop.HAIRCUT_MINUTES]
+		if mine:
+			text = "%s  (şu anki saçın)" % h["name"]
+		elif GameState.money < h["price"]:
+			text = "%s  (%d TL, paran yetmiyor)" % [h["name"], h["price"]]
+		choices.append([text, id, mine or GameState.money < h["price"]])
+	_paged_dialog(_spot_name(s), s.get("lines", [""]).pick_random(), choices, page, func(id: String):
+		var why := GameState.get_haircut(id)
+		if why != "":
+			_say(s["node"], why)
+			return
+		Audio.sfx("buy")
+		_player.set_look(GameState.player_look())
+		_say(s["node"], ["Oldu mu? Bir de ense tıraşı yaptım!", "Aynaya bak, adam oldun!", "Sıhhatler olsun!"].pick_random())
+		_say(_player, "Yeni saç: %s" % Shop.HAIRCUTS[id]["name"], 2.0), func(pg: int): _open_barber(s, pg),
+			GameState.portrait_texture(s["look"]))
 
 
 ## Evdeki gardırop: kıyafet giy, çantaya silah koy ya da çıkar.

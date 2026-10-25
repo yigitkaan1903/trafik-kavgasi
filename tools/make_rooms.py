@@ -1129,6 +1129,21 @@ def room_gym():
     return r.finish()
 
 
+def shop_window(c, x, y, w, h, light, dark, inside):
+    """Dükkan vitrini: koyu çerçeve, içeride sıcak ışık geçişi, içerik (inside), camda çapraz yansıma, denizlik."""
+    c.fill(x - 3, y - 3, w + 6, h + 6, H("2c2636")); c.fill(x - 2, y - 2, w + 4, h + 4, H("4a4258"))
+    c.grad_v(x, y, w, h, [light, dark])
+    inside(x, y, w, h)
+    for i in range(0, w + h, 22):   # cam yansıması
+        for k in range(4):
+            for d in range(h):
+                px_, py_ = x + i - k - d // 2, y + d
+                if x <= px_ < x + w and (d + k) % 6 < 3:
+                    col = c.px[py_][px_]
+                    c.px[py_][px_] = (min(255, col[0] + 22), min(255, col[1] + 22), min(255, col[2] + 26), 255)
+    c.fill(x - 4, y + h + 2, w + 8, 3, H("6a6458")); c.fill(x - 4, y + h + 2, w + 8, 1, H("9a948a"))
+
+
 def a_frame_sign():
     """Kafenin kaldırımdaki menü tahtası."""
     c = Painter(16, 22)
@@ -1257,11 +1272,20 @@ def room_carsi():
     for x in (212, 420, 628, 820, 1012):   # dükkan araları: kolon ve yağmur borusu
         c.fill(x - 4, 0, 8, 96 + D, H("2c2636")); c.fill(x - 4, 0, 2, 96 + D, H("3e3650"))
         c.fill(x + 1, 4, 2, 92 + D, STONE[3]); c.fill(x, 4, 4, 2, STONE[4])
-    # kafe: vitrin, cam kapı
-    c.fill(30, 46 + D, 90, 40, H("f0c070")); c.fill(32, 48 + D, 86, 36, H("ffe0a0"))
-    for x in (40, 70, 100):
-        c.fill(x, 70 + D, 14, 14, WOOD[2]); c.fill(x + 3, 66 + D, 8, 4, H("c48a3c"))
+    # vitrinler: çerçeve, sıcak iç ışık, içerik, cam yansıması, denizlik (bkz. shop_window)
+    def kafe_inside(x, y, w, h):
+        for lx in (x + 14, x + 44, x + 74):                                   # sarkan lambalar
+            c.fill(lx, y, 1, 8, STONE[1]); c.fill(lx - 3, y + 8, 7, 3, GOLD[3]); c.fill(lx - 2, y + 11, 5, 1, H("fff2b0"))
+        c.fill(x, y + h - 12, w, 12, WOOD[2]); c.fill(x, y + h - 12, w, 1, WOOD[4])   # pasta tezgahı
+        for k in range(5):
+            c.fill(x + 6 + k * 16, y + h - 17, 10, 5, [H("c48a3c"), H("f0d8a0"), H("6b4530"), H("e8745a"), H("f4a6c0")][k])
+            c.fill(x + 6 + k * 16, y + h - 17, 10, 1, WHITE)
+        for (px_, col) in ((x + 22, H("3a5a8a")), (x + 58, H("8a3a5a"))):  # masalarda oturanlar
+            c.circle(px_, y + 17, 3, H("d8a880")); c.fill(px_ - 4, y + 20, 8, 7, col)
+            c.fill(px_ + 6, y + 22, 10, 2, WOOD[3])
+    shop_window(c, 30, 46 + D, 90, 40, H("ffe6b0"), H("f2c070"), kafe_inside)
     c.fill(144, 46 + D, 30, 50, H("8fb4cc")); c.fill(146, 48 + D, 26, 46, H("cfe7f5")); c.fill(158, 48 + D, 1, 46, STONE[3])
+    c.fill(150, 68 + D, 6, 3, GOLD[3]); r.text(146, 58 + D, 26, "AÇIK", 5, "2e7d32")
     # kargo: yarı açık kepenk, içeride koliler
     c.fill(250, 34 + D, 140, 62, H("2a2620"))
     for (bx, by) in ((262, 74), (290, 70), (320, 76), (350, 72)):
@@ -1270,25 +1294,53 @@ def room_carsi():
     for y in range(36, 68, 4):
         c.fill(250, y + D, 140, 1, STONE[3])
     c.fill(250, 66 + D, 140, 2, STONE[2])
-    # dershane: cam kapı ve afişler
+
+    def poster_inside(x, y, w, h, posters):
+        for (px_, py_, pw, ph, col, txt) in posters:
+            c.fill(x + px_ - 1, y + py_ - 1, pw + 2, ph + 2, STONE[1]); c.fill(x + px_, y + py_, pw, ph, col)
+            c.fill(x + px_, y + py_, pw, 2, shade(col, 1.25))
+            r.text(x + px_, y + py_ + ph - 3, pw, txt, 5, "1b1024")
+    shop_window(c, 450, 44 + D, 50, 34, H("eef4fa"), H("d8e4f0"),
+                lambda x, y, w, h: poster_inside(x, y, w, h, [(4, 4, 18, 22, GOLD[3], "YKS"), (26, 4, 20, 16, RED[3], "%100")]))
+    shop_window(c, 550, 44 + D, 60, 34, H("eef4fa"), H("d8e4f0"),
+                lambda x, y, w, h: poster_inside(x, y, w, h, [(4, 4, 24, 18, GREEN[3], "KAYIT"), (32, 6, 22, 22, NAVY[4], "LGS")]))
     c.fill(510, 44 + D, 30, 52, H("8fb4cc")); c.fill(512, 46 + D, 26, 48, H("cfe7f5"))
-    c.fill(450, 44 + D, 50, 34, H("cfe7f5")); c.fill(550, 44 + D, 60, 34, H("cfe7f5"))
-    c.fill(456, 50 + D, 14, 18, GOLD[3]); c.fill(474, 50 + D, 18, 12, RED[3]); c.fill(560, 50 + D, 22, 16, GREEN[3]); c.fill(588, 52 + D, 14, 20, NAVY[4])
-    r.text(450, 76 + D, 50, "YKS", 6, "1b2a52"); r.text(550, 76 + D, 60, "KAYIT", 6, "9e2c34")
-    # butik: vitrinde mankenler, cam kapı
-    c.fill(652, 44 + D, 110, 46, H("fff4f8")); c.fill(652, 44 + D, 110, 2, H("c8a0b0"))
-    for k, (col, top) in enumerate(((H("c84060"), RED[1]), (H("3a6ab8"), NAVY[2]), (H("e6b428"), GOLD[1]), (H("2a2a30"), BLACK))):
-        mx = 662 + k * 26
-        c.circle(mx + 5, 52 + D, 3, H("e8d8c8")); c.fill(mx + 1, 56 + D, 9, 14, col); c.fill(mx + 2, 70 + D, 7, 12, top)
-        c.fill(mx + 5, 82 + D, 1, 6, STONE[2]); c.fill(mx + 2, 87 + D, 7, 2, STONE[2])
+
+    def butik_inside(x, y, w, h):
+        for k in range(4):                                                  # spot ışığı konileri
+            sx = x + 14 + k * 26
+            for d in range(h - 6):
+                for xx in range(sx - d // 4, sx - d // 4 + d // 2 + 2):
+                    col = c.px[y + d][xx]
+                    c.px[y + d][xx] = (min(255, col[0] + 10), min(255, col[1] + 9), min(255, col[2] + 6), 255)
+            c.fill(sx - 1, y, 3, 2, STONE[2])
+        outfits = ((H("c84060"), RED[1]), (H("3a6ab8"), NAVY[2]), (H("e6b428"), H("6a4a1a")), (H("2a2a30"), BLACK))
+        for k, (col, low) in enumerate(outfits):
+            mx = x + 10 + k * 26
+            c.circle(mx + 4, y + 9, 3, H("e8d8c8"))
+            c.fill(mx, y + 13, 9, 14, col); c.fill(mx, y + 13, 9, 1, shade(col, 1.3)); c.fill(mx - 1, y + 14, 1, 8, col); c.fill(mx + 9, y + 14, 1, 8, col)
+            c.fill(mx + 1, y + 27, 7, 10, low)
+            c.fill(mx + 4, y + 37, 1, 5, STONE[2]); c.fill(mx + 1, y + 41, 7, 2, STONE[2])
+            c.fill(mx + 10, y + 20, 5, 4, WHITE); c.set(mx + 12, y + 21, RED[2])   # fiyat etiketi
+    shop_window(c, 652, 44 + D, 110, 46, H("fff4f8"), H("f6dde8"), butik_inside)
     c.fill(774, 44 + D, 30, 52, H("8fb4cc")); c.fill(776, 46 + D, 26, 48, H("cfe7f5")); c.fill(788, 46 + D, 1, 48, STONE[3])
-    # hırdavat: vitrinde sopa, çekiç, eldiven; açık kapı
-    c.fill(842, 44 + D, 100, 42, H("e8e4d6")); c.fill(842, 44 + D, 100, 2, H("8a7a5a"))
-    for k in range(4):
-        c.fill(850 + k * 4, 50 + D, 2, 30, WOOD[2 + k % 2]); c.fill(850 + k * 4, 50 + D, 2, 3, WOOD[1])
-    c.fill(876, 52 + D, 14, 4, STONE[2]); c.fill(882, 56 + D, 2, 16, WOOD[2])
-    c.fill(900, 54 + D, 10, 10, RED[2]); c.fill(914, 54 + D, 10, 10, RED[2])
-    c.fill(898, 70 + D, 30, 10, GOLD[2]); c.fill(902, 72 + D, 22, 2, GOLD[4])
+
+    def hirdavat_inside(x, y, w, h):
+        c.fill(x, y, w, h - 10, H("b08a5a"))                                 # delikli pano
+        for yy in range(y + 3, y + h - 12, 4):
+            for xx in range(x + 3, x + w - 2, 4):
+                c.set(xx, yy, H("8a6a44"))
+        for k in range(4):                                                   # sopalar
+            c.fill(x + 6 + k * 4, y + 4, 2, 24, WOOD[2 + k % 2]); c.fill(x + 6 + k * 4, y + 24, 2, 4, BLACK)
+        c.fill(x + 26, y + 6, 14, 4, STONE[2]); c.fill(x + 32, y + 10, 2, 14, WOOD[2])    # çekiç
+        c.fill(x + 46, y + 8, 10, 10, RED[2]); c.fill(x + 60, y + 8, 10, 10, RED[2])       # boks eldivenleri
+        c.fill(x + 46, y + 8, 10, 2, RED[4]); c.fill(x + 60, y + 8, 10, 2, RED[4])
+        c.fill(x + 76, y + 6, 16, 3, GOLD[3]); r.text(x + 74, y + 26, 22, "%20", 5, "9e2c34")
+        c.fill(x, y + h - 10, w, 10, STONE[3]); c.fill(x, y + h - 10, w, 1, STONE[5])      # alt raf: toplar
+        for k in range(6):
+            c.circle(x + 8 + k * 15, y + h - 6, 4, [WHITE, H("f59e0b"), WHITE, H("3b82f6"), WHITE, H("f59e0b")][k])
+            c.set(x + 7 + k * 15, y + h - 7, BLACK)
+    shop_window(c, 842, 44 + D, 100, 42, H("f0ead8"), H("e0d4b8"), hirdavat_inside)
     c.fill(954, 44 + D, 32, 52, H("2a2620")); c.fill(956, 46 + D, 28, 50, H("4a4030"))
     r.rect("windows", 30, 46 + D, 90, 40); r.rect("windows", 450, 44 + D, 50, 34); r.rect("windows", 550, 44 + D, 60, 34)
     r.rect("windows", 652, 44 + D, 110, 46); r.rect("windows", 842, 44 + D, 100, 42)
@@ -1505,6 +1557,84 @@ def room_galeri():
     r.mark("spawn", 36, 186); r.mark("exit", 36, 204)
     for x in range(140, r.W - 20, 110):
         r.add("lamps", [x, 120])
+    return r.finish()
+
+
+def barber_chair():
+    """Berber koltuğu (arkadan): krom ayak, kırmızı deri oturak ve sırt, kolçaklar, ayak dayama."""
+    c = Painter(26, 30)
+    c.fill(9, 26, 8, 3, STONE[4]); c.fill(5, 28, 16, 2, STONE[3])                 # ayak
+    c.fill(12, 18, 2, 9, STONE[5])
+    c.fill(3, 4, 20, 14, H("9e2c34")); c.fill(3, 4, 20, 1, H("c84438")); c.fill(4, 5, 2, 12, H("b83a40"))   # sırt
+    c.fill(9, 0, 8, 5, H("7a222a")); c.fill(9, 0, 8, 1, H("9e2c34"))             # başlık
+    c.fill(0, 12, 3, 8, STONE[5]); c.fill(23, 12, 3, 8, STONE[5])                # kolçaklar
+    c.fill(2, 18, 22, 3, H("7a222a"))
+    return c
+
+
+def barber_pole():
+    """Döner berber direği: kırmızı-beyaz-mavi şerit, krom uçlar."""
+    c = Painter(10, 30)
+    c.fill(1, 0, 8, 3, STONE[5]); c.fill(1, 27, 8, 3, STONE[5])
+    c.fill(2, 3, 6, 24, WHITE)
+    for y in range(3, 27):
+        for x in range(2, 8):
+            k = (x + y) % 8
+            if k < 2:
+                c.set(x, y, RED[3])
+            elif k < 4:
+                c.set(x, y, NAVY[4])
+    c.fill(2, 3, 1, 24, H("dcdad4"))
+    return c
+
+
+def room_berber():
+    """Berber Sabri: aynalar önünde üç koltuk (müşteriler saate göre oturur), bekleme kanepesi, direk, afişler."""
+    r = Room("berber", 336, 224, wall_h=64)
+    c = r.c
+    r.back_wall(H("e8dcc4"), base=WOOD[1])
+    c.fill(0, 40, r.W, 16, WOOD[2]); c.fill(0, 40, r.W, 1, WOOD[4])                       # ahşap lambri
+    for x in range(0, r.W, 12):
+        c.fill(x, 41, 1, 15, WOOD[1])
+    for k, x in enumerate((66, 146, 226)):                                                 # aynalar ve şişe rafı
+        c.fill(x - 2, 8, 52, 32, WOOD[1]); c.fill(x, 10, 48, 28, H("b8d0e0"))
+        c.grad_v(x, 10, 48, 28, [H("d8e8f2"), H("b8d0e0"), H("98b4c8")])
+        for d in range(20):
+            if d % 5 < 3:
+                c.set(x + 6 + d // 2, 12 + d, WHITE)
+        c.fill(x - 2, 40, 52, 3, STONE[4]); c.fill(x - 2, 40, 52, 1, STONE[5])
+        rng = random.Random(x)
+        for bx in range(x, x + 46, 7):
+            col = rng.choice([TEAL[3], GOLD[3], RED[3], NAVY[4], GREEN[3]])
+            c.fill(bx, 34, 4, 6, col); c.fill(bx + 1, 32, 2, 2, STONE[2])
+    c.fill(10, 10, 40, 26, WHITE); c.fill(10, 10, 40, 1, STONE[3])                       # saç modeli afişi
+    for k in range(3):
+        c.circle(17 + k * 12, 20, 4, H("e8c8a8")); c.fill(13 + k * 12, 15, 9, 3 + k, [BLACK, WOOD[1], GOLD[2]][k])
+    r.text(10, 33, 40, "MODELLER", 5, "9e2c34")
+    c.fill(286, 10, 42, 14, H("9e2c34")); c.fill(286, 10, 42, 1, H("c84438"))
+    r.text(286, 20, 42, "BERBER SABRİ", 5, "f6d86a")
+    checker(c, 0, 64, r.W, r.H - 64, H("ece8e0"), H("2a2a30"), size=16)
+    rng = random.Random(4)
+    for (cx, cy) in ((90, 100), (170, 100), (250, 100)):                                  # yerde saç kırpıntıları
+        for _ in range(26):
+            c.set(cx + rng.randint(-14, 14), cy + rng.randint(-6, 8), rng.choice([BLACK, WOOD[1], H("3a2a22")]))
+    r.borders(door=(150, 34))
+    r.prop("barber_pole", barber_pole, 128, 26, foot=4)
+    for k, x in enumerate((77, 157, 237)):
+        r.prop("barber_chair", barber_chair, x, 72, foot=6)
+        r.add("crowd_seats", [x + 13, 92, "up"])
+    r.prop("sofa", sofa, 264, 150, foot=8)
+    r.prop("plant", plant, 316, 150, foot=4)
+    r.prop("plant_big", lambda: plant(True), 6, 56, foot=4)
+    for x in (274, 290, 306):
+        r.add("crowd_seats", [x, 168, "down"])
+    for (x, y) in ((44, 150), (60, 170)):
+        r.add("crowd_stand", [x, y])
+    r.mark("sabri", 196, 98); r.mark("talk_sabri", 196, 130)
+    r.mark("cirak", 276, 98)
+    r.mark("spawn", 166, r.H - 22); r.mark("exit", 166, r.H - 4)
+    for (x, y) in ((90, 110), (170, 110), (250, 110), (290, 180)):
+        r.add("lamps", [x, y])
     return r.finish()
 
 
@@ -1780,7 +1910,7 @@ def gd(v):
 def main():
     os.makedirs(PROP_OUT, exist_ok=True)
     rooms = {}
-    for fn in (room_ev, room_market, room_gym, room_carsi, room_butik, room_hirdavat, room_kampus_kafe, room_galeri, room_amfi,
+    for fn in (room_ev, room_market, room_gym, room_carsi, room_butik, room_hirdavat, room_kampus_kafe, room_galeri, room_berber, room_amfi,
                room_yemekhane, room_restoran, room_durak, room_metrobus, room_sokak):
         data = fn()
         rooms[fn.__name__[5:]] = data

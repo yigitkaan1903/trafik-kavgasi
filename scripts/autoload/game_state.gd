@@ -72,6 +72,7 @@ var technique := false        # Direksiyon Kilidi
 var messages: Array = []      # telefondaki mesajlar: [gönderen, metin], yeniden eskiye
 var unread := 0               # okunmamış mesaj sayısı (telefondaki bildirim)
 var outfit := "esofman"       # üzerindeki kıyafet (data/shop.gd OUTFITS)
+var hair := "sidepart"          # berberde seçilen saç (data/shop.gd HAIRCUTS)
 var outfits_owned: Array = ["esofman"]
 var weapons_owned: Array = []
 var weapon := ""              # çantadaki silah ("" yok)
@@ -167,6 +168,7 @@ func new_game(diff: String = "normal") -> void:
 	messages = []
 	unread = 0
 	outfit = "esofman"
+	hair = "sidepart"
 	outfits_owned = ["esofman"]
 	weapons_owned = []
 	weapon = ""
@@ -213,7 +215,7 @@ func save_game() -> void:
 		"metro_station": metro_station, "metro_dir": metro_dir, "intro_seen": intro_seen,
 		"metro_on_board": metro_on_board, "metro_seated": metro_seated, "simit_buff": simit_buff,
 		"blast_best": blast_best, "drive_dest": drive_dest, "drive_left": drive_left, "unread": unread,
-		"outfit": outfit, "outfits_owned": outfits_owned, "weapons_owned": weapons_owned, "weapon": weapon,
+		"outfit": outfit, "hair": hair, "outfits_owned": outfits_owned, "weapons_owned": weapons_owned, "weapon": weapon,
 		"skills_owned": skills_owned, "skill_points": skill_points, "level": level, "xp": xp,
 		"metro_seat": metro_seat,
 	}
@@ -305,6 +307,7 @@ func load_game() -> bool:
 	if not outfits_owned.has("esofman"):
 		outfits_owned.push_front("esofman")
 	outfit = data.get("outfit", "esofman") if outfits_owned.has(data.get("outfit", "")) else "esofman"
+	hair = data.get("hair", "sidepart") if Shop.HAIRCUTS.has(data.get("hair", "")) else "sidepart"
 	weapons_owned = data.get("weapons_owned", []).filter(func(w): return Shop.WEAPONS.has(w))
 	weapon = data.get("weapon", "") if weapons_owned.has(data.get("weapon", "")) else ""
 	skills_owned = data.get("skills_owned", []).filter(func(k): return Skills.SKILLS.has(k))
@@ -993,7 +996,22 @@ func make_label(text: String, size: int = 10, color: Color = Color.WHITE) -> Lab
 
 ## Oyuncunun görünüşü (üzerindeki kıyafete göre karakter sayfası).
 func player_look() -> String:
-	return "player" if outfit == "esofman" else "player_" + outfit
+	var base := "player" if outfit == "esofman" else "player_" + outfit
+	return base if hair == "sidepart" else base + "__" + hair
+
+
+## Berberde tıraş: para, zaman ve yeni saç. Olmazsa neden ("" ise oldu).
+func get_haircut(id: String) -> String:
+	if not is_open(Shop.BARBER_HOURS):
+		return "Kapalı (09:00-21:00)"
+	if id == hair:
+		return "Zaten bu saçın var"
+	if not try_spend(Shop.HAIRCUTS[id]["price"]):
+		return "Paran yetmiyor"
+	hair = id
+	spend_time(Shop.HAIRCUT_MINUTES)
+	save_game()
+	return ""
 
 
 ## Mağaza fiyatı (Pazarlıkçı yeteneğiyle %15 indirimli).

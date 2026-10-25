@@ -126,7 +126,7 @@ const PLACES := {
 		"pos": Vector2(372, 104), "color": Color("4a5fb0"),
 		"spots": [
 			{"kind": "exit", "name": "Kapı", "at": "exit"},
-			{"kind": "npc", "name": "Hoca Rıza", "look": "cemil", "stand": "riza", "at": "talk_riza",
+			{"kind": "npc", "name": "Hoca Rıza", "look": "riza", "stand": "riza", "at": "talk_riza",
 				"actions": ["gym_day", "gym_month", "technique"],
 				"lines": ["Ooo hoş geldin! Isındın mı?", "Ter dökmeden kas olmaz evlat.", "Üyelik al, her gün gel. Düzen her şeydir."]},
 			{"kind": "machine", "name": "Halter sehpası", "action": "lift", "anim": "lift", "at": "lift_0", "index": 0},
@@ -160,7 +160,7 @@ const PLACES := {
 		"pos": Vector2(212, 176), "color": Color("b8902a"),
 		"spots": [
 			{"kind": "exit", "name": "Mahalleye dön", "at": "exit"},
-			{"kind": "npc", "name": "Kafe sahibi Melek Hanım", "look": "sivil9", "stand": "melek", "at": "talk_melek", "actions": ["waiter"],
+			{"kind": "npc", "name": "Kafe sahibi Melek Hanım", "look": "melek", "stand": "melek", "at": "talk_melek", "actions": ["waiter"],
 				"lines": ["Garson lazım, akşamlar çok yoğun.", "Tepsiyi düşürürsen maaştan keserim, ona göre!"]},
 			{"kind": "npc", "name": "Kargo şefi Bayram", "look": "hayri", "stand": "bayram", "at": "talk_bayram", "actions": ["cargo"],
 				"lines": ["Koliler ağır, bilek lazım!", "Güçsüzsen hiç başlama, bel fıtığı olursun."]},
@@ -187,7 +187,7 @@ const PLACES := {
 		"name": "Butik Moda", "desc": "Çarşıdaki giyim mağazası.", "parent": "carsi",
 		"spots": [
 			{"kind": "exit", "name": "Çarşıya çık", "at": "exit", "to": "carsi", "spawn": "from_butik"},
-			{"kind": "npc", "name": "Butikçi Selin", "look": "sivil13", "stand": "selin", "at": "talk_selin", "shop": "outfits",
+			{"kind": "npc", "name": "Butikçi Selin", "look": "selin", "stand": "selin", "at": "talk_selin", "shop": "outfits",
 				"lines": ["Yeni sezon geldi canım, bak bak!", "Bu ceket tam sana göre, yemin ederim.", "Askılara bak, beğendiğini getir."]},
 			{"kind": "item", "shop": "outfits", "item": "kapson", "at": "item_kapson", "prop": "rack_kapson"},
 			{"kind": "item", "shop": "outfits", "item": "hawaii", "at": "item_hawaii", "prop": "rack_hawaii"},
@@ -240,6 +240,18 @@ const PLACES := {
 				"needs": {"open": [420, 1440]}, "replies": ["İyi ki geldin, kafam dağıldı.", "Yine gel, muhabbet güzeldi!", "Hadi bir çay daha?"]},
 		],
 	},
+	"berber": {
+		"name": "Berber Sabri", "desc": "Saç tıraşı, yeni saç modeli. 09:00-21:00 açık.",
+		"pos": Vector2(88, 180), "color": Color("c84438"),
+		"extras": [["cirak", "cirak", "left", false]],
+		"spots": [
+			{"kind": "exit", "name": "Kapı", "at": "exit"},
+			{"kind": "npc", "name": "Berber Sabri", "look": "berber", "stand": "sabri", "at": "talk_sabri", "barber": true,
+				"lines": ["Buyur kardeşim, otur bakalım. Nasıl keselim?", "Ense kısa, yanlar biraz alınsın mı?",
+					"Bu saçla kavgaya gidilmez, gel düzeltelim.", "Sakal da var mı? Şaka şaka, sadece saç."]},
+		],
+		"actions": [],
+	},
 	"galeri": {
 		"name": "Necdet Oto Galeri", "desc": "İkinci el, az kullanılmış, sahibinden temiz.",
 		"pos": Vector2(424, 178), "color": Color("6b7080"),
@@ -282,6 +294,7 @@ const MAPS := {
 			"market": {"name": "Market", "desc": "Köşedeki market. 07:00-01:00 açık.", "pos": Vector2(186, 114), "go": "place"},
 			"gym": {"name": "Rıza'nın Salonu", "desc": "Mahallenin spor salonu. 06:00-24:00 açık.", "pos": Vector2(372, 104), "go": "place"},
 			"galeri": {"name": "Necdet Oto Galeri", "desc": "Araba al, sat, yükselt.", "pos": Vector2(424, 178), "go": "place"},
+			"berber": {"name": "Berber Sabri", "desc": "Saç tıraşı, yeni saç modeli. 09:00-21:00 açık.", "pos": Vector2(88, 180), "go": "place"},
 			"carsi": {"name": "Çarşı", "desc": "İş (kafe, kargo, dershane) ve alışveriş (butik, hırdavat).", "pos": Vector2(212, 176), "go": "place"},
 			"durak": {"name": "Metrobüs Durağı", "desc": "Okula (YTÜ Davutpaşa) metrobüsle gidilir.", "pos": Vector2(250, 74), "go": "metro"},
 			"otopark": {"name": "Otopark", "desc": "Arabanla okula git: ~35 dk, 30 TL benzin. Trafikte kavga çıkabilir.", "pos": Vector2(338, 180), "go": "drive"},

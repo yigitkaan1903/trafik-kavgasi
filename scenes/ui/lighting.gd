@@ -20,23 +20,24 @@ static func time_color(outdoor: bool) -> Color:
 		if m >= KEYS[i][0] and m <= KEYS[i + 1][0]:
 			c = KEYS[i][1].lerp(KEYS[i + 1][1], (m - KEYS[i][0]) / (KEYS[i + 1][0] - KEYS[i][0]))
 			break
-	return c if outdoor else c.lerp(Color.WHITE, 0.55)
+	return c if outdoor else c.lerp(Color(1.0, 0.96, 0.9), 0.6)   # içeride ampul ışığı: geceyi çok az hissedersin
 
 
 static func is_dark() -> bool:
 	return GameState.minute >= 1170.0 or GameState.minute < 400.0
 
 
-## Gece ışıklarının gücü (0 gündüz, 1 gece): 18:00-20:00 yanar, 05:30-07:00 söner.
+## Gece ışıklarının gücü (0 gündüz, 1 gece): hava kararınca 19:00-21:00 arası yanar, 05:30-06:45 söner.
 static func night_amount() -> float:
 	var m: float = GameState.minute
-	if m >= 1200.0 or m < 330.0:
-		return 1.0
-	if m >= 1080.0:
-		return (m - 1080.0) / 120.0
-	if m < 420.0:
-		return 1.0 - (m - 330.0) / 90.0
-	return 0.0
+	var k := 0.0
+	if m >= 1260.0 or m < 330.0:
+		k = 1.0
+	elif m >= 1140.0:
+		k = (m - 1140.0) / 120.0
+	elif m < 405.0:
+		k = 1.0 - (m - 330.0) / 75.0
+	return k * k   # yavaş başlar: alacakaranlıkta sadece birkaç ışık
 
 
 ## Sahneye zaman rengi ve lambaları ekler. always_on: iç mekan lambaları gündüz de hafif yanar.
@@ -51,7 +52,8 @@ static func apply(parent: Node, outdoor: bool, lamps: Array = [], radius: float 
 			l.texture_scale = radius / 64.0
 			l.position = pos
 			l.color = Color(1.0, 0.86, 0.62)
-			l.energy = 0.95 if is_dark() else 0.3
+			# dışarıda sokak lambası güçlü; içeride tavan lambası hafif (yoksa açık renk zemin bembeyaz olur)
+			l.energy = (0.95 if is_dark() else 0.3) if outdoor else (0.32 if is_dark() else 0.18)
 			parent.add_child(l)
 	return cm
 
