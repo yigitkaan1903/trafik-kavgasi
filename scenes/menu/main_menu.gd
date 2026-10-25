@@ -177,7 +177,7 @@ func _spawn_car(x: float, lane: int) -> void:
 ## Zorluk seçimi: her seçeneğin ne yaptığı altında yazar.
 func _choose_difficulty() -> void:
 	var popup := ChoicePopup.new()
-	popup.portrait = GameState.fighter_texture("player", "idle")
+	popup.portrait = GameState.portrait_texture(GameState.player_look())
 	popup.title = "Zorluk seç"
 	popup.add_line("Gymde kazandığın güç, antrenman yapmadığın günlerde ne kadar azalsın? Zorluk bunu belirler.", 9, Color(1, 1, 1, 0.75))
 	for id in Places.DIFFICULTIES:

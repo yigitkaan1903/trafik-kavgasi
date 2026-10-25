@@ -253,7 +253,7 @@ func _finish() -> void:
 	a["money"] = pay + _tips
 	GameState.do_action(a)
 	var popup := ChoicePopup.new()
-	popup.portrait = GameState.fighter_texture("sivil9", "idle")
+	popup.portrait = GameState.portrait_texture("sivil9")
 	popup.title = "Vardiya bitti!"
 	popup.add_line("Melek Hanım: \"%s\"" % ("Harikaydın, yarın yine gel!" if _missed == 0 and _served >= 6 else
 			"Fena değil, ama müşteri bekletme!" if _missed < 3 else "Bu böyle olmaz, daha hızlı olmalısın!"))

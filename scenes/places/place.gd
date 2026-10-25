@@ -463,6 +463,8 @@ func _open_dialog(s: Dictionary, _i: int) -> void:
 	var d := DialogBox.new()
 	d.speaker = _spot_name(s)
 	d.line = s.get("lines", [""]).pick_random()
+	if s.has("look"):
+		d.portrait = GameState.portrait_texture(s["look"])
 	for id in s.get("actions", []):
 		var a := _action(id)
 		if a.is_empty() or GameState.action_hidden(a):
@@ -492,10 +494,12 @@ func _on_pick(id: String, s: Dictionary) -> void:
 
 
 ## Sayfalı seçim kutusu: choices = [[yazı, id, kapalı mı]], fazlası "Diğerleri" ile sonraki sayfada.
-func _paged_dialog(speaker: String, line: String, choices: Array, page: int, on_pick: Callable, reopen: Callable) -> void:
+func _paged_dialog(speaker: String, line: String, choices: Array, page: int, on_pick: Callable, reopen: Callable,
+		portrait: Texture2D = null) -> void:
 	var d := DialogBox.new()
 	d.speaker = speaker
 	d.line = line
+	d.portrait = portrait
 	var pages := maxi(1, ceili(choices.size() / float(PAGE_SIZE)))
 	page = clampi(page, 0, pages - 1)
 	for c in choices.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE):
@@ -580,7 +584,8 @@ func _open_shop(s: Dictionary, page: int) -> void:
 		if ok:
 			Audio.sfx("buy")
 			_say(s["node"], "Güle güle giy! Gardırobuna koydum." if s["shop"] == "outfits" else "Çantana koydum. Dikkatli ol evlat.")
-			_say(_player, "+ %s" % items[id]["name"], 2.0), func(pg: int): _open_shop(s, pg))
+			_say(_player, "+ %s" % items[id]["name"], 2.0), func(pg: int): _open_shop(s, pg),
+			GameState.portrait_texture(s["look"]) if s.has("look") else null)
 
 
 ## Evdeki gardırop: kıyafet giy, çantaya silah koy ya da çıkar.
@@ -603,7 +608,8 @@ func _open_wardrobe(s: Dictionary, page: int) -> void:
 		else:
 			GameState.weapon = id.trim_prefix("arm:")
 			_say(_player, "Çanta boş." if GameState.weapon == "" else "%s çantada. Kavgada işime yarar." % Shop.WEAPONS[GameState.weapon]["name"])
-		GameState.save_game(), func(pg: int): _open_wardrobe(s, pg))
+		GameState.save_game(), func(pg: int): _open_wardrobe(s, pg),
+			GameState.portrait_texture(GameState.player_look()))
 
 
 func _car_dialog(s: Dictionary) -> void:

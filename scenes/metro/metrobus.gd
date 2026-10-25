@@ -564,7 +564,7 @@ func _give_seat_to(rival_id: String) -> void:
 
 func _neutral_popup(title: String) -> ChoicePopup:
 	var popup := ChoicePopup.new()
-	popup.portrait = GameState.fighter_texture("player", "idle")
+	popup.portrait = GameState.portrait_texture(GameState.player_look())
 	popup.title = title
 	return popup
 

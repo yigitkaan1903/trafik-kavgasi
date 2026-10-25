@@ -1108,6 +1108,14 @@ func fighter_texture(look: String, pose: String) -> Texture2D:
 	return load("res://assets/sprites/fighter_%s_%s.png" % [look, pose])
 
 
+## Konuşma portresi (tools/make_portraits.py, 48x48 büst). Yoksa dövüş sprite'ı. mood: "" ya da "hurt" (sadece oyuncu).
+func portrait_texture(look: String, mood: String = "") -> Texture2D:
+	var path := "res://assets/portraits/portrait_%s%s.png" % [look, "_" + mood if mood != "" else ""]
+	if ResourceLoader.exists(path):
+		return load(path)
+	return fighter_texture(look, "hurt" if mood == "hurt" else "idle")
+
+
 ## 3/4 üstten bakış karakter sayfası (tools/make_topdown.py): 4 yön x pozlar.
 func td_texture(look: String) -> Texture2D:
 	return load("res://assets/topdown/td_%s.png" % look)

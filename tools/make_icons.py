@@ -36,18 +36,16 @@ ICONS = [
         "..kkk.......",
     ]),
     ("food", {"k": K, "B": H("f4a64a"), "b": H("c97a2a"), "W": H("fff3d6"), "G": H("4ade80"), "g": H("16a34a"),
-              "Y": H("facc15"), "M": H("7c3f1d"), "m": H("5a2a12")}, [   # hamburger
+              "Y": H("facc15"), "M": H("7c3f1d"), "m": H("5a2a12")}, [   # hamburger (10 satır: çubuğa sığar)
         "...kkkkkk...",
         ".kkBBBBBBkk.",
         "kBBWBBBBWBBk",
-        "kBBBBBWBBBBk",
-        "kbbbbbbbbbbk",
+        "kbbbbbWbbbbk",
         "kGgGGgGGgGGk",
         "kYYYYYYYYYYk",
         "kMYMMMMMMYMk",
         "kmmmmmmmmmmk",
         "kBBBBBBBBBBk",
-        "kbbbbbbbbbbk",
         ".kkkkkkkkkk.",
     ]),
     ("money", {"k": K, "o": H("8e611a"), "Y": H("f6d86a"), "W": H("fff7cc"), "d": H("8e611a")}, [

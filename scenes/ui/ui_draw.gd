@@ -10,7 +10,7 @@ const TEXT_DIM := Color(1, 1, 1, 0.62)
 
 ## Piksel simgeler (tools/make_icons.py): ad -> [hücre sırası, boyut].
 const ICONS := {
-	"energy": [0, Vector2(12, 12)], "food": [1, Vector2(12, 12)], "money": [2, Vector2(12, 12)],
+	"energy": [0, Vector2(12, 12)], "food": [1, Vector2(12, 10)], "money": [2, Vector2(12, 12)],
 	"str": [3, Vector2(12, 12)], "agi": [4, Vector2(12, 12)], "sta": [5, Vector2(12, 12)],
 	"calendar": [6, Vector2(14, 15)],
 }
@@ -42,6 +42,41 @@ static func box(ci: CanvasItem, r: Rect2, bg: Color, border: Color = Color(0, 0,
 static func icon(ci: CanvasItem, name: String, pos: Vector2) -> void:
 	var d: Array = ICONS[name]
 	ci.draw_texture_rect_region(ICON_SHEET, Rect2(pos, d[1]), Rect2(Vector2(d[0] * 16, 0), d[1]))
+
+
+## Düz seçenek butonu (konuşma kutusu, olay pencereleri): üstüne gelince/seçilince vurgu rengi ve solda çubuk.
+static func flat_button(text: String, accent: Color = GOLD, font_size: int = 10) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	b.add_theme_font_size_override("font_size", font_size)
+	b.add_theme_color_override("font_color", Color(1, 1, 1, 0.85))
+	b.add_theme_color_override("font_hover_color", accent)
+	b.add_theme_color_override("font_focus_color", accent)
+	b.add_theme_color_override("font_pressed_color", Color.WHITE)
+	b.add_theme_color_override("font_disabled_color", Color(1, 1, 1, 0.3))
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = Color(1, 1, 1, 0.05)
+	normal.set_corner_radius_all(3)
+	normal.content_margin_left = 8
+	normal.content_margin_right = 8
+	normal.content_margin_top = 2
+	normal.content_margin_bottom = 2
+	var hot := normal.duplicate() as StyleBoxFlat
+	hot.bg_color = Color(accent, 0.16)
+	hot.border_color = accent
+	hot.border_width_left = 2
+	hot.content_margin_left = 12
+	var off := normal.duplicate() as StyleBoxFlat
+	off.bg_color = Color(1, 1, 1, 0.02)
+	b.add_theme_stylebox_override("normal", normal)
+	b.add_theme_stylebox_override("disabled", off)
+	for st in ["hover", "focus", "pressed"]:
+		b.add_theme_stylebox_override(st, hot)
+	b.mouse_entered.connect(func():
+		if not b.disabled:
+			b.grab_focus())
+	return b
 
 
 ## Kart: koyu yarı saydam zemin, ince altın kenar, üstte hafif parlama.

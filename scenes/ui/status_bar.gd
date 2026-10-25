@@ -89,7 +89,7 @@ func _draw() -> void:
 	UIDraw.icon(self, "energy", Vector2(73, 0))
 	UIDraw.meter(self, Rect2(86, 3, 52, 5), _energy / 100.0, Color("facc15") if _energy > 25.0 else Color("ef4444"), 10)
 	draw_string(font, Vector2(142, 8.5), "%d" % int(_energy), HORIZONTAL_ALIGNMENT_LEFT, -1, 7, Color(1, 1, 1, 0.75))
-	UIDraw.icon(self, "food", Vector2(73, 10))
+	UIDraw.icon(self, "food", Vector2(73, 11))
 	UIDraw.meter(self, Rect2(86, 13, 52, 5), _food / 100.0, Color("4ade80") if _food > 25.0 else Color("ef4444"), 10)
 	draw_string(font, Vector2(142, 18.5), "%d" % int(_food), HORIZONTAL_ALIGNMENT_LEFT, -1, 7, Color(1, 1, 1, 0.75))
 	_divider(160)

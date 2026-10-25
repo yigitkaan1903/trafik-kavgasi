@@ -535,7 +535,7 @@ func _say(who: Node2D, text: String, seconds: float = 2.5) -> void:
 func _show_intro() -> void:
 	_paused = true
 	var popup := ChoicePopup.new()
-	popup.portrait = GameState.fighter_texture("player", "idle")
+	popup.portrait = GameState.portrait_texture(GameState.player_look())
 	popup.title = "Hoş geldin, Yıldızlı!"
 	popup.add_line("Sabahın köründe Beylikdüzü Sondurak'tasın. Okul Davutpaşa'da, araban yok, cebinde %d TL var." % GameState.money)
 	popup.add_line("Kapıların önünde koca bir insan yığını var. Sıranı bekleyebilir ya da kalabalığı yarıp kaynak yapabilirsin... ama insanlar kızar.", 9, Color(1, 1, 1, 0.75))

@@ -39,7 +39,7 @@ func add_scared_note(rival_id: String) -> void:
 ## Rakibin portresi, adı ve nam durumu.
 func set_rival(rival_id: String) -> void:
 	var r := GameState.rival(rival_id)
-	portrait = GameState.fighter_texture(r["look"], "idle")
+	portrait = GameState.portrait_texture(r["look"])
 	title = r["name"]
 	var fear := GameState.fear_level(rival_id)
 	if fear >= GameState.INTIMIDATE_FEAR:
@@ -89,8 +89,9 @@ func _ready() -> void:
 			pic.texture = portrait
 			pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 			pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			pic.custom_minimum_size = Vector2(60, 90)
-			pic.flip_h = true
+			var bust := portrait.get_width() == portrait.get_height()   # konuşma portresi (kare) ya da tam boy sprite
+			pic.custom_minimum_size = Vector2(96, 96) if bust else Vector2(60, 90)
+			pic.flip_h = not bust
 			frame.add_child(pic)
 
 	var box := VBoxContainer.new()
@@ -113,7 +114,8 @@ func _ready() -> void:
 
 	var first: Button = null
 	for c in _choices:
-		var b := _choice_button(c["text"], c["disabled"])
+		var b := UIDraw.flat_button(c["text"], accent)
+		b.disabled = c["disabled"]
 		var id: String = c["id"]
 		b.pressed.connect(func(): chosen.emit(id))
 		box.add_child(b)
@@ -137,42 +139,6 @@ func _pop(panel: Control) -> void:
 	var tw := create_tween().set_parallel().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tw.tween_property(self, "modulate:a", 1.0, 0.15)
 	tw.tween_property(panel, "scale", Vector2.ONE, 0.22)
-
-
-## Seçenek: düz satır; üstüne gelince/seçilince vurgu rengi, solda çubuk.
-func _choice_button(text: String, disabled: bool) -> Button:
-	var b := Button.new()
-	b.text = text
-	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	b.disabled = disabled
-	b.add_theme_font_size_override("font_size", 10)
-	b.add_theme_color_override("font_color", Color(1, 1, 1, 0.85))
-	b.add_theme_color_override("font_hover_color", accent)
-	b.add_theme_color_override("font_focus_color", accent)
-	b.add_theme_color_override("font_pressed_color", Color.WHITE)
-	b.add_theme_color_override("font_disabled_color", Color(1, 1, 1, 0.3))
-	var normal := StyleBoxFlat.new()
-	normal.bg_color = Color(1, 1, 1, 0.05)
-	normal.set_corner_radius_all(3)
-	normal.content_margin_left = 8
-	normal.content_margin_right = 8
-	normal.content_margin_top = 3
-	normal.content_margin_bottom = 3
-	var hot := normal.duplicate() as StyleBoxFlat
-	hot.bg_color = Color(accent, 0.16)
-	hot.border_color = accent
-	hot.border_width_left = 2
-	hot.content_margin_left = 12
-	var off := normal.duplicate() as StyleBoxFlat
-	off.bg_color = Color(1, 1, 1, 0.02)
-	b.add_theme_stylebox_override("normal", normal)
-	b.add_theme_stylebox_override("disabled", off)
-	for st in ["hover", "focus", "pressed"]:
-		b.add_theme_stylebox_override(st, hot)
-	b.mouse_entered.connect(func():
-		if not b.disabled:
-			b.grab_focus())
-	return b
 
 
 ## Uyarı simgesi: vurgu renginde daire, içinde ünlem (ya da saat: "clock").

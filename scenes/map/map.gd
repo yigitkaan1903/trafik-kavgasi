@@ -222,7 +222,7 @@ func _update_info() -> void:
 
 func _intro() -> void:
 	var popup := ChoicePopup.new()
-	popup.portrait = GameState.fighter_texture("player", "idle")
+	popup.portrait = GameState.portrait_texture(GameState.player_look())
 	popup.title = "Hoş geldin, Yıldızlı!"
 	popup.add_line("Beylikdüzü'nde küçük bir öğrenci evinde yaşıyorsun. Okul Davutpaşa'da, araban yok, cebinde %d TL var." % GameState.money)
 	popup.add_line("Günün kısıtlı: gymde antrenman yap, çarşıda çalış, haftada en az %d gün derse git, yemek yemeyi unutma. Gece 02:00'yi geçirirsen bayılırsın." % Places.ATTEND_NEEDED, 9, Color(1, 1, 1, 0.75))
@@ -239,7 +239,7 @@ func _notice(title: String, text: String, icon: String = "clock") -> void:
 	popup.icon = icon
 	popup.accent = Color("f59e0b")
 	if icon == "":
-		popup.portrait = GameState.fighter_texture("player", "hurt")
+		popup.portrait = GameState.portrait_texture("player", "hurt")
 	popup.title = title
 	popup.add_line(text, 10, Color(1, 1, 1, 0.85))
 	popup.add_choice("Tamam", "ok")
