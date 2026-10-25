@@ -60,7 +60,7 @@ func _ready() -> void:
 	add_child(_ui)
 	_build_hud()
 	if GameState.car()["damage"] >= GameState.car_max_hp():
-		_message("Araban hurda durumda! Önce garajda tamir ettir.", "Garaja git")
+		_message("Araban hurda durumda!", "Önce tamir ettirmen lazım.", "Garaja git", GameState.go_to.bind(GameState.SCENE_GARAGE))
 
 
 func _physics_process(delta: float) -> void:
@@ -230,32 +230,32 @@ func _arrive() -> void:
 	GameState.finish_drive()
 
 
+## Kaporta bitti: çekici arabayı galeriye götürür. Yolculuktaysan kalan yolu dolmuşla tamamlarsın
+## (yolculuk yarıda kalmaz); serbest sürüşteysen garaja dönersin.
 func _wreck() -> void:
 	var fee := mini(GameState.money, GameState.TOW_COST)
 	GameState.money -= fee
-	if GameState.drive_dest != "":   # çekici arabayı galeriye götürür, sen de onunla gelirsin
-		GameState.drive_dest = ""
-		GameState.map_id = "mahalle"
-		GameState.place = "galeri"
 	GameState.save_game()
-	_message("Araban hurdaya döndü! Çekici geldi: -%d TL.\nArabayı garaja çektiler." % fee, "Garaja git")
+	if GameState.drive_dest != "":
+		_message("Araban hurdaya döndü!", "Çekici arabanı Necdet Oto Galeri'ye çekti: -%d TL. Tamir ettirmeden binemezsin.\nKalan yolu dolmuşla gidiyorsun." % fee,
+				"Dolmuşa bin", GameState.walk_rest_of_drive)
+	else:
+		_message("Araban hurdaya döndü!", "Çekici geldi: -%d TL. Arabayı garaja çektiler." % fee,
+				"Garaja git", GameState.go_to.bind(GameState.SCENE_GARAGE))
 
 
-func _message(text: String, button_text: String) -> void:
+## Uyarı kartı (oyunu durdurur); tek seçenek, seçince on_ok çağrılır.
+func _message(title: String, text: String, button_text: String, on_ok: Callable) -> void:
 	_paused = true
-	var cc := CenterContainer.new()
-	cc.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_ui.add_child(cc)
-	var panel := PanelContainer.new()
-	cc.add_child(panel)
-	var box := VBoxContainer.new()
-	panel.add_child(box)
-	box.add_child(GameState.make_label(text, 11))
-	var b := Button.new()
-	b.text = button_text
-	b.pressed.connect(GameState.go_to.bind(GameState.SCENE_GARAGE))
-	box.add_child(b)
-	b.grab_focus.call_deferred()
+	_update_hud()   # durunca HUD güncellenmez: çekici parası hemen görünsün
+	var popup := ChoicePopup.new()
+	popup.icon = "warn"
+	popup.accent = Color("ef4444")
+	popup.title = title
+	popup.add_line(text, 10, Color(1, 1, 1, 0.85))
+	popup.add_choice(button_text, "ok")
+	_ui.add_child(popup)
+	popup.chosen.connect(func(_c: String): on_ok.call())
 
 
 func _leave(path: String) -> void:

@@ -429,6 +429,7 @@ func _faint() -> void:
 	pending_notice = "Gece çok geç oldu, ayakta duramadın ve bayıldın. Gözünü evde açtın, kafan zonkluyor."
 	place = "ev"
 	map_id = "mahalle"
+	drive_dest = ""   # yoldaysan da yarım kalır
 	metro_on_board = false
 	metro_seated = false
 	spend_time(Places.WAKE_AFTER_FAINT - minute, true)
