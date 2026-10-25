@@ -385,12 +385,6 @@ def city_map():
 
 # ---------------------------------------------------------------- YTÜ Davutpaşa
 
-KAMPUS = {   # data/places.gd MAPS["kampus"]["spots"] ile aynı
-    "giris": (60, 74), "eef": (110, 124), "mak": (246, 112), "fen": (392, 126),
-    "yemekhane": (330, 190), "kampus_kafe": (196, 190), "otopark": (446, 92),
-}
-
-
 def _bus(p, bus, cx):
     """Hatta bekleyen metrobüs; gece camları yanar, önde farlar."""
     small = shrink(bus, 0.4)
@@ -399,47 +393,245 @@ def _bus(p, bus, cx):
     glow(fx + 3, 52, 8, 90, (255, 248, 225))
 
 
+KAMPUS = {   # data/places.gd MAPS["kampus"]["spots"] ile aynı
+    "giris": (400, 210), "eef": (250, 78), "mak": (390, 140), "fen": (318, 104),
+    "yemekhane": (56, 82), "kampus_kafe": (190, 210), "otopark": (300, 203),
+}
+# YTÜ kampüs haritası renkleri (canlı yeşil, koyu asfalt, açık gri ızgaralı dış zemin)
+C_OUT, C_OUT_LINE = H("e7e4dd"), H("d8d4ca")
+C_GRASS = [H("6db044"), H("7cbf4f"), H("8fcc5e")]
+C_FOREST = H("2f6b37")
+C_TREE = [H("2b6630"), H("3d8b3a"), H("69b54f")]
+C_ASPH, C_ASPH_EDGE = H("3f434a"), H("e9e9e6")
+C_PATH = H("ecdcae")
+C_ROOF, C_ROOF_L, C_ROOF_D = H("c4553b"), H("dc7553"), H("943b28")
+C_CREAM, C_CREAM_D, C_WIN = H("f0e2c0"), H("d2be96"), H("5b6f86")
+
+
+def band_top(x):
+    """Sağ üstten çapraz geçen metrobüs hattının üst kenarı."""
+    return 22 + (x - 290) * 0.5
+
+
+def campus_edge(x):
+    return max(26, int(band_top(x)) + 26)
+
+
+def thick_line(p, pts, w, c):
+    """Kalın çoklu çizgi (kare fırçayla)."""
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+        n = max(abs(x1 - x0), abs(y1 - y0), 1)
+        for i in range(n + 1):
+            x, y = round(x0 + (x1 - x0) * i / n), round(y0 + (y1 - y0) * i / n)
+            p.fill(x - w // 2, y - w // 2, w, w, c)
+
+
+def campus_road(p, pts):
+    thick_line(p, pts, 9, C_ASPH_EDGE)
+    thick_line(p, pts, 7, C_ASPH)
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):   # lambalar
+        n = max(abs(x1 - x0), abs(y1 - y0), 1)
+        for i in range(0, n, 26):
+            lamp(round(x0 + (x1 - x0) * i / n), round(y0 + (y1 - y0) * i / n) - 5)
+
+
+def bright_tree(p, x, y):
+    p.darken(x - 2, y + 2, 7, 2, 0.75)
+    p.circle(x, y, 3, C_TREE[0]); p.circle(x - 1, y - 1, 2, C_TREE[1])
+    p.set(x - 2, y - 2, C_TREE[2]); p.set(x - 1, y - 3, C_TREE[2]); p.set(x - 3, y - 1, C_TREE[2])
+
+
+def ellipse(p, cx, cy, rx, ry, c):
+    for yy in range(-ry, ry + 1):
+        for xx in range(-rx, rx + 1):
+            if (xx / rx) ** 2 + (yy / ry) ** 2 <= 1.0:
+                p.set(cx + xx, cy + yy, c)
+
+
+def curve_path(p, pts, w=2):
+    """Parktaki kıvrımlı yürüyüş yolu: noktalar arasından yumuşak (Catmull-Rom) geçer."""
+    ext = [pts[0]] + pts + [pts[-1]]
+    for i in range(1, len(ext) - 2):
+        p0, p1, p2, p3 = ext[i - 1], ext[i], ext[i + 1], ext[i + 2]
+        for k in range(24):
+            t = k / 24
+            pt = [0.5 * (2 * p1[j] + (-p0[j] + p2[j]) * t + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t * t
+                         + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * t ** 3) for j in (0, 1)]
+            p.fill(round(pt[0]), round(pt[1]), w, w, C_PATH)
+
+
+def tasbina(p, cx, cy):
+    """Taşbina (tarihi Davutpaşa Kışlası, rektörlük): kiremit çatılı kare bina, ortada avlu, önde cephe ve kule."""
+    w, d, wing, fh = 104, 46, 12, 9
+    x0, y0 = cx - w // 2, cy - d // 2 - 4
+    p.darken(x0 + 3, y0 + d + fh, w, 3, 0.7)
+    p.darken(x0 + w, y0 + 3, 3, d + fh, 0.7)
+    # çatı halkası
+    p.fill(x0, y0, w, d, C_ROOF)
+    p.fill(x0, y0, w, 1, C_ROOF_L)
+    for (rx, ry, rw, rh, vertical) in ((x0, y0, w, wing, False), (x0, y0 + d - wing, w, wing, False),
+                                       (x0, y0, wing, d, True), (x0 + w - wing, y0, wing, d, True)):
+        if vertical:
+            p.fill(rx + rw // 2, ry + 1, 1, rh - 2, C_ROOF_L)
+        else:
+            p.fill(rx + 1, ry + rh // 2, rw - 2, 1, C_ROOF_L)
+    # avlu: çim, çapraz yollar, içerideki kuzey kanadın cephesi
+    ax, ay, aw, ah = x0 + wing, y0 + wing, w - 2 * wing, d - 2 * wing
+    p.fill(ax, ay, aw, ah, C_GRASS[1])
+    p.fill(ax, ay, aw, 5, C_CREAM)
+    for wx in range(ax + 2, ax + aw - 2, 4):
+        p.fill(wx, ay + 1, 2, 3, C_WIN)
+        light(wx, ay + 2) if LIGHT_RNG.random() < 0.5 else None
+    for k in range(0, max(aw, ah)):
+        for (px_, py_) in ((ax + k, ay + 5 + k * (ah - 5) // max(aw, 1)), (ax + aw - 1 - k, ay + 5 + k * (ah - 5) // max(aw, 1))):
+            if ax <= px_ < ax + aw and ay + 5 <= py_ < ay + ah:
+                p.set(px_, py_, C_PATH)
+    p.fill(ax, ay + 5 + (ah - 5) // 2, aw, 1, C_PATH)
+    p.fill(ax + aw // 2, ay + 5, 1, ah - 5, C_PATH)
+    p.fill(x0 + wing - 1, y0 + d - wing - 1, w - 2 * wing + 2, 1, C_ROOF_D)
+    # ön cephe: pencere sıraları, ortada kemerli giriş
+    fy = y0 + d
+    p.fill(x0, fy, w, fh, C_CREAM)
+    p.fill(x0, fy, w, 1, C_ROOF_D)
+    p.fill(x0, fy + fh - 1, w, 1, C_CREAM_D)
+    for wx in range(x0 + 3, x0 + w - 3, 5):
+        if abs(wx - cx) < 5:
+            continue
+        for wy in (fy + 2, fy + 5):
+            p.fill(wx, wy, 2, 2, C_WIN)
+            if LIGHT_RNG.random() < 0.45:
+                light(wx, wy, a=220); light(wx + 1, wy, a=220)
+    p.fill(cx - 3, fy + 2, 6, fh - 2, H("4a3a2e")); p.fill(cx - 2, fy + 1, 4, 1, H("4a3a2e"))
+    glow(cx, fy + fh, 10, 70)
+    # köşe köşkleri ve saat kulesi
+    for kx in (x0 - 2, x0 + w - 12):
+        p.fill(kx, y0 - 3, 14, 6, C_ROOF_D); p.fill(kx, y0 - 3, 14, 1, C_ROOF_L)
+    tx = x0 + w - 30
+    p.fill(tx, y0 - 14, 8, 14, C_CREAM); p.fill(tx, y0 - 14, 8, 1, C_CREAM_D)
+    p.fill(tx - 1, y0 - 17, 10, 3, C_ROOF); p.fill(tx + 3, y0 - 19, 2, 2, C_ROOF_D)
+    p.set(tx + 3, y0 - 10, C_WIN); p.set(tx + 4, y0 - 10, C_WIN)
+
+
+def stadium(p, cx, cy):
+    """YTÜ Stadyumu: kırmızı koşu pisti, çizgili çim saha."""
+    p.darken(cx - 30, cy + 15, 62, 3, 0.75)
+    ellipse(p, cx, cy, 31, 17, C_ASPH_EDGE)
+    ellipse(p, cx, cy, 30, 16, H("c65a3e"))
+    for k in (3, 6):
+        for a in range(0, 360, 3):
+            import math
+            x = round(cx + (30 - k) * math.cos(math.radians(a)))
+            y = round(cy + (16 - k * 0.55) * math.sin(math.radians(a)))
+            p.set(x, y, H("e88a6a"))
+    ellipse(p, cx, cy, 21, 10, H("5fae46"))
+    for x in range(cx - 18, cx + 19, 6):
+        p.fill(x, cy - 8, 3, 17, H("6cbb52"))
+    p.fill(cx - 15, cy - 6, 30, 1, WHITE_L); p.fill(cx - 15, cy + 6, 30, 1, WHITE_L)
+    p.fill(cx - 15, cy - 6, 1, 13, WHITE_L); p.fill(cx + 14, cy - 6, 1, 13, WHITE_L)
+    p.fill(cx, cy - 6, 1, 13, WHITE_L)
+    for a in range(0, 360, 20):   # projektörler
+        pass
+    glow(cx - 28, cy - 14, 12, 60, (255, 250, 230)); glow(cx + 28, cy - 14, 12, 60, (255, 250, 230))
+
+
+WHITE_L = H("f4f2ec")
+
+
+def metro_band(p):
+    """Sağ üstteki çapraz hat: gri platform, kırmızı metrobüs yolu, istasyon ve M tabelası."""
+    for x in range(250, W):
+        t = int(band_top(x))
+        for y in range(max(TOP, t), t + 24):
+            k = y - t
+            if k < 2 or k > 21:
+                c = H("bfc0c4")
+            elif 8 <= k <= 15:
+                c = H("b03a3a") if k not in (8, 15) else H("f2f2f2")
+            else:
+                c = H("d6d7da")
+            p.set(x, y, c)
+        if x % 24 == 0:
+            p.set(x, int(band_top(x)) + 11, H("f2f2f2")); p.set(x + 1, int(band_top(x)) + 11, H("f2f2f2"))
+        if x % 22 == 0:
+            glow(x, int(band_top(x)) + 4, 6, 55)
+    # Davutpaşa-YTÜ istasyonu: çatılı peron
+    for x in range(392, 436):
+        t = int(band_top(x))
+        p.fill(x, t - 4, 1, 4, H("8a8f99"))
+        p.set(x, t - 5, H("e6e7ea"))
+        light(x, t - 2, a=120)
+    # M tabelası (kırmızı iğne)
+    mx, my = 380, int(band_top(380)) - 10
+    p.circle(mx, my, 5, H("1b2a52")); p.circle(mx, my, 4, H("c8102e"))
+    for (dx, dy) in ((-2, 2), (-2, 1), (-2, 0), (-2, -1), (-1, -1), (0, 0), (1, -1), (2, -1), (2, 0), (2, 1), (2, 2)):
+        p.set(mx + dx, my + dy, (255, 255, 255))
+    p.fill(mx, my + 5, 1, 4, H("1b2a52"))
+
+
 def campus_map():
     start_lights()
     p = Painter(W, HGT)
-    p.fill(0, 0, W, HGT, GROUND)
-    fill_block(p, 0, TOP, W, 14, 77)
-    highway(p, 36)
-    # kampüs: duvarla çevrili yeşil alan
-    grass(p, 0, 66, W, HGT - 66, 21, 0.0)
-    p.fill(0, 64, W, 2, H("8a7f6a")); p.fill(0, 64, W, 1, H("a89c84"))      # kampüs duvarı
-    # yürüyüş yolları
-    walk = H("a49c86")
-    p.fill(0, 152, W, 6, walk); p.fill(0, 152, W, 1, H("b8b09a"))
-    for name in ("eef", "mak", "fen", "yemekhane", "kampus_kafe"):
-        cx, cy = KAMPUS[name]
-        y0, y1 = sorted((cy + BASE, 155))
-        p.fill(cx - 2, y0, 4, y1 - y0, walk)
-    p.fill(58, 66, 4, 88, walk)                       # girişten ana yola
-    p.fill(440, 104, 4, 50, walk)
-    lake(p, 120, 200, 34, 14, 5)                      # gölet
-    # ağaçlar (bina ve yollardan uzak)
-    rng = random.Random(9)
-    for _ in range(260):
-        x, y = rng.randrange(4, W - 4), rng.randrange(70, 230)
-        if 148 < y < 162 or any(abs(x - sx) < 28 and -36 < y - sy < 20 for sx, sy in KAMPUS.values()) \
-                or ((x - 120) / 40) ** 2 + ((y - 200) / 19) ** 2 < 1 or (54 < x < 66) or (430 < x < 470 and y < 162):
+    # dış zemin: açık gri izometrik ızgara
+    p.fill(0, 0, W, HGT, C_OUT)
+    for y in range(HGT):
+        for x in range(W):
+            if (x + 2 * y) % 24 == 0 or (x - 2 * y) % 24 == 0:
+                p.set(x, y, C_OUT_LINE)
+    # kampüs alanı: canlı yeşil, kenarı koyu orman
+    rng = random.Random(21)
+    for x in range(W):
+        e = campus_edge(x)
+        for y in range(e, HGT):
+            p.set(x, y, C_GRASS[1] if rng.random() > 0.12 else C_GRASS[rng.choice((0, 2))])
+        for y in range(e, e + 3):
+            p.set(x, y, C_FOREST)
+    metro_band(p)
+    # yollar: dış halka, içte bir dikey ve bir yatay yol, A kapısından çıkış
+    ring = [(12, 40), (258, 40), (452, 137), (452, 228), (12, 228), (12, 40)]
+    campus_road(p, ring)
+    campus_road(p, [(100, 40), (100, 228)])
+    campus_road(p, [(100, 178), (452, 178)])
+    campus_road(p, [(452, 160), (W + 4, 160)])
+    for gx in (460, 470):                              # A kapısı
+        p.fill(gx, 151, 4, 9, H("c9ccd2")); p.fill(gx, 151, 4, 1, (255, 255, 255))
+    p.fill(458, 149, 18, 3, H("1b2a52")); p.fill(462, 150, 10, 1, GOLD_L)
+    # park: gölet ve kıvrımlı yollar (Taşbina ile fakülteler arası)
+    curve_path(p, [(205, 128), (226, 150), (248, 132), (276, 128), (292, 150), (270, 168), (236, 166), (226, 150)])
+    curve_path(p, [(160, 140), (190, 158), (226, 150)])
+    ellipse(p, 262, 146, 14, 7, H("d9eef6")); ellipse(p, 262, 146, 12, 5, H("6fbde3"))
+    p.fill(256, 144, 5, 1, H("a8dcf2"))
+    stadium(p, 56, 152)
+    # ağaçlar: kenar ormanı sık, içeride serpiştirilmiş (bina, yol, park dışında)
+    blocked = [(56, 82, 26, 26), (165, 108, 60, 36), (250, 78, 24, 26), (318, 104, 24, 26), (390, 140, 24, 26),
+               (190, 210, 22, 24), (300, 203, 22, 14), (400, 210, 18, 14), (56, 152, 34, 20), (262, 148, 34, 24)]
+    trees = random.Random(33)
+    spots = [(trees.randrange(2, W - 2), trees.randrange(TOP + 4, 232)) for _ in range(1600)]
+    for (cx, cy) in [(195, 58), (70, 205), (36, 112), (140, 200), (250, 205), (352, 215), (430, 168), (340, 150),
+                     (130, 160), (420, 200), (300, 140), (225, 100)]:   # orman kümeleri
+        spots += [(cx + trees.randint(-14, 14), cy + trees.randint(-9, 9)) for _ in range(26)]
+    for x, y in spots:
+        if not (2 <= x < W - 2 and TOP + 4 <= y < 232):
             continue
-        big_tree(p, x, y)
+        if y < campus_edge(x) + 3:
+            continue
+        if any(abs(x - bx) < bw and abs(y - by) < bh for bx, by, bw, bh in blocked):
+            continue
+        if p.px[y][x][:3] in (C_ASPH, C_ASPH_EDGE, C_PATH) or p.px[y + 3][x][:3] in (C_ASPH, C_ASPH_EDGE) \
+                or p.px[y - 3][x][:3] in (C_ASPH, C_ASPH_EDGE):
+            continue
+        edge = x < 10 or y > 224 or x > 456 or y < campus_edge(x) + 14 or (y < 38)
+        if edge or trees.random() < 0.3 or (x, y) in spots[1600:]:
+            bright_tree(p, x, y)
+    tasbina(p, 165, 108)
     parking(p, *KAMPUS["otopark"])
     place(p, "kampus", "giris", "durak", *KAMPUS["giris"], scale=0.36)
     for name in ("eef", "mak", "fen", "yemekhane", "kampus_kafe"):
         place(p, "kampus", name, name, *KAMPUS[name])
-    place(p, "kampus", "", "kisla", 430, 206)        # tarihi kışla (süs)
-    bus = load_art("metrobus")
-    if bus:
-        _bus(p, bus, 300)
-    for x in range(20, W, 40):                         # yol lambaları
-        lamp(x, 151)
-    for y in range(76, 150, 24):
-        lamp(57, y)
     p.save("bg_campus.png")
     save_lights("bg_campus_lights.png")
+
+
+GOLD_L = H("e6b428")
 
 
 def write_map_art():

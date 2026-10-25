@@ -2,7 +2,7 @@
 
 Çalıştırma (proje klasöründen):  python tools/pixellab_gen.py ev [market gym ...]
 Anahtar: proje klasöründeki .pixellab_key dosyası (git'e girmez).
-Çıktı: assets/pixellab/map/<ad>.png  (şeffaf arka planlı, low top-down)
+Çıktı: assets/pixellab/map/<ad>.png, arabalar (car_<id>) assets/pixellab/cars/  (şeffaf arka planlı, low top-down)
 Her çağrı hesaptan üretim hakkı harcar; aynı ad zaten indirildiyse tekrar üretilmez (--force ile üretilir).
 """
 import json
@@ -33,7 +33,25 @@ PROMPTS = {
     "kapi": "university entrance gate, two stone pillars, arch with dark blue sign board on top",
     "metrobus": "long articulated white Istanbul metrobus city bus with red stripe and accordion joint in the middle, seen from the side, facing right",
 }
-SIZES = {"metrobus": (128, 64)}   # varsayılan 96x96
+CAR_FRONT = ("front view of a {} parked facing the viewer, symmetrical, headlights and grille visible, "
+             "clean shiny paint, no text, no logo")
+for _id, _desc in {
+    "sahin": "boxy old beige 1990s Turkish sedan car (Tofas Sahin)",
+    "toros": "old white 1990s Renault 12 Toros sedan car",
+    "doblo": "white Fiat Doblo small boxy van",
+    "egea": "red modern compact sedan car (Fiat Egea)",
+    "passat": "dark blue Volkswagen Passat sedan car",
+    "golf": "light grey Volkswagen Golf GTI hatchback with red grille stripe",
+    "bmw": "black BMW 3 series sports sedan with kidney grille",
+    "mercedes": "silver Mercedes C-class luxury sedan",
+}.items():
+    PROMPTS["car_" + _id] = CAR_FRONT.format(_desc)
+SIZES = {"metrobus": (128, 64)}   # varsayılan 96x96; arabalar 64x64
+CAR_OUT = os.path.join(ROOT, "assets", "pixellab", "cars")
+
+
+def out_dir(name):
+    return CAR_OUT if name.startswith("car_") else OUT
 
 
 def key():
@@ -52,7 +70,7 @@ def call(method, path, body=None):
 
 
 def generate(name):
-    w, h = SIZES.get(name, (96, 96))
+    w, h = SIZES.get(name, (64, 64) if name.startswith("car_") else (96, 96))
     status, res = call("POST", "/map-objects", {
         "description": PROMPTS[name] + STYLE,
         "image_size": {"width": w, "height": h},
@@ -74,10 +92,11 @@ def generate(name):
             if not url:
                 print(name, "indirme adresi yok:", info)
                 return False
-            os.makedirs(OUT, exist_ok=True)
+            out = out_dir(name)
+            os.makedirs(out, exist_ok=True)
             req = urllib.request.Request(url, headers={"Authorization": "Bearer " + key()} if url.startswith(API) else {})
             with urllib.request.urlopen(req, timeout=60) as r:
-                open(os.path.join(OUT, name + ".png"), "wb").write(r.read())
+                open(os.path.join(out, name + ".png"), "wb").write(r.read())
             print(name, "indirildi", info.get("width"), "x", info.get("height"))
             return True
         if status == 410 or info.get("status") == "failed":
@@ -90,7 +109,7 @@ def generate(name):
 if __name__ == "__main__":
     force = "--force" in sys.argv
     for n in [a for a in sys.argv[1:] if not a.startswith("--")]:
-        if not force and os.path.exists(os.path.join(OUT, n + ".png")):
+        if not force and os.path.exists(os.path.join(out_dir(n), n + ".png")):
             print(n, "zaten var, atlandı")
             continue
         generate(n)

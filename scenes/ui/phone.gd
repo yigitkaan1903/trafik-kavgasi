@@ -197,35 +197,43 @@ func _button(r: Rect2, text: String, bg: Color, fg: Color = Color.WHITE, size: i
 
 
 func _draw_icon() -> void:
-	_icon.draw_rect(Rect2(4, 2, 14, 25), DARK)
-	_icon.draw_rect(Rect2(5, 3, 12, 23), Color("2a2a33"))
-	_icon.draw_rect(Rect2(6, 5, 10, 17), Color("3b82f6") if _open else Color("60a5fa"))
-	_icon.draw_rect(Rect2(10, 23, 2, 2), Color("8a8a96"))
+	# cep telefonu: yuvarlak köşeli kasa, parlayan ekran, çentik
+	UIDraw.box(_icon, Rect2(4, 1, 15, 26), Color("2b2d35"), Color("6b7080"), 4)
+	var top := Color("3b82f6") if _open else Color("60a5fa")
+	UIDraw.box(_icon, Rect2(6, 3, 11, 22), top.darkened(0.35), Color(0, 0, 0, 0), 2)
+	_icon.draw_rect(Rect2(6, 4, 11, 10), Color(top, 0.85))
+	_icon.draw_rect(Rect2(7, 5, 2, 7), Color(1, 1, 1, 0.25))
+	UIDraw.box(_icon, Rect2(9, 4, 5, 2), Color("0b0b0f"), Color(0, 0, 0, 0), 1)
+	_icon.draw_rect(Rect2(9, 23, 5, 1), Color(1, 1, 1, 0.6))
 	if GameState.unread > 0:   # okunmamış mesaj sayısı
 		var pulse := 0.5 + 0.5 * absf(sin(Time.get_ticks_msec() / 400.0))
-		_icon.draw_circle(Vector2(17, 4), 4.5, Color("1b1024"))
-		_icon.draw_circle(Vector2(17, 4), 3.8, Color("ef4444").lerp(Color("ff8a7a"), pulse * 0.4))
-		_icon.draw_string(_font, Vector2(13, 6.5), str(mini(9, GameState.unread)), HORIZONTAL_ALIGNMENT_CENTER, 8, 6, Color.WHITE)
-	_icon.draw_string(_font, Vector2(0, 30), "T", HORIZONTAL_ALIGNMENT_CENTER, 22, 6, Color(1, 1, 1, 0.6))
+		_icon.draw_circle(Vector2(18, 3), 4.5, Color("1b1024"))
+		_icon.draw_circle(Vector2(18, 3), 3.8, Color("ef4444").lerp(Color("ff8a7a"), pulse * 0.4))
+		_icon.draw_string(_font, Vector2(14, 5.5), str(mini(9, GameState.unread)), HORIZONTAL_ALIGNMENT_CENTER, 8, 6, Color.WHITE)
+	_icon.draw_string(_font, Vector2(0, 30), "T", HORIZONTAL_ALIGNMENT_CENTER, 23, 6, Color(1, 1, 1, 0.6))
 
 
 func _draw_body() -> void:
-	_rect(Rect2(Vector2.ZERO, BODY_SIZE), Color("0e0e12"))
-	_rect(Rect2(1, 1, BODY_SIZE.x - 2, BODY_SIZE.y - 2), Color("2a2a33"))
-	_rect(Rect2(3, 3, BODY_SIZE.x - 6, BODY_SIZE.y - 6), Color("0e0e12"))
-	_rect(Rect2(48, 7, 22, 3), Color("2a2a33"))
-	_body.draw_circle(Vector2(59, 211), 4, Color("3a3a44"))
+	# kasa: metal çerçeve, yan tuşlar, siyah çerçeve (bezel)
+	_rect(Rect2(-1, 40, 2, 14), Color("4a4d58")); _rect(Rect2(-1, 60, 2, 22), Color("4a4d58"))
+	_rect(Rect2(BODY_SIZE.x - 1, 52, 2, 26), Color("4a4d58"))
+	UIDraw.box(_body, Rect2(Vector2.ZERO, BODY_SIZE), Color("33363f"), Color("7a7f8c"), 14)
+	UIDraw.box(_body, Rect2(2, 2, BODY_SIZE.x - 4, BODY_SIZE.y - 4), Color("08080b"), Color(0, 0, 0, 0), 12)
 	match _app:
 		"home": _draw_home()
 		"zep": _draw_zep()
 		"blocks": _draw_blocks()
 		"msg": _draw_messages()
-	# durum çubuğu
-	_rect(Rect2(SCREEN.position.x, SCREEN.position.y, SCREEN.size.x, 10), Color(0, 0, 0, 0.35))
-	_text(Vector2(9, 22), GameState.clock_text(), 7, Color.WHITE)
-	_rect(Rect2(95, 16, 12, 6), Color.WHITE)
-	_rect(Rect2(96, 17, 7, 4), Color("22c55e"))
-	_rect(Rect2(107, 18, 1, 2), Color.WHITE)
+	# durum çubuğu ve kamera çentiği
+	_rect(Rect2(SCREEN.position.x, SCREEN.position.y, SCREEN.size.x, 10), Color(0, 0, 0, 0.3))
+	_text(Vector2(10, 22), GameState.clock_text(), 7, Color.WHITE)
+	UIDraw.box(_body, Rect2(45, 15, 28, 7), Color("000000"), Color(0, 0, 0, 0), 3)
+	_body.draw_circle(Vector2(67, 18.5), 1.5, Color("1e293b"))
+	UIDraw.box(_body, Rect2(94, 16, 12, 6), Color(0, 0, 0, 0), Color(1, 1, 1, 0.8), 2)
+	_rect(Rect2(95.5, 17.5, 7, 3), Color("4ade80"))
+	_rect(Rect2(106, 18, 1, 2), Color(1, 1, 1, 0.8))
+	# ana ekran çubuğu (dokununca ana ekrana döner)
+	UIDraw.box(_body, Rect2(42, 208, 34, 3), Color(1, 1, 1, 0.75), Color(0, 0, 0, 0), 1)
 
 
 func _title_bar(title: String, color: Color, right: String = "") -> void:
@@ -240,44 +248,72 @@ func _title_bar(title: String, color: Color, right: String = "") -> void:
 
 const HOME_ICONS := {"zep": Rect2(12, 96, 26, 26), "blocks": Rect2(46, 96, 26, 26), "msg": Rect2(80, 96, 26, 26),
 		"skill": Rect2(12, 140, 26, 26)}
+const WALLPAPER := [Color("0f172a"), Color("3b1d78"), Color("9d2a6b"), Color("f59e0b")]
+
+
+## Uygulama simgesi zemini: yuvarlak köşe, alttan gölge, üstte parlama.
+func _app_tile(r: Rect2, col: Color) -> void:
+	UIDraw.box(_body, Rect2(r.position + Vector2(0, 2), r.size), Color(0, 0, 0, 0.35), Color(0, 0, 0, 0), 7)
+	UIDraw.box(_body, r, col, Color(col.lightened(0.3), 0.6), 7)
+	UIDraw.box(_body, Rect2(r.position + Vector2(2, 1), Vector2(r.size.x - 4, r.size.y / 2.0)), Color(1, 1, 1, 0.12), Color(0, 0, 0, 0), 6)
+
+
+func _badge(r: Rect2, n: int) -> void:
+	_body.draw_circle(Vector2(r.end.x - 2, r.position.y + 2), 5, Color("08080b"))
+	_body.draw_circle(Vector2(r.end.x - 2, r.position.y + 2), 4.2, Color("ef4444"))
+	_text(Vector2(r.end.x - 6, r.position.y + 4.5), str(mini(9, n)), 6, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, 8)
 
 
 func _draw_home() -> void:
-	for i in 19:
-		_rect(Rect2(SCREEN.position.x, SCREEN.position.y + i * 10, SCREEN.size.x, 10), Color("1b2a52").lerp(Color("4c1d95"), i / 18.0))
-	_text(Vector2(6, 62), GameState.clock_text(), 20, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, 106)
-	_text(Vector2(6, 76), GameState.day_text(), 7, Color(1, 1, 1, 0.7), HORIZONTAL_ALIGNMENT_CENTER, 106)
-	# ZepBet
+	# duvar kâğıdı: geceden gün batımına yumuşak geçiş
+	var steps := 95
+	for i in steps:
+		var t := float(i) / (steps - 1) * (WALLPAPER.size() - 1)
+		var k := mini(int(t), WALLPAPER.size() - 2)
+		var c: Color = WALLPAPER[k].lerp(WALLPAPER[k + 1], t - k)
+		_rect(Rect2(SCREEN.position.x, SCREEN.position.y + i * 2, SCREEN.size.x, 2), c)
+	_text(Vector2(6, 60), GameState.clock_text(), 22, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, 106)
+	_text(Vector2(6, 74), GameState.day_text(), 7, Color(1, 1, 1, 0.75), HORIZONTAL_ALIGNMENT_CENTER, 106)
+	# ZepBet: kırmızı zemin, zeplin
 	var r: Rect2 = HOME_ICONS["zep"]
-	_rect(r, Color("7f1d1d"))
-	_rect(Rect2(r.position.x + 5, r.position.y + 9, 16, 7), Color("cbd5e1"))
-	_rect(Rect2(r.position.x + 3, r.position.y + 11, 2, 3), Color("cbd5e1"))
-	_rect(Rect2(r.position.x + 10, r.position.y + 16, 5, 3), Color("475569"))
-	# Block Blast
+	_app_tile(r, Color("b91c1c"))
+	var c0 := r.position + Vector2(13, 12)
+	_body.draw_circle(c0 + Vector2(-4, 0), 4, Color("e2e8f0"))
+	_body.draw_circle(c0 + Vector2(3, 0), 4, Color("e2e8f0"))
+	_rect(Rect2(c0.x - 4, c0.y - 4, 7, 8), Color("e2e8f0"))
+	_rect(Rect2(c0.x - 10, c0.y - 3, 3, 6), Color("94a3b8"))
+	_rect(Rect2(c0.x - 2, c0.y + 4, 5, 3), Color("334155"))
+	_rect(Rect2(c0.x - 6, c0.y - 2, 10, 1), Color(1, 1, 1, 0.8))
+	# Block Blast: dört renkli blok
 	r = HOME_ICONS["blocks"]
-	_rect(r, Color("1e293b"))
+	_app_tile(r, Color("1e293b"))
 	for k in 4:
-		_rect(Rect2(r.position.x + 4 + (k % 2) * 10, r.position.y + 4 + (k / 2) * 10, 8, 8), BLOCK_COLORS[k])
-	# Mesajlar
+		var br := Rect2(r.position.x + 4 + (k % 2) * 10, r.position.y + 4 + (k / 2) * 10, 8, 8)
+		UIDraw.box(_body, br, BLOCK_COLORS[k], Color(0, 0, 0, 0), 2)
+		_rect(Rect2(br.position.x + 1, br.position.y + 1, 6, 1), Color(1, 1, 1, 0.35))
+	# Mesajlar: yeşil zemin, konuşma balonu
 	r = HOME_ICONS["msg"]
-	_rect(r, Color("15803d"))
-	_rect(Rect2(r.position.x + 5, r.position.y + 7, 16, 10), Color.WHITE)
-	_rect(Rect2(r.position.x + 7, r.position.y + 17, 3, 3), Color.WHITE)
+	_app_tile(r, Color("16a34a"))
+	UIDraw.box(_body, Rect2(r.position.x + 5, r.position.y + 6, 16, 11), Color.WHITE, Color(0, 0, 0, 0), 5)
+	_body.draw_colored_polygon(PackedVector2Array([r.position + Vector2(8, 15), r.position + Vector2(13, 16),
+			r.position + Vector2(6, 21)]), Color.WHITE)
 	if GameState.unread > 0:
-		_body.draw_circle(Vector2(r.end.x - 2, r.position.y + 2), 4, Color("ef4444"))
-		_text(Vector2(r.end.x - 6, r.position.y + 5), str(mini(9, GameState.unread)), 6, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, 8)
-	r = HOME_ICONS["skill"]   # yetenek ağacı: altın yıldız, harcanmamış puan varsa rozet
-	_rect(r, Color("5b3c9a"))
+		_badge(r, GameState.unread)
+	# Yetenek ağacı: mor zemin, altın yıldız
+	r = HOME_ICONS["skill"]
+	_app_tile(r, Color("6d28d9"))
 	_body.draw_colored_polygon(PackedVector2Array([r.position + Vector2(13, 4), r.position + Vector2(16, 11), r.position + Vector2(23, 11),
 			r.position + Vector2(17, 15), r.position + Vector2(20, 22), r.position + Vector2(13, 18), r.position + Vector2(6, 22),
 			r.position + Vector2(9, 15), r.position + Vector2(3, 11), r.position + Vector2(10, 11)]), GOLD)
 	if GameState.skill_points > 0:
-		_body.draw_circle(Vector2(r.end.x - 2, r.position.y + 2), 4, Color("ef4444"))
-		_text(Vector2(r.end.x - 6, r.position.y + 5), str(mini(9, GameState.skill_points)), 6, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, 8)
+		_badge(r, GameState.skill_points)
 	for key in HOME_ICONS:
 		var ir: Rect2 = HOME_ICONS[key]
 		var label: String = {"zep": "ZepBet", "blocks": "Block Blast", "msg": "Mesajlar", "skill": "Yetenek"}[key]
 		_text(Vector2(ir.position.x - 6, ir.end.y + 9), label, 6, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, ir.size.x + 12)
+	# alt rıhtım (dock)
+	UIDraw.box(_body, Rect2(10, 180, 98, 22), Color(1, 1, 1, 0.12), Color(1, 1, 1, 0.15), 8)
+	_text(Vector2(10, 194), "Bakiye: %d TL" % GameState.money, 7, Color(1, 1, 1, 0.85), HORIZONTAL_ALIGNMENT_CENTER, 98)
 
 
 func _draw_messages() -> void:

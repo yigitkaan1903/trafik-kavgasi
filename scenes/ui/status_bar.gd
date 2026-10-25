@@ -82,8 +82,7 @@ func _draw() -> void:
 	UIDraw.icon(self, "calendar", Vector2(5, 3))
 	draw_string(font, Vector2(5, 15.5), str(gs.day), HORIZONTAL_ALIGNMENT_CENTER, 14, 7, Color("1b1024"))
 	var late: bool = gs.minute >= 23 * 60 or gs.minute < Places.START_MINUTE
-	draw_string(font, Vector2(24, 12), gs.clock_text(), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("ff6a4a") if late else Color.WHITE)
-	draw_string(font, Vector2(24, 19.5), Places.DAY_NAMES[gs.weekday()], HORIZONTAL_ALIGNMENT_LEFT, -1, 6, UIDraw.TEXT_DIM)
+	draw_string(font, Vector2(23, 15.5), gs.clock_text(), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("ff6a4a") if late else Color.WHITE)
 	_divider(70)
 
 	# enerji ve tokluk: parçalı çubuklar

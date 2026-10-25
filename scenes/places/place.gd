@@ -237,7 +237,7 @@ func _spot_rect(i: int) -> Rect2:
 			var n: Node2D = s["node"]
 			return Rect2(n.position + Vector2(-8, n.head_y() - 1), Vector2(16, -n.head_y() + 2))
 		"car":
-			return _prop_rect("car_" + s["car"], 0)
+			return _prop_rect("carfront_" + s["car"], 0)
 		"machine":
 			var pr := _prop_rect(SPOT_PROPS[s["at"]][0], SPOT_PROPS[s["at"]][1])
 			return body.merge(pr) if pr.has_area() else body
@@ -846,18 +846,9 @@ func _draw_floor_fx() -> void:
 					_floor_fx.draw_rect(Rect2(p.x + 22, p.y - 4, 4, 10), Color("121018"))
 
 
-## En üst: fareyle üstüne gelinen ya da yanındaki şeyin adı; galeride fiyatlar, evde dolap.
+## En üst: fareyle üstüne gelinen ya da yanındaki şeyin adı; dükkanlarda fiyatlar, evde dolap.
 func _draw_top() -> void:
 	var font := ThemeDB.fallback_font
-	if _id == "galeri":
-		var tags: Array = _room.points("tags")
-		for s in _spots:
-			if s["kind"] == "car":
-				var t: Vector2 = tags[s["index"]] + Vector2(28, 34)
-				var price := "%d TL" % Cars.CARS[s["car"]]["price"]
-				_top.draw_rect(Rect2(t.x - 1, t.y - 1, 40, 11), Color("1b1024"))
-				_top.draw_rect(Rect2(t.x, t.y, 38, 9), Color("e6b428"))
-				_top.draw_string(font, Vector2(t.x, t.y + 8), price, HORIZONTAL_ALIGNMENT_CENTER, 38, 7, Color("1b1024"))
 	for s in _spots:   # dükkanlarda askı ve panoların üstünde fiyat
 		if s["kind"] == "item":
 			var r := _prop_rect(s["prop"], 0)

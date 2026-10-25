@@ -5,7 +5,7 @@ extends Control
 const ChoicePopup = preload("res://scenes/ui/choice_popup.gd")
 const Places = preload("res://data/places.gd")
 const VERSION := "v0.2"
-const CAR_IDS := ["sahin", "taksi", "doblo", "passat", "dolmus", "tofas"]
+const CAR_IDS := ["sahin", "taksi", "doblo", "passat", "dolmus", "tofas", "toros", "egea", "golf", "mercedes"]
 
 var _confirm_new := false
 var _t := 0.0

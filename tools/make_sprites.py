@@ -315,7 +315,11 @@ CARS = {
     # id: (genişlik, uzunluk, gövde rengi, ekstra)
     "sahin": (16, 30, (226, 212, 168), None),
     "tofas": (16, 30, (150, 70, 52), None),
+    "toros": (16, 30, (236, 232, 222), None),
     "doblo": (18, 32, (236, 236, 240), "van"),
+    "egea": (17, 32, (196, 40, 44), None),
+    "golf": (17, 30, (176, 180, 188), "hatch"),
+    "mercedes": (18, 35, (200, 204, 212), None),
     "passat": (18, 34, (40, 62, 112), None),
     "bmw": (18, 34, (28, 28, 34), "sport"),
     "taksi": (16, 32, (246, 200, 40), "taxi"),
@@ -324,76 +328,143 @@ CARS = {
 }
 
 
+GLASS, GLASS_HI = (66, 98, 132), (168, 208, 232)
+TIRE, RIM = (22, 22, 26), (150, 152, 162)
+HEAD, TAIL = (255, 246, 196), (228, 44, 44)
+
+
 def car_top(w, h, body, extra):
-    c = Canvas(w + 2, h)
-    ox = 1
-    dark, light = shade(body, 0.7), shade(body, 1.15)
-    glass, glass_hi = (96, 140, 176), (170, 210, 230)
-    # tekerlekler
-    for wy in (int(h * 0.18), int(h * 0.72)):
-        c.rect(0, wy, 0, wy + 4, (20, 20, 24)); c.rect(w + 1, wy, w + 1, wy + 4, (20, 20, 24))
+    """Üstten araba (trafik, otopark; önü yukarı): yuvarlak köşeli gövde, kenara doğru koyulaşan boya,
+    eğimli ön/arka cam, tavan parlaması, yan aynalar, farlar ve stoplar."""
+    c = Canvas(w + 4, h)
+    ox = 2
+    dark, mid, light, lighter = shade(body, 0.66), shade(body, 0.85), shade(body, 1.12), shade(body, 1.28)
+    for wy in (int(h * 0.15), int(h * 0.70)):   # tekerlekler gövdeden azıcık taşar
+        c.rect(ox - 1, wy, ox - 1, wy + 5, TIRE); c.rect(ox + w, wy, ox + w, wy + 5, TIRE)
     if extra == "truck":
         cab = 14
         c.rect(ox, 1, ox + w - 1, cab, body); c.rect(ox + 1, 0, ox + w - 2, 0, body)
-        c.rect(ox + 2, 4, ox + w - 3, 7, glass); c.rect(ox + 3, 4, ox + 5, 4, glass_hi)
-        c.rect(ox, cab + 2, ox + w - 1, h - 1, (150, 160, 176))
+        c.rect(ox, 1, ox, cab, dark); c.rect(ox + w - 1, 1, ox + w - 1, cab, dark)
+        c.rect(ox + 2, 4, ox + w - 3, 7, GLASS); c.rect(ox + 3, 4, ox + 6, 4, GLASS_HI)
+        c.rect(ox + 2, 9, ox + w - 3, cab - 1, light)
+        c.rect(ox, cab + 2, ox + w - 1, h - 1, (156, 164, 178))
         for y in range(cab + 4, h - 2, 4):
-            c.rect(ox + 1, y, ox + w - 2, y, (120, 130, 146))
-        c.rect(ox + 1, 0, ox + 2, 0, (255, 246, 190)); c.rect(ox + w - 3, 0, ox + w - 2, 0, (255, 246, 190))
-        c.rect(ox, h - 1, ox + 1, h - 1, (230, 40, 40)); c.rect(ox + w - 2, h - 1, ox + w - 1, h - 1, (230, 40, 40))
-        c.volume(); c.outline(); return c
-    # gövde (köşeler yuvarlatılmış)
-    c.rect(ox + 1, 0, ox + w - 2, h - 1, body)
-    c.rect(ox, 1, ox + w - 1, h - 2, body)
-    c.rect(ox, 1, ox, h - 2, dark); c.rect(ox + w - 1, 1, ox + w - 1, h - 2, dark)
-    ws, we = int(h * 0.26), int(h * 0.36)
-    rs, re = (int(h * 0.80), int(h * 0.88)) if extra == "van" else (int(h * 0.70), int(h * 0.78))
-    c.rect(ox + 2, ws, ox + w - 3, we, glass); c.rect(ox + 3, ws, ox + 5, ws, glass_hi)
-    c.rect(ox + 2, we + 1, ox + w - 3, rs - 1, light)  # tavan
-    c.rect(ox + 2, rs, ox + w - 3, re, glass)
-    if extra == "van":
+            c.rect(ox + 1, y, ox + w - 2, y, (122, 130, 146))
+        c.rect(ox + 1, 0, ox + 3, 0, HEAD); c.rect(ox + w - 4, 0, ox + w - 2, 0, HEAD)
+        c.rect(ox, h - 1, ox + 1, h - 1, TAIL); c.rect(ox + w - 2, h - 1, ox + w - 1, h - 1, TAIL)
+        c.volume(); c.outline()
+        return c
+    # gövde: köşeler yuvarlatılmış, yanlara doğru koyulaşır
+    c.rect(ox + 2, 0, ox + w - 3, h - 1, body)
+    c.rect(ox + 1, 1, ox + w - 2, h - 2, body)
+    c.rect(ox, 3, ox + w - 1, h - 4, body)
+    c.rect(ox, 3, ox, h - 4, dark); c.rect(ox + w - 1, 3, ox + w - 1, h - 4, dark)
+    c.rect(ox + 1, 2, ox + 1, h - 3, mid); c.rect(ox + w - 2, 2, ox + w - 2, h - 3, mid)
+    van = extra == "van"
+    ws = int(h * (0.16 if van else 0.27))
+    we = ws + max(3, int(h * 0.1))
+    if van:
+        rs, re = h - 6, h - 4
+    elif extra == "hatch":
+        rs, re = int(h * 0.74), int(h * 0.86)
+    else:
+        rs, re = int(h * 0.68), int(h * 0.77)
+    if not van:   # kaput çizgisi
+        c.rect(ox + w // 2, 2, ox + w // 2, ws - 2, light)
+        c.rect(ox + 3, 1, ox + w - 4, 1, light)
+    for i, y in enumerate(range(ws, we + 1)):   # ön cam (üstte dar)
+        inset = 3 if i == 0 else 2
+        c.rect(ox + inset, y, ox + w - 1 - inset, y, GLASS)
+    c.rect(ox + 3, ws + 1, ox + 5, ws + 1, GLASS_HI); c.rect(ox + 3, ws + 2, ox + 4, ws + 2, GLASS_HI)
+    c.rect(ox + 3, we + 1, ox + w - 4, rs - 1, light)                    # tavan
+    c.rect(ox + 4, we + 2, ox + 4, rs - 2, lighter)
+    c.rect(ox + 2, we + 1, ox + 2, rs - 1, GLASS); c.rect(ox + w - 3, we + 1, ox + w - 3, rs - 1, GLASS)   # yan camlar
+    pillar = (we + rs) // 2
+    c.set(ox + 2, pillar, mid); c.set(ox + w - 3, pillar, mid)
+    for y in range(rs, re + 1):   # arka cam (altta dar)
+        inset = 3 if y == re else 2
+        c.rect(ox + inset, y, ox + w - 1 - inset, y, GLASS)
+    c.set(ox - 1, ws + 1, body); c.set(ox + w, ws + 1, body)            # yan aynalar
+    if van:
         for y in range(we + 3, rs - 1, 5):
-            c.rect(ox + 1, y, ox + 1, y + 2, glass); c.rect(ox + w - 2, y, ox + w - 2, y + 2, glass)
+            c.rect(ox + 1, y, ox + 1, y + 2, GLASS); c.rect(ox + w - 2, y, ox + w - 2, y + 2, GLASS)
     if extra == "taxi":
-        mid = (we + rs) // 2
-        c.rect(ox + w // 2 - 3, mid - 1, ox + w // 2 + 2, mid + 1, (30, 30, 30))
-        c.rect(ox + w // 2 - 2, mid, ox + w // 2 + 1, mid, (250, 240, 200))
-    if extra == "sport":
-        c.rect(ox + w // 2 - 1, 1, ox + w // 2, ws - 2, (70, 70, 84))
-    c.rect(ox + 1, 0, ox + 3, 0, (255, 246, 190)); c.rect(ox + w - 4, 0, ox + w - 2, 0, (255, 246, 190))
-    c.rect(ox + 1, h - 1, ox + 3, h - 1, (230, 40, 40)); c.rect(ox + w - 4, h - 1, ox + w - 2, h - 1, (230, 40, 40))
+        c.rect(ox + w // 2 - 3, pillar - 1, ox + w // 2 + 2, pillar + 1, (30, 30, 30))
+        c.rect(ox + w // 2 - 2, pillar, ox + w // 2 + 1, pillar, (250, 240, 200))
+    if extra in ("sport", "hatch"):   # yarış şeridi
+        c.rect(ox + w // 2 - 1, 1, ox + w // 2, ws - 1, shade(body, 0.45))
+        c.rect(ox + w // 2 - 1, re + 1, ox + w // 2, h - 2, shade(body, 0.45))
+    c.rect(ox + 1, 0, ox + 3, 0, HEAD); c.rect(ox + w - 4, 0, ox + w - 2, 0, HEAD)
+    c.rect(ox + 1, h - 1, ox + 3, h - 1, TAIL); c.rect(ox + w - 4, h - 1, ox + w - 2, h - 1, TAIL)
     c.volume(); c.outline()
     return c
 
 
+def _wheel(c, cx, cy, r=5):
+    for y in range(-r, r + 1):
+        for x in range(-r, r + 1):
+            d = x * x + y * y
+            if d <= r * r + r * 0.5:
+                c.set(cx + x, cy + y, TIRE if d > (r - 2) ** 2 else RIM if d > 1 else (90, 92, 100))
+    c.set(cx - 1, cy - 2, (210, 212, 220))
+
+
 def car_side(body, extra):
-    """Garaj ve dövüş arka planı için yandan görünüş (sağa bakar)."""
-    w, h = (64, 30) if extra == "truck" else (52, 22) if extra == "van" else (48, 20)
+    """Yandan araba (garaj, menü; sağa bakar): omuz çizgisi, eğimli camlar, kapı çizgileri, jant."""
+    w, h = (64, 30) if extra == "truck" else (54, 24) if extra == "van" else (50, 22)
     c = Canvas(w, h)
-    dark, light = shade(body, 0.7), shade(body, 1.15)
-    glass = (110, 156, 190)
+    dark, mid, light = shade(body, 0.66), shade(body, 0.85), shade(body, 1.18)
     base = h - 5
     if extra == "truck":
-        c.rect(1, 2, 42, base, (150, 160, 176)); c.rect(1, base - 1, 42, base, (120, 130, 146))
-        c.rect(44, 8, 62, base, body); c.rect(48, 10, 60, 16, glass); c.rect(44, base - 2, 62, base, dark)
+        c.rect(1, 2, 42, base, (156, 164, 178)); c.rect(1, 2, 42, 2, (190, 196, 206)); c.rect(1, base - 1, 42, base, (120, 130, 146))
+        c.rect(44, 8, 62, base, body); c.rect(44, 8, 62, 8, light)
+        c.rect(50, 10, 60, 16, GLASS); c.rect(51, 11, 53, 11, GLASS_HI); c.rect(44, base - 2, 62, base, dark)
+        c.rect(61, base - 6, 62, base - 5, HEAD)
+        for wx in (10, 32, 54):
+            _wheel(c, wx, base, 4)
+        c.volume(); c.outline()
+        return c
+    van = extra == "van"
+    belt = base - 8                                   # cam altı (omuz) çizgisi
+    c.rect(1, belt, w - 2, base, body)
+    c.rect(0, belt + 2, w - 1, base - 1, body)
+    c.rect(1, belt, w - 2, belt, light)               # omuz parlaması
+    c.rect(1, base - 1, w - 2, base, dark)            # etek
+    c.rect(2, belt + 3, w - 3, belt + 3, mid)
+    # kabin: ön cam daha yatık
+    if van:
+        top, roof_l, roof_r, slope_f, slope_b = 2, 3, w - 12, 6, 1
+    elif extra == "sport":
+        top, roof_l, roof_r, slope_f, slope_b = 6, 17, w - 17, 7, 6
+    elif extra == "hatch":
+        top, roof_l, roof_r, slope_f, slope_b = 4, 8, w - 18, 7, 2
     else:
-        top = 2 if extra == "van" else 4
-        c.rect(1, base - 7, w - 2, base, body)
-        c.rect(1, base - 7, w - 2, base - 7, light)
-        c.rect(1, base - 1, w - 2, base, dark)
-        roof_l, roof_r = (4, w - 10) if extra == "van" else (12, w - 15)
-        if extra == "sport":
-            roof_l, roof_r = 15, w - 16
-        c.rect(roof_l, top, roof_r, base - 8, body)
-        c.rect(roof_l + 2, top + 2, (roof_l + roof_r) // 2 - 1, base - 9, glass)
-        c.rect((roof_l + roof_r) // 2 + 1, top + 2, roof_r - 2, base - 9, glass)
-        c.rect(w - 2, base - 6, w - 2, base - 5, (255, 246, 190))
-        c.rect(1, base - 6, 1, base - 5, (230, 40, 40))
-        if extra == "taxi":
-            c.rect((roof_l + roof_r) // 2 - 3, top - 2, (roof_l + roof_r) // 2 + 3, top - 1, (30, 30, 30))
-    for wx in ((8, w - 14) if extra != "truck" else (8, 30, 52)):
-        c.rect(wx, base - 1, wx + 6, base + 4, (24, 24, 28))
-        c.rect(wx + 2, base + 1, wx + 4, base + 2, (140, 140, 150))
+        top, roof_l, roof_r, slope_f, slope_b = 4, 12, w - 16, 7, 5
+    rows = belt - top
+    for i in range(rows):
+        k = i / max(1, rows - 1)
+        xl = int(roof_l - slope_b * k)
+        xr = int(roof_r + slope_f * k)
+        c.rect(xl, top + i, xr, top + i, body)
+        if i > 0:
+            c.rect(xl + 2, top + i, xr - 2, top + i, GLASS)
+    c.rect(roof_l, top, roof_r, top, light)            # tavan çizgisi
+    mid_x = (roof_l + roof_r) // 2 + 2
+    c.rect(mid_x, top + 1, mid_x + 1, belt - 1, dark)  # orta direk
+    c.rect(roof_l + 2, top + 1, roof_l + 5, top + 1, GLASS_HI)
+    c.rect(mid_x, belt + 1, mid_x, base - 2, dark)     # kapı çizgisi
+    c.rect(mid_x - 6, belt + 2, mid_x - 4, belt + 2, light); c.rect(mid_x + 4, belt + 2, mid_x + 6, belt + 2, light)
+    c.rect(w - 3, belt + 1, w - 2, belt + 2, HEAD); c.rect(1, belt + 1, 2, belt + 2, TAIL)
+    c.rect(w - 4, base - 1, w - 1, base, (60, 62, 70)); c.rect(0, base - 1, 3, base, (60, 62, 70))   # tamponlar
+    if extra == "taxi":
+        tx = (roof_l + roof_r) // 2
+        c.rect(tx - 3, top - 2, tx + 3, top - 1, (30, 30, 30)); c.rect(tx - 2, top - 2, tx + 2, top - 2, (250, 240, 200))
+    for wx in (9, w - 12):
+        for y in range(-6, 1):   # çamurluk boşluğu
+            for x in range(-6, 7):
+                if x * x + y * y <= 36:
+                    c.set(wx + x, base + y, (0, 0, 0, 0))
+        _wheel(c, wx, base)
     c.volume(); c.outline()
     return c
 

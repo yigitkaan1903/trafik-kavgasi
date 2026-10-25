@@ -609,6 +609,8 @@ CAR_COLORS = {
     "sahin": ((226, 212, 168), None), "tofas": ((150, 70, 52), None), "doblo": ((236, 236, 240), "van"),
     "passat": ((40, 62, 112), None), "bmw": ((28, 28, 34), "sport"), "taksi": ((246, 200, 40), "taxi"),
     "dolmus": ((230, 210, 70), "van"), "kamyon": ((200, 46, 40), "van"),
+    "toros": ((236, 232, 222), None), "egea": ((196, 40, 44), None), "golf": ((176, 180, 188), "sport"),
+    "mercedes": ((200, 204, 212), None),
 }
 
 
@@ -924,12 +926,6 @@ def pass_counter(w=168):
     c = block(w, 16, 14, STONE[6], STONE[3])
     c.fill(0, 16, w, 2, STONE[4])
     c.fill(0, 0, w, 1, WHITE)
-    return c
-
-
-def show_stand():
-    c = Painter(10, 22)
-    c.fill(4, 8, 2, 14, STONE[1]); c.fill(0, 0, 10, 8, GOLD[3]); c.fill(0, 0, 10, 1, GOLD[4])
     return c
 
 
@@ -1257,15 +1253,33 @@ def room_hirdavat():
     return r.finish()
 
 
+GALERI_CARS = ["sahin", "toros", "doblo", "egea", "passat", "golf", "bmw", "mercedes"]   # data/places.gd galeri ile aynı sıra
+
+
+def car_front(cid):
+    """Galeride bize bakan araba: assets/pixellab/cars/car_<id>.png (boş kenarlar kırpılır)."""
+    import pngio
+    px = pngio.read_png(os.path.join(ROOT, "assets", "pixellab", "cars", "car_%s.png" % cid))
+    ys = [y for y, row in enumerate(px) if any(c[3] > 40 for c in row)]
+    xs = [x for x in range(len(px[0])) if any(px[y][x][3] > 40 for y in range(len(px)))]
+    c = Painter(xs[-1] - xs[0] + 1, ys[-1] - ys[0] + 1)
+    for y in range(c.h):
+        for x in range(c.w):
+            p = px[ys[0] + y][xs[0] + x]
+            if p[3] > 40:
+                c.set(x, y, p[:3])
+    return c
+
+
 def room_galeri():
-    r = Room("galeri", 576, 208, wall_h=72)
+    r = Room("galeri", 704, 208, wall_h=72)
     c = r.c
     r.back_wall(STONE[2], base=STONE[1])
-    for x in range(110, 470, 112):
+    for x in range(124, r.W - 100, 112):
         r.window(x, 20, 100, 42, outside="city", frame=[STONE[0], STONE[1], STONE[2], STONE[3], STONE[4]])
     c.fill(24, 18, 70, 46, NAVY[2]); c.fill(28, 22, 62, 38, NAVY[3])
-    c.fill(160, 4, 300, 12, GOLD[3]); c.fill(160, 4, 300, 1, GOLD[4])
-    r.text(160, 14, 300, "NECDET OTO  ·  KİMSEDE YOK BU FİYATLAR", 8, "1b1024")
+    c.fill(220, 4, 300, 12, GOLD[3]); c.fill(220, 4, 300, 1, GOLD[4])
+    r.text(220, 14, 300, "NECDET OTO  ·  KİMSEDE YOK BU FİYATLAR", 8, "1b1024")
     checker(c, 0, 72, r.W, 136, H("d8dce4"), H("c4c8d2"), size=32)
     for x in range(0, r.W, 32):   # parlak zemin yansıması
         for d in range(0, 136, 3):
@@ -1274,14 +1288,16 @@ def room_galeri():
     r.borders(door=(20, 32))
     r.prop("desk_dealer", lambda: reception_desk(60), 22, 96, foot=16)
     r.prop("plant_big", lambda: plant(True), 96, 60, foot=4)
-    for i, (cid, x) in enumerate((("sahin", 124), ("doblo", 232), ("passat", 340), ("bmw", 448))):
-        r.prop("car_" + cid, lambda b=CAR_COLORS[cid]: car_3q(*b), x, 100, foot=14)
-        r.prop("stand", show_stand, x + 64, 132, foot=3)
-        r.mark("car_%d" % i, x + 38, 158)
-        r.add("tags", [x + 38, 96])
+    for i, cid in enumerate(GALERI_CARS):   # arabalar bize bakar; fiyat arabaya tıklayınca görünür
+        cx = 150 + i * 70
+        img = car_front(cid)
+        x, y = cx - img.w // 2, 136 - img.h
+        c.darken(x + 2, 132, img.w - 4, 6, 0.8)          # zemindeki gölge
+        r.prop("carfront_" + cid, lambda cid=cid: car_front(cid), x, y, foot=10)
+        r.mark("car_%d" % i, cx, 156)
     r.mark("necdet", 52, 108); r.mark("talk_necdet", 54, 146)
     r.mark("spawn", 36, 186); r.mark("exit", 36, 204)
-    for x in range(140, 560, 110):
+    for x in range(140, r.W - 20, 110):
         r.add("lamps", [x, 120])
     return r.finish()
 
