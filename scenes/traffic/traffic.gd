@@ -3,6 +3,7 @@ extends Node2D
 ## Otoparktan çıkınca (GameState.drive_dest) hedefe kadar sürülür: yol aldıkça saat ilerler, varınca oranın
 ## otoparkında inersin. Galeriden "Trafiğe çık" ile girince serbest sürüş.
 
+const PauseMenu = preload("res://scenes/ui/pause_menu.gd")
 const NpcCar = preload("res://scenes/traffic/npc_car.gd")
 const ChoicePopup = preload("res://scenes/ui/choice_popup.gd")
 
@@ -106,8 +107,8 @@ func _physics_process(delta: float) -> void:
 		_honk()
 	if Input.is_action_just_pressed("garage") and GameState.drive_dest == "":
 		_leave(GameState.SCENE_GARAGE)
-	elif Input.is_action_just_pressed("back"):
-		_leave(GameState.SCENE_MENU)
+	elif Input.is_action_just_pressed("back"):   # Esc: duraklatma menüsü (ana menüye oradan)
+		PauseMenu.open(self)
 	queue_redraw()
 	_hud.queue_redraw()
 	_update_hud()

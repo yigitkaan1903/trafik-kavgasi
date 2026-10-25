@@ -4,6 +4,7 @@ extends Node2D
 ## oturulur, ayaktaki yolculara laf atılır. Camlardan ve kenarlardan akan yol görünür.
 ## Sağ alttaki telefonla yolda oyun oynanır.
 
+const PauseMenu = preload("res://scenes/ui/pause_menu.gd")
 const MetroEvents = preload("res://data/metro_events.gd")
 const ChoicePopup = preload("res://scenes/ui/choice_popup.gd")
 const Person = preload("res://scenes/metro/person.gd")
@@ -109,8 +110,8 @@ func _physics_process(delta: float) -> void:
 	_update_grabbers(delta)
 	if not _popup_open and not _phone.is_open():
 		_control_player(delta)
-		if Input.is_action_just_pressed("back"):
-			_leave(GameState.SCENE_MENU)
+		if Input.is_action_just_pressed("back"):   # Esc: duraklatma menüsü (ana menüye oradan)
+			PauseMenu.open(self)
 	_outside.queue_redraw()
 	_doors_fx.queue_redraw()
 	_line_map.queue_redraw()

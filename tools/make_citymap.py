@@ -10,7 +10,7 @@ import random
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from make_backgrounds import Painter, H, WOOD  # noqa: E402
+from make_backgrounds import Painter, H, WOOD, STONE, RED, GOLD, GREEN, NAVY  # noqa: E402
 from make_sprites import write_png  # noqa: E402
 import pngio  # noqa: E402
 
@@ -406,6 +406,221 @@ def iso_parking(p, cx, cy):
     p.fill(cx + 8, cy - 9, 5, 5, H("2d4e8c")); p.fill(cx + 9, cy - 8, 1, 3, (255, 255, 255)); p.set(cx + 10, cy - 8, (255, 255, 255))
 
 
+# ---------------------------------------------------------------- Mekan binaları (izometrik, elle; haritayla aynı açı)
+# Her bina kendi tuvalinde çizilir: zemin karosunun merkezi (BX, BY). Sol yüz sol-aşağı, sağ yüz sağ-aşağı bakar.
+
+BW, BHT = 48, 60
+BX, BY = 24, 50
+LIT_PTS = []          # gece yanacak pencereler (tuval koordinatı): place_iso haritaya taşır
+
+
+class IsoB:
+    def __init__(self, hw=13, hh=6, ox=0, oy=0):
+        self.hw, self.hh, self.ox, self.oy = hw, hh, ox, oy
+
+    def ground(self, dx):
+        return BY + self.oy + self.hh - (abs(dx) * self.hh) // self.hw
+
+    def px(self, c, dx, k, col):
+        c.set(BX + self.ox + dx, self.ground(dx) - k, col)
+
+    def body(self, c, h, wl, wr):
+        for dx in range(-self.hw, self.hw + 1):
+            col = wl if dx < 0 else wr
+            for k in range(h):
+                self.px(c, dx, k, col)
+        self.roof(c, h, _shade(wl, 1.12))
+
+    def roof(self, c, h, col, edge=None):
+        cx, cy = BX + self.ox, BY + self.oy - h
+        for dy in range(-self.hh, self.hh + 1):
+            w = self.hw - (abs(dy) * self.hw) // self.hh
+            c.fill(cx - w, cy + dy, w * 2 + 1, 1, col)
+        if edge:
+            for dx in range(-self.hw, self.hw + 1):
+                c.set(cx + dx, cy + self.hh - (abs(dx) * self.hh) // self.hw, edge)
+
+    def band(self, c, k0, k1, cl, cr=None, stripe=None):
+        for dx in range(-self.hw, self.hw + 1):
+            col = cl if dx < 0 else (cr or _shade(cl, 0.82))
+            if stripe and (dx // 2) % 2:
+                col = stripe if dx < 0 else _shade(stripe, 0.85)
+            for k in range(k0, k1):
+                self.px(c, dx, k, col)
+
+    def windows(self, c, ks, col, step=4, w=2, lit=0.3, skip_center=0):
+        for k in ks:
+            for dx in list(range(-self.hw + 2, -skip_center - 1, step)) + list(range(skip_center + 2, self.hw - 1, step)):
+                for q in range(w):
+                    if abs(dx + q) < self.hw:
+                        self.px(c, dx + q, k, col if dx < 0 else _shade(col, 0.85))
+                        self.px(c, dx + q, k + 1, col if dx < 0 else _shade(col, 0.85))
+                if LIGHT_RNG.random() < lit:
+                    LIT_PTS.append((BX + self.ox + dx, self.ground(dx) - k))
+
+
+def _canvas():
+    return Painter(BW, BHT)
+
+
+def b_ev():
+    c = _canvas()
+    b = IsoB(11, 5)
+    b.body(c, 32, H("e2c8a0"), H("bca07a"))
+    b.windows(c, range(5, 30, 5), H("5a7898"), step=4, lit=0.35)
+    for k in range(9, 30, 5):                                   # balkon çizgileri
+        for dx in range(2, b.hw):
+            b.px(c, dx, k - 1, H("8a7458"))
+    for k in range(0, 4):                                       # giriş kapısı (ön köşe)
+        for dx in (-1, 0, 1):
+            b.px(c, dx, k, H("5a3a2a"))
+    b.roof(c, 32, H("b25a48"), H("e08a6a"))
+    c.fill(BX + 3, BY - 32 - 6, 3, 3, STONE[3]); c.fill(BX - 6, BY - 32 - 4, 2, 2, STONE[4])   # su deposu, anten
+    return c
+
+
+def b_market():
+    c = _canvas()
+    b = IsoB(14, 7)
+    b.body(c, 14, H("f0f0ea"), H("ccd0cc"))
+    for k in range(2, 8):                                       # vitrin: renkli ürünler
+        for dx in range(-b.hw + 2, b.hw - 1):
+            if abs(dx) > 1:
+                b.px(c, dx, k, [RED[3], GOLD[3], GREEN[3], NAVY[4], H("e8745a")][(dx * 3 + k) % 5] if (dx + k) % 2 else H("dfeaf2"))
+    for k in range(0, 6):
+        b.px(c, 0, k, H("8fb4cc")); b.px(c, 1, k, H("8fb4cc")); b.px(c, -1, k, H("8fb4cc"))
+    b.band(c, 8, 10, WHITE_L, stripe=H("2f9a4a"))                # tente
+    b.band(c, 10, 14, H("2f8a44"))                              # tabela
+    for dx in range(-b.hw + 3, b.hw - 2, 3):
+        b.px(c, dx, 12, GOLD[4])
+    b.roof(c, 14, H("c8ccc8"), H("e4e6e2"))
+    c.fill(BX - 4, BY - 14 - 3, 5, 3, STONE[5])                  # klima
+    return c
+
+
+def b_gym():
+    c = _canvas()
+    b = IsoB(14, 7)
+    b.body(c, 20, H("34468c"), H("243268"))
+    b.band(c, 4, 11, H("9ac4e8"), H("7aa4cc"))                   # geniş cam şerit
+    for dx in range(-b.hw + 1, b.hw, 4):
+        for k in range(4, 11):
+            b.px(c, dx, k, H("243268"))
+    for k in range(0, 4):
+        for dx in (-1, 0, 1):
+            b.px(c, dx, k, H("cfe7f5"))
+    b.band(c, 14, 18, H("e6b428"))                              # sarı tabela
+    for dx in range(-b.hw + 3, b.hw - 2, 2):
+        b.px(c, dx, 16, H("1b1b22"))
+    b.roof(c, 20, H("8a94a8"), H("aab4c8"))
+    c.fill(BX - 6, BY - 20 - 3, 5, 3, STONE[5]); c.fill(BX + 3, BY - 20 - 2, 5, 3, STONE[5])
+    return c
+
+
+def b_carsi():
+    """Çarşı: tek uzun bina, ön (sağ) cephesi üç dükkana bölünmüş: her birinin kendi tentesi ve vitrini."""
+    c = _canvas()
+    b = IsoB(16, 8)
+    b.body(c, 16, H("e8dcc4"), H("c8b898"))
+    b.windows(c, [12], H("5a7898"), step=4, w=2, lit=0.4)
+    awn = [H("c83a3a"), H("2a5ab0"), H("8a3a7a")]
+    for dx in range(-b.hw + 1, b.hw):
+        sec = 0 if dx < 0 else min(2, 1 + dx // 8)          # sol cephe: kafe; sağ cephe: iki dükkan
+        for k in range(1, 7):                                # vitrinler
+            b.px(c, dx, k, H("dfeaf2") if (dx + k) % 3 else H("8fb4cc"))
+        if dx % 8 == 0 or dx == -1:
+            for k in range(0, 10):
+                b.px(c, dx, k, H("8a7a5a"))                   # dükkan araları
+        for k in (7, 8):                                     # tente
+            b.px(c, dx, k, awn[sec] if (dx // 2) % 2 else WHITE_L)
+        b.px(c, dx, 6, _shade(awn[sec], 0.6))
+    b.roof(c, 16, H("d8ccb0"), H("efe6d2"))
+    c.fill(BX - 5, BY - 16 - 3, 4, 3, STONE[5]); c.fill(BX + 4, BY - 16 - 1, 4, 2, STONE[4])
+    return c
+
+
+def b_galeri():
+    c = _canvas()
+    b = IsoB(15, 7)
+    b.body(c, 14, H("bfe0ec"), H("98c4d8"))                     # cam showroom
+    for dx in range(-b.hw, b.hw + 1, 6):                         # cam yansımaları
+        for k in range(1, 10):
+            b.px(c, dx + k // 3, k, H("e8f6fc"))
+    for (dx, col) in ((-9, RED[3]), (-3, WHITE_L), (5, H("2a5ab0")), (10, H("1b1b22"))):   # içerideki arabalar
+        for q in range(4):
+            for k in (1, 2):
+                b.px(c, dx + q, k, col)
+        b.px(c, dx, 0, H("1b1b22")); b.px(c, dx + 3, 0, H("1b1b22"))
+    b.band(c, 10, 14, H("e6b428"))
+    for dx in range(-b.hw + 2, b.hw - 1, 3):
+        b.px(c, dx, 12, RED[2])
+    b.roof(c, 14, H("d8dce0"), H("eef0f2"))
+    for dx in range(-b.hw, b.hw + 1, 2):                         # bayraklar
+        c.set(BX + dx, BY - 14 - 7 + (abs(dx) * 7) // b.hw - 2, [RED[3], GOLD[3], GREEN[3], NAVY[4]][(dx // 2) % 4])
+    return c
+
+
+def b_berber():
+    c = _canvas()
+    b = IsoB(11, 5)
+    b.body(c, 14, H("ece2c8"), H("c8bc9e"))
+    for k in range(2, 8):
+        for dx in range(-b.hw + 2, b.hw - 1):
+            if abs(dx) > 1:
+                b.px(c, dx, k, H("bcd8ea") if (dx + k) % 4 else H("e8f4fa"))
+    for k in range(0, 6):
+        for dx in (-1, 0, 1):
+            b.px(c, dx, k, H("6a4a3a"))
+    b.band(c, 8, 10, WHITE_L, stripe=H("c8283a"))                # kırmızı-beyaz tente
+    b.band(c, 10, 14, H("b02030"))
+    b.roof(c, 14, H("d8cfb8"), H("ece4d0"))
+    for k in range(0, 12):                                      # berber direği (sol köşe)
+        col = [H("c8283a"), WHITE_L, H("2a4aa0")][(k // 2) % 3]
+        c.set(BX - b.hw - 2, b.ground(-b.hw) - k, col); c.set(BX - b.hw - 1, b.ground(-b.hw) - k, col)
+    return c
+
+
+def b_durak():
+    c = _canvas()
+    b = IsoB(12, 6)
+    for dx in (-b.hw, -1, b.hw):                                 # direkler
+        for k in range(0, 11):
+            b.px(c, dx, k, STONE[2])
+    for dx in range(-b.hw, 0):                                   # cam arka panel ve reklam
+        for k in range(2, 10):
+            b.px(c, dx, k, H("e6b428") if -9 < dx < -4 and 4 < k < 8 else H("a8c8dc"))
+    for dx in range(1, b.hw):                                    # bank
+        b.px(c, dx, 3, WOOD[3]); b.px(c, dx, 4, WOOD[4])
+    b.roof(c, 11, H("c8283a"), H("e85a6a"))
+    c.fill(BX + b.hw + 1, BY - 16, 2, 16, STONE[2]); c.circle(BX + b.hw + 2, BY - 17, 2, H("c8283a"))   # tabela direği
+    return c
+
+
+ISO_BUILDINGS = {"ev": b_ev, "market": b_market, "gym": b_gym, "carsi": b_carsi, "galeri": b_galeri,
+                 "berber": b_berber, "durak": b_durak}
+
+
+def place_iso(p, map_id, name, x, y):
+    """Mekan binasını haritaya bas: kontur, sağ-aşağı gölge, gece pencereleri; etiket için tepe kaydı."""
+    del LIT_PTS[:]
+    c = ISO_BUILDINGS[name]()
+    c.outline((30, 24, 34, 255))
+    ox, oy = x - BX, y - BY
+    for k in range(4):   # yere gölge
+        p.darken(x + 4 + k * 2, y + 2 + k, 12, 1, 0.8, dither=k > 2)
+    top = BHT
+    for yy in range(BHT):
+        for xx in range(BW):
+            col = c.px[yy][xx]
+            if col[3]:
+                p.set(ox + xx, oy + yy, col[:3])
+                top = min(top, yy)
+    for (lx, ly) in LIT_PTS:
+        light(ox + lx, oy + ly, (255, 206, 120), 230)
+    glow(x, y + 4, 7, 55)
+    TOPS.setdefault(map_id, {})[name] = oy + top - y
+
+
 def city_map():
     """İzometrik Beylikdüzü: çapraz sokak ızgarası, gri-renksiz bina blokları, parklar, kuzeyde E-5 ve metrobüs,
     sol altta Marmara kıyısı. Mekanlar renkli PixelLab çizimleri (aynı boyutta), arsaları açık renk."""
@@ -446,10 +661,8 @@ def city_map():
             diamond(p, x, y, H("c8c2b4"), 0, H("b0aa9c"))
             if name == "otopark":
                 iso_parking(p, x, y)
-            elif name == "durak":
-                place(p, "mahalle", "durak", "durak", x, y, scale=0.26, base=4)
             else:
-                place(p, "mahalle", name, name, x, y, scale=ISO_SCALE, base=4)
+                place_iso(p, "mahalle", name, x, y)
             continue
         e5 = E5_J[0] <= j <= E5_J[1]
         road = (i % 6 == 0 or j % 6 == 0) and not e5 and j > E5_J[1]

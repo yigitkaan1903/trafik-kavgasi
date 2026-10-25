@@ -1499,7 +1499,7 @@ def glass_counter(wids):
     c.grad_v(3, 3, w - 6, 22, [H("dfeaf2"), H("a8c4d6"), H("7a98ae")])
     x = 6
     for wid in wids:
-        art = pixellab_art("weapon_" + wid, 26, 18)
+        art = pixellab_art("weapon_" + wid, 14, 9) if wid == "musta" else pixellab_art("weapon_" + wid, 26, 18)   # muşta avuç kadar
         oy = 4 + (20 - art.h) // 2
         for yy in range(art.h):
             for xx in range(art.w):

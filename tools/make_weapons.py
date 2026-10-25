@@ -13,7 +13,7 @@ from make_citymap import load_art, shrink  # noqa: E402
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 # id: dövüşte en uzun kenar (piksel), sap hangi köşede ("bl": sol alt, "c": orta = muşta)
-WEAPONS = {"sopa": (22, "bl"), "bicak": (12, "bl"), "musta": (10, "c"), "levye": (20, "bl"), "pala": (20, "bl"),
+WEAPONS = {"sopa": (22, "bl"), "bicak": (12, "bl"), "musta": (6, "c"), "levye": (20, "bl"), "pala": (20, "bl"),
            "balta": (22, "bl")}
 
 

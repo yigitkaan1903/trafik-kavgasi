@@ -4,6 +4,7 @@ extends Control
 ## Klavyeyle: Sol/Sağ seç, E ya da Enter git. Harita ekrandan büyükse kayar: kamera oyuncuyu ve seçili yeri izler,
 ## fare ekran kenarına gelince ya da sağ/orta tuşla sürükleyince de kayar.
 
+const PauseMenu = preload("res://scenes/ui/pause_menu.gd")
 const Places = preload("res://data/places.gd")
 const MapArt = preload("res://data/map_art.gd")
 const Person = preload("res://scenes/metro/person.gd")
@@ -58,14 +59,6 @@ func _ready() -> void:
 	_world.add_child(_overlay)
 	Lighting.apply(self, true)
 	_add_night_lights()
-
-	if _spots.has("otopark") and GameState.has_car():   # araban otoparkta durur
-		var car := Sprite2D.new()
-		car.texture = GameState.car_texture(GameState.car()["id"])
-		car.rotation = PI / 2.0
-		car.scale = Vector2(0.5, 0.5)
-		car.position = _spots["otopark"]["pos"] + Vector2(-6, 0)
-		_world.add_child(car)
 
 	_player = Person.new()
 	_player.look = GameState.player_look()
@@ -213,9 +206,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		_center_on(_spots[_hover]["pos"])
 	elif (event.is_action_pressed("interact") or event.is_action_pressed("ui_accept")) and _hover != "":
 		_go(_hover)
-	elif event.is_action_pressed("back"):
-		GameState.save_game()
-		GameState.go_to(GameState.SCENE_MENU)
+	elif event.is_action_pressed("back"):   # Esc: duraklatma menüsü (ana menüye oradan)
+		get_viewport().set_input_as_handled()
+		PauseMenu.open(self)
 
 
 ## Seçilen yere yürü ve aç.
@@ -343,3 +336,9 @@ func _draw_overlay() -> void:
 			_overlay.draw_colored_polygon(PackedVector2Array([tip + Vector2(-4, -4), tip + Vector2(4, -4), tip]), Color("1b1024"))
 			_overlay.draw_colored_polygon(PackedVector2Array([tip + Vector2(-3, -4), tip + Vector2(3, -4), tip + Vector2(0, -1)]), Color("e6b428"))
 	_overlay.draw_string(font, _map["line"][0], _map["line"][1], HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color(1, 1, 1, 0.75))
+	if _spots.has("otopark") and GameState.has_car():   # araban otoparkta: yanıp sönen kırmızı nokta
+		var c: Vector2 = _spots["otopark"]["pos"] + Vector2(0, -2)
+		var k := 0.5 + 0.5 * sin(Time.get_ticks_msec() / 220.0)
+		_overlay.draw_circle(c, 5.0 + 2.0 * k, Color(1, 0.2, 0.2, 0.25 * (1.0 - k)))
+		_overlay.draw_circle(c, 3.5, Color.WHITE)
+		_overlay.draw_circle(c, 2.6, Color("e3262f"))
