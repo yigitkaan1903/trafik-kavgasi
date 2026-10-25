@@ -81,7 +81,7 @@ const STAT_NAMES := {"str": "Güç", "agi": "Çeviklik", "sta": "Dayanıklılık
 const PLACES := {
 	"ev": {
 		"name": "Ev", "desc": "Küçük, rutubetli ama senin.",
-		"pos": Vector2(78, 92), "color": Color("b8654a"),
+		"pos": Vector2(64, 108), "color": Color("b8654a"),
 		"spots": [
 			{"kind": "exit", "name": "Kapı", "at": "exit"},
 			{"kind": "object", "name": "Çalışma masası", "at": "desk", "dir": "up",
@@ -101,7 +101,7 @@ const PLACES := {
 	},
 	"market": {
 		"name": "Market", "desc": "Köşedeki market. 07:00-01:00 açık.",
-		"pos": Vector2(196, 74), "color": Color("3f8f5a"),
+		"pos": Vector2(186, 114), "color": Color("3f8f5a"),
 		"spots": [
 			{"kind": "exit", "name": "Kapı", "at": "exit"},
 			{"kind": "npc", "name": "Kasiyer Hüseyin Abi", "look": "sivil0", "stand": "cashier", "at": "talk_cashier",
@@ -121,7 +121,7 @@ const PLACES := {
 	},
 	"gym": {
 		"name": "Rıza'nın Salonu", "desc": "Mahallenin spor salonu. 06:00-24:00 açık.",
-		"pos": Vector2(330, 84), "color": Color("4a5fb0"),
+		"pos": Vector2(372, 104), "color": Color("4a5fb0"),
 		"spots": [
 			{"kind": "exit", "name": "Kapı", "at": "exit"},
 			{"kind": "npc", "name": "Hoca Rıza", "look": "cemil", "stand": "riza", "at": "talk_riza",
@@ -155,7 +155,7 @@ const PLACES := {
 	},
 	"carsi": {
 		"name": "Çarşı", "desc": "Kafe, kargo deposu, dershane, butik, hırdavat. İş ve alışveriş burada.",
-		"pos": Vector2(212, 180), "color": Color("b8902a"),
+		"pos": Vector2(212, 176), "color": Color("b8902a"),
 		"spots": [
 			{"kind": "exit", "name": "Mahalleye dön", "at": "exit"},
 			{"kind": "npc", "name": "Kafe sahibi Melek Hanım", "look": "sivil9", "stand": "melek", "at": "talk_melek", "actions": ["waiter"],
@@ -236,7 +236,7 @@ const PLACES := {
 	},
 	"galeri": {
 		"name": "Necdet Oto Galeri", "desc": "İkinci el, az kullanılmış, sahibinden temiz.",
-		"pos": Vector2(400, 186), "color": Color("6b7080"),
+		"pos": Vector2(424, 178), "color": Color("6b7080"),
 		"spots": [
 			{"kind": "exit", "name": "Kapı", "at": "exit"},
 			{"kind": "npc", "name": "Galerici Necdet", "look": "sivil17", "stand": "necdet", "at": "talk_necdet", "actions": [],
@@ -266,28 +266,28 @@ const CAMPUS_ACTIONS := {
 const MAPS := {
 	"mahalle": {
 		"name": "BEYLİKDÜZÜ", "bg": "bg_map", "walk": 15, "start": "ev",
-		"line": [Vector2(170, 236), "metrobüs hattı → Davutpaşa"],
+		"line": [Vector2(330, 34), "metrobüs hattı → Davutpaşa"],
 		"spots": {
-			"ev": {"name": "Ev", "desc": "Küçük, rutubetli ama senin.", "pos": Vector2(78, 92), "go": "place"},
-			"market": {"name": "Market", "desc": "Köşedeki market. 07:00-01:00 açık.", "pos": Vector2(196, 74), "go": "place"},
-			"gym": {"name": "Rıza'nın Salonu", "desc": "Mahallenin spor salonu. 06:00-24:00 açık.", "pos": Vector2(330, 84), "go": "place"},
-			"galeri": {"name": "Necdet Oto Galeri", "desc": "Araba al, sat, yükselt.", "pos": Vector2(400, 186), "go": "place"},
-			"carsi": {"name": "Çarşı", "desc": "İş (kafe, kargo, dershane) ve alışveriş (butik, hırdavat).", "pos": Vector2(212, 180), "go": "place"},
-			"durak": {"name": "Metrobüs Durağı", "desc": "Okula (YTÜ Davutpaşa) metrobüsle gidilir.", "pos": Vector2(102, 196), "go": "metro"},
-			"otopark": {"name": "Otopark", "desc": "Arabanla okula git: ~35 dk, 30 TL benzin. Trafikte kavga çıkabilir.", "pos": Vector2(332, 186), "go": "drive"},
+			"ev": {"name": "Ev", "desc": "Küçük, rutubetli ama senin.", "pos": Vector2(64, 108), "go": "place"},
+			"market": {"name": "Market", "desc": "Köşedeki market. 07:00-01:00 açık.", "pos": Vector2(186, 114), "go": "place"},
+			"gym": {"name": "Rıza'nın Salonu", "desc": "Mahallenin spor salonu. 06:00-24:00 açık.", "pos": Vector2(372, 104), "go": "place"},
+			"galeri": {"name": "Necdet Oto Galeri", "desc": "Araba al, sat, yükselt.", "pos": Vector2(424, 178), "go": "place"},
+			"carsi": {"name": "Çarşı", "desc": "İş (kafe, kargo, dershane) ve alışveriş (butik, hırdavat).", "pos": Vector2(212, 176), "go": "place"},
+			"durak": {"name": "Metrobüs Durağı", "desc": "Okula (YTÜ Davutpaşa) metrobüsle gidilir.", "pos": Vector2(250, 74), "go": "metro"},
+			"otopark": {"name": "Otopark", "desc": "Arabanla okula git: ~35 dk, 30 TL benzin. Trafikte kavga çıkabilir.", "pos": Vector2(338, 180), "go": "drive"},
 		},
 	},
 	"kampus": {
 		"name": "YTÜ DAVUTPAŞA", "bg": "bg_campus", "walk": 8, "start": "giris",
-		"line": [Vector2(10, 236), "Hafta içi 09:00-17:00 ders  ·  haftada en az 3 gün"],
+		"line": [Vector2(250, 230), "Hafta içi 09:00-17:00 ders  ·  haftada en az 3 gün"],
 		"spots": {
-			"giris": {"name": "Kampüs girişi (metrobüs)", "desc": "Eve dönmek için metrobüse bin.", "pos": Vector2(70, 196), "go": "metro_home"},
-			"eef": {"name": "Elektrik-Elektronik Fak.", "desc": "Devre Analizi dersi.", "pos": Vector2(108, 84), "go": "lecture", "course": "Devre Analizi"},
-			"mak": {"name": "Makine Fakültesi", "desc": "Termodinamik dersi.", "pos": Vector2(254, 66), "go": "lecture", "course": "Termodinamik"},
-			"fen": {"name": "Fen-Edebiyat Fakültesi", "desc": "Diferansiyel Denklemler dersi.", "pos": Vector2(396, 104), "go": "lecture", "course": "Diferansiyel Denklemler"},
-			"yemekhane": {"name": "Merkez Yemekhane", "desc": "11:00-20:00. Ucuz ve doyurucu.", "pos": Vector2(330, 186), "go": "cafeteria"},
-			"kampus_kafe": {"name": "Kampüs Kafe", "desc": "Kahve, çay, sohbet. Enerji toplamanın yolu.", "pos": Vector2(196, 176), "go": "place"},
-			"otopark": {"name": "Otopark", "desc": "Arabanla eve dön: ~35 dk, 30 TL benzin.", "pos": Vector2(446, 52), "go": "drive"},
+			"giris": {"name": "Kampüs girişi (metrobüs)", "desc": "Eve dönmek için metrobüse bin.", "pos": Vector2(60, 74), "go": "metro_home"},
+			"eef": {"name": "Elektrik-Elektronik Fak.", "desc": "Devre Analizi dersi.", "pos": Vector2(110, 124), "go": "lecture", "course": "Devre Analizi"},
+			"mak": {"name": "Makine Fakültesi", "desc": "Termodinamik dersi.", "pos": Vector2(246, 112), "go": "lecture", "course": "Termodinamik"},
+			"fen": {"name": "Fen-Edebiyat Fakültesi", "desc": "Diferansiyel Denklemler dersi.", "pos": Vector2(392, 126), "go": "lecture", "course": "Diferansiyel Denklemler"},
+			"yemekhane": {"name": "Merkez Yemekhane", "desc": "11:00-20:00. Ucuz ve doyurucu.", "pos": Vector2(330, 190), "go": "cafeteria"},
+			"kampus_kafe": {"name": "Kampüs Kafe", "desc": "Kahve, çay, sohbet. Enerji toplamanın yolu.", "pos": Vector2(196, 190), "go": "place"},
+			"otopark": {"name": "Otopark", "desc": "Arabanla eve dön: ~35 dk, 30 TL benzin.", "pos": Vector2(446, 92), "go": "drive"},
 		},
 	},
 }

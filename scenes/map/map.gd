@@ -10,7 +10,7 @@ const StatusBar = preload("res://scenes/ui/status_bar.gd")
 const ChoicePopup = preload("res://scenes/ui/choice_popup.gd")
 const Phone = preload("res://scenes/ui/phone.gd")
 
-const BUILDING := Vector2(64, 40)
+const BUILDING := Vector2(40, 24)    # uzaktan bakış: küçük binalar (tools/make_citymap.py)
 
 var _map: Dictionary
 var _spots := {}      # id -> {"name", "desc", "pos", "go"}
@@ -49,13 +49,14 @@ func _ready() -> void:
 		var car := Sprite2D.new()
 		car.texture = GameState.car_texture(GameState.car()["id"])
 		car.rotation = PI / 2.0
+		car.scale = Vector2(0.5, 0.5)
 		car.position = _spots["otopark"]["pos"] + Vector2(-6, 0)
 		add_child(car)
 
 	_player = Person.new()
 	_player.look = GameState.player_look()
 	_player.marker = true
-	_player.scale_px = 1.0
+	_player.scale_px = 0.6
 	_player.position = _door(GameState.place)
 	add_child(_player)
 
@@ -89,7 +90,7 @@ func _process(_delta: float) -> void:
 
 
 func _door(id: String) -> Vector2:
-	return _spots[id]["pos"] + Vector2(0, BUILDING.y / 2.0 + 8)
+	return _spots[id]["pos"] + Vector2(0, BUILDING.y / 2.0 + 4)
 
 
 ## Binanın alanı: altı kapı hizası, üstü çizimin tepesi (PixelLab binaları daha uzun, bkz. data/map_art.gd).
@@ -237,11 +238,11 @@ func _draw_overlay() -> void:
 		if hot:
 			_overlay.draw_rect(r.grow(3), Color("e6b428"), false, 2.0)
 		var name: String = _spots[id]["name"]
-		var w := font.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x
-		var lp := Vector2(r.get_center().x - w / 2.0, r.position.y - 4)
-		if lp.y < 38.0:   # tepesi durum çubuğuna değen uzun binalarda etiket kapının altına
-			lp.y = r.end.y + 11.0
-		_overlay.draw_rect(Rect2(lp.x - 3, lp.y - 9, w + 6, 12), Color(0, 0, 0, 0.6))
-		_overlay.draw_string(font, lp, name, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color("e6b428") if hot else Color.WHITE)
+		var w := font.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x
+		var lp := Vector2(clampf(r.get_center().x - w / 2.0, 4.0, 476.0 - w), r.position.y - 3)
+		if lp.y < 32.0:   # durum çubuğuna değecekse etiket binanın altına
+			lp.y = r.end.y + 10.0
+		_overlay.draw_rect(Rect2(lp.x - 2, lp.y - 8, w + 4, 10), Color(0, 0, 0, 0.55))
+		_overlay.draw_string(font, lp, name, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color("e6b428") if hot else Color.WHITE)
 	_overlay.draw_string(font, _map["line"][0], _map["line"][1], HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color(1, 1, 1, 0.75))
 	_overlay.draw_string(font, Vector2(6, 34), _map["name"], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(1, 1, 1, 0.6))
