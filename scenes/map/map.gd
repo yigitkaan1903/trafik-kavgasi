@@ -131,6 +131,7 @@ func _gui_input(event: InputEvent) -> void:
 		for id in _spots:
 			if _rect(id).grow(4).has_point(event.position):
 				_hover = id
+		mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if _hover != "" else Control.CURSOR_ARROW
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and _hover != "":
 		_go(_hover)
 
@@ -263,8 +264,6 @@ func _draw_overlay() -> void:
 	for id in _spots:
 		var r := _rect(id)
 		var hot: bool = id == _hover
-		if hot:
-			_overlay.draw_rect(r.grow(3), Color("e6b428"), false, 2.0)
 		var name: String = _spots[id]["name"]
 		var w := font.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x
 		var lp := Vector2(clampf(r.get_center().x - w / 2.0, 4.0, 476.0 - w), r.position.y - 3)
@@ -272,5 +271,9 @@ func _draw_overlay() -> void:
 			lp.y = r.end.y + 10.0
 		_overlay.draw_rect(Rect2(lp.x - 2, lp.y - 8, w + 4, 10), Color(0, 0, 0, 0.55))
 		_overlay.draw_string(font, lp, name, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color("e6b428") if hot else Color.WHITE)
+		if hot:   # seçili yer: etiketin üstünde zıplayan ok (kare çerçeve yerine)
+			var tip := Vector2(lp.x + w / 2.0, lp.y - 10 + roundf(sin(Time.get_ticks_msec() / 160.0) * 1.5))
+			_overlay.draw_colored_polygon(PackedVector2Array([tip + Vector2(-4, -4), tip + Vector2(4, -4), tip]), Color("1b1024"))
+			_overlay.draw_colored_polygon(PackedVector2Array([tip + Vector2(-3, -4), tip + Vector2(3, -4), tip + Vector2(0, -1)]), Color("e6b428"))
 	_overlay.draw_string(font, _map["line"][0], _map["line"][1], HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color(1, 1, 1, 0.75))
 	_overlay.draw_string(font, Vector2(6, 34), _map["name"], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(1, 1, 1, 0.6))

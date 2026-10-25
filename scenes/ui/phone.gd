@@ -586,6 +586,13 @@ func _blocks_input(event: InputEvent) -> void:
 
 func _body_input(event: InputEvent) -> void:
 	_body.accept_event()
+	if event is InputEventMouseMotion:   # uygulama simgeleri ve geri tuşu üstünde el imleci
+		var p: Vector2 = event.position
+		var hot := Rect2(42, 204, 34, 12).has_point(p) or (_app != "home" and Rect2(6, 24, 16, 12).has_point(p))
+		if _app == "home":
+			for key in HOME_ICONS:
+				hot = hot or HOME_ICONS[key].has_point(p)
+		_body.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if hot else Control.CURSOR_ARROW
 	if _app == "blocks":
 		_blocks_input(event)
 	if not (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):

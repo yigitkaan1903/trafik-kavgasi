@@ -47,6 +47,7 @@ func _gui_input(event: InputEvent) -> void:
 		for id in _rects:
 			if _rects[id].has_point(event.position):
 				_hover = id
+		mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if _hover != "" else Control.CURSOR_ARROW
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		for id in _rects:
 			if _rects[id].has_point(event.position):

@@ -98,7 +98,8 @@ func _apply_volume() -> void:
 		_players[_active].volume_db = _music_db()
 
 
-## Oyundaki bütün butonlara tık sesi.
+## Oyundaki bütün butonlara tık sesi ve el imleci.
 func _on_node_added(node: Node) -> void:
 	if node is BaseButton:
 		node.pressed.connect(func(): sfx("click", 0.6, 0.02))
+		node.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND   # butonlarda el imleci

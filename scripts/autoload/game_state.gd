@@ -127,6 +127,7 @@ var _no_save := false     # geliştirici komutlarıyla açılınca kaydı bozma
 
 
 func _ready() -> void:
+	_setup_cursors()
 	_setup_input()
 	_setup_theme()
 	_setup_fade()
@@ -1106,6 +1107,17 @@ func weapon_info() -> Dictionary:
 
 func fighter_texture(look: String, pose: String) -> Texture2D:
 	return load("res://assets/sprites/fighter_%s_%s.png" % [look, pose])
+
+
+## Oyuna özel fare imleçleri (tools/make_cursors.py): ok ve tıklanabilir şeylerin üstünde el.
+func _setup_cursors() -> void:
+	Input.set_custom_mouse_cursor(load("res://assets/sprites/cursor_arrow.png"), Input.CURSOR_ARROW, Vector2(0, 0))
+	Input.set_custom_mouse_cursor(load("res://assets/sprites/cursor_hand.png"), Input.CURSOR_POINTING_HAND, Vector2(10, 1))
+
+
+## Sahnede tıklanabilir bir şeyin üstündeyken el imleci (Control olmayan sahneler için: mekan, metrobüs...).
+func set_hand_cursor(on: bool) -> void:
+	Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND if on else Input.CURSOR_ARROW)
 
 
 ## Konuşma portresi (tools/make_portraits.py, 48x48 büst). Yoksa dövüş sprite'ı. mood: "" ya da "hurt" (sadece oyuncu).

@@ -286,13 +286,19 @@ func _process(delta: float) -> void:
 
 
 func _update_hover() -> void:
+	var before := _hover
 	_hover = -1
-	if not _can_control():
-		return
-	var m := get_global_mouse_position()
-	for i in _spots.size():
-		if _spot_rect(i).has_point(m):
-			_hover = i
+	if _can_control():
+		var m := get_global_mouse_position()
+		for i in _spots.size():
+			if _spot_rect(i).has_point(m):
+				_hover = i
+	if (_hover >= 0) != (before >= 0):   # tıklanabilir bir şeyin üstünde el imleci
+		GameState.set_hand_cursor(_hover >= 0)
+
+
+func _exit_tree() -> void:
+	GameState.set_hand_cursor(false)
 
 
 func _nearest_spot() -> int:
@@ -871,9 +877,6 @@ func _draw_top() -> void:
 	if focus < 0:
 		return
 	var r := _spot_rect(focus)
-	if _hover >= 0:
-		_top.draw_rect(r, Color("e6b428", 0.12))
-		_top.draw_rect(r, Color("e6b428", 0.8), false, 1.0)
 	var name := _spot_name(_spots[focus])
 	var w := font.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x
 	var p := Vector2(roundf(r.get_center().x - w / 2.0), r.position.y - 4)
