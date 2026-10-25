@@ -6,6 +6,10 @@
 
 const STARTER := "sahin"
 
+## Trafikte sadece süs olan arabalar (tools/make_sprites.py DECOR_CARS): galeride satılmaz, iddiaya girilmez.
+## Rakip böyle bir arabayla gelirse kavga olur ama "arabalar ortaya" seçeneği çıkmaz.
+const DECOR := ["civ_0", "civ_1", "civ_2", "civ_3", "civ_4", "civ_5", "civ_6", "civ_7", "civ_8", "civ_9"]
+
 const CARS := {
 	"sahin": {"name": "Murat 131 Şahin", "price": 200, "shop": true, "speed": 1.0, "hp": 3,
 		"desc": "Babadan kalma. Dandik ama bizim."},

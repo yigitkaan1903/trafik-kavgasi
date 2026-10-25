@@ -44,7 +44,7 @@ const SKILLS := {
 		"desc": "Dövüşte +25 can"},
 	# ---------------------------------------------------------------- Günlük hayat
 	"pazarlikci": {"branch": "life", "name": "Pazarlıkçı", "cost": 1,
-		"desc": "Butik ve hırdavatta %15 indirim"},
+		"desc": "Butik ve silahçıda %15 indirim"},
 	"garson_ustasi": {"branch": "life", "name": "Garson Ustası", "cost": 1, "needs": "pazarlikci",
 		"desc": "Garsonlukta sipariş başı +2 TL"},
 	"metro_kurdu": {"branch": "life", "name": "Metrobüs Kurdu", "cost": 1, "needs": "garson_ustasi",

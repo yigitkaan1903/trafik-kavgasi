@@ -5,6 +5,7 @@
 ##   hp, power (hasar çarpanı), speed (hareket ve karar hızı)
 ##   aggro:  saldırma isteği (0-1), block: blok/kaçma refleksi (0-1)
 ##   bet:    arabasına iddiaya girilebilir mi
+##   also:   "traffic" ise metrobüs rakibi trafikte de çıkar (car ve tier ile)
 ##   lines:  "carpma" (sürtünce), "korna" (korna çalınca), "laf" (metrobüste),
 ##           "win" (seni dövünce), "lose" (dayak yiyince), "scared" (namını duyunca), "thanks" (yer verince)
 ##
@@ -81,10 +82,12 @@ const RIVALS := {
 		},
 	},
 	"eren": {
-		"name": "Ayyaş Eren", "venue": "metro", "look": "eren", "weight": 2,
+		"name": "Ayyaş Eren", "venue": "metro", "look": "eren", "weight": 2, "also": "traffic", "car": "tofas", "tier": 0,
 		"hp": 80, "power": 1.0, "speed": 0.75, "aggro": 0.6, "block": 0.08, "reward": 40, "bet": false,
 		"lines": {
 			"laf": ["Kankaa... sen benim en yakın arkadaşımsın... ama ayağıma bastın.", "Bu metrobüs niye dönüyo ya... sen mi döndürüyon?!"],
+			"carpma": ["Hık! Kanka... yol niye iki tane?", "Arabam mı senin araban mı... hangisi bizimki?"],
+			"korna": ["Korna çalma kanka, başım çatlıyo...", "Tamam tamam sağa çekiyorum... sağ hangisiydi?"],
 			"thanks": ["Sen... sen benim kardeşimsin be..."],
 			"scared": ["Abi sen o videodaki adamsın... Gel sarılalım kanka.", "Tamam tamam... ben zaten iniyodum... hangi duraktayız?"],
 			"win": ["Hık! Ben bile ayakta duramıyorum, sen nasıl düştün?"],
@@ -92,10 +95,12 @@ const RIVALS := {
 		},
 	},
 	"kaan": {
-		"name": "Kaan Hardal", "venue": "metro", "look": "kaan", "weight": 2,
+		"name": "Kaan Hardal", "venue": "metro", "look": "kaan", "weight": 2, "also": "traffic", "car": "golf", "tier": 1,
 		"hp": 75, "power": 1.0, "speed": 1.15, "aggro": 0.5, "block": 0.3, "reward": 45, "bet": false,
 		"lines": {
 			"laf": ["Hardal gibi yakarım kardeşim, uzak dur!", "Ne bakıyon? Sarı mont mu görmedin?"],
+			"carpma": ["GTI'ıma sürttün! Hardal gibi yakacam seni!", "Bu jantlar yeni kardeşim, in aşağı!"],
+			"korna": ["Korna mı? Ben sana egzoz sesi dinleteyim!", "Hardal acısı neymiş göreceksin, kenara çek!"],
 			"thanks": ["Eyvallah hocam, borcum olsun."],
 			"scared": ["Tamam abi, hardalı ketçapla karıştırmayalım.", "Seni Ebu Hazretleri anlatmıştı... Geç."],
 			"win": ["Acı mı? Hardal o, alışırsın."],
@@ -103,10 +108,12 @@ const RIVALS := {
 		},
 	},
 	"ebu": {
-		"name": "Ebu Hazretleri", "venue": "metro", "look": "ebu", "weight": 1,
+		"name": "Ebu Hazretleri", "venue": "metro", "look": "ebu", "weight": 1, "also": "traffic", "car": "doblo", "tier": 1,
 		"hp": 100, "power": 1.15, "speed": 0.8, "aggro": 0.35, "block": 0.55, "reward": 70, "bet": false,
 		"lines": {
 			"laf": ["Evlat, sabır acıdır... ama benim sabrım taştı.", "Bu vagonda edep kalmamış, sana öğretelim."],
+			"carpma": ["Evlat, trafikte de edep lazım. İn bakalım.", "Doblo'ma sürtmek... bu da bir imtihan."],
+			"korna": ["Korna şeytanın borusudur evlat!", "Sabret evlat, yeşil yanınca geçeriz. Ama sen sabretmedin."],
 			"thanks": ["Allah razı olsun, hayırlı yolculuklar."],
 			"scared": ["Hikmet senden yana evlat. Geç, yolun açık olsun.", "Senin namın kervanlarda anlatılıyor. Buyur."],
 			"win": ["Nasihat kâr etmeyince... böyle oluyor işte."],

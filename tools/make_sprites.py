@@ -343,6 +343,16 @@ TIRE, RIM = (22, 22, 26), (150, 152, 162)
 HEAD, TAIL = (255, 246, 196), (228, 44, 44)
 
 
+# Trafikte süs arabalar (data/cars.gd DECOR): sadece üstten görünüş.
+DECOR_CARS = {
+    "civ_0": (16, 30, (84, 128, 88), None), "civ_1": (17, 29, (226, 226, 230), "hatch"),
+    "civ_2": (18, 33, (128, 36, 44), None), "civ_3": (18, 32, (96, 100, 110), "van"),
+    "civ_4": (16, 28, (236, 146, 40), "hatch"), "civ_5": (18, 34, (32, 96, 150), "sport"),
+    "civ_6": (17, 31, (186, 172, 128), None), "civ_7": (17, 32, (240, 240, 244), "police"),
+    "civ_8": (16, 29, (120, 70, 150), "hatch"), "civ_9": (19, 36, (44, 44, 50), None),
+}
+
+
 def car_top(w, h, body, extra):
     """Üstten araba (trafik, otopark; önü yukarı): kaput (orta çizgi, farlar, ızgara), eğimli koyu ön cam,
     gövde renginde geniş tavan (ince yan camlar), arka cam, bagaj ve stoplar; yanlardan taşan tekerlekler, aynalar."""
@@ -414,6 +424,9 @@ def car_top(w, h, body, extra):
     if van:   # tavan rafı ve yan camlar
         for y in range(we + 3, rs - 2, 4):
             c.rect(ox + 3, y, ox + w - 4, y, mid)
+    if extra == "police":   # tepe lambası ve kapıda lacivert şerit
+        c.rect(ox + 3, pillar - 1, ox + w // 2 - 1, pillar, (220, 40, 40)); c.rect(ox + w // 2, pillar - 1, ox + w - 4, pillar, (40, 80, 220))
+        c.rect(ox, ws + 2, ox, rs, (30, 50, 120)); c.rect(ox + w - 1, ws + 2, ox + w - 1, rs, (30, 50, 120))
     if extra == "taxi":
         c.rect(ox + w // 2 - 3, pillar - 1, ox + w // 2 + 2, pillar + 1, (30, 30, 30))
         c.rect(ox + w // 2 - 2, pillar, ox + w // 2 + 1, pillar, (250, 240, 200))
@@ -541,6 +554,8 @@ def main():
         for pose in poses:
             fighter(look, pose).save(f"fighter_{who}_{pose}.png")
     for cid, (w, h, body, extra) in CARS.items():
+        car_top(w, h, body, extra).save(f"car_{cid}.png")
+    for cid, (w, h, body, extra) in DECOR_CARS.items():
         car_top(w, h, body, extra).save(f"car_{cid}.png")
         car_side(body, extra).save(f"car_side_{cid}.png")
     print("Sprite'lar üretildi:", os.path.normpath(OUT))

@@ -189,7 +189,7 @@ func _encounter(n: Node, reason: String) -> void:
 	var reply_key := "scared" if GameState.is_scared(id) else reason
 	popup.add_line("Sen: \"%s\"" % PLAYER_REPLIES[reply_key].pick_random(), 9, Color(1, 1, 1, 0.65))
 	popup.add_rival_choices(id, "Kavga et!")
-	if r["bet"]:
+	if r["bet"] and not n.decor:   # süs arabaya iddiaya girilmez
 		popup.add_choice("İddiaya gir: arabalar ortaya!", "bet", false, "Kazanırsan: %s   Kaybedersen: %s" % [
 				GameState.car_info(r["car"])["name"], GameState.car_info()["name"]])
 	var cost := int(r["reward"] / 2)

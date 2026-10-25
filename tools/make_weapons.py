@@ -12,13 +12,6 @@ from make_sprites import write_png  # noqa: E402
 from make_citymap import load_art, shrink  # noqa: E402
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-# Muşta elle çizilir (PixelLab 4 yerine 6 delik çizdi): dört parmak deliği, altta avuç çubuğu.
-# assets/pixellab/map/weapon_musta.png bunun üstüne yazılır; pano ve inceleme portresi de onu kullanır.
-MUSTA_PAL = {"k": (58, 36, 16, 255), "Y": (230, 180, 40, 255), "W": (255, 242, 176, 255), "y": (184, 134, 20, 255)}
-MUSTA = [".kkkkkk.kkkkkk.kkkkkk.kkkkkk."] + [
-    "k" + (row + "k") * 4 for row in ("YWYYYY", "YkkkkY", "Yk..kY", "Yk..kY", "YkkkkY", "YYYYYY")
-] + ["k" + "y" * 27 + "k", ".k" + "y" * 25 + "k.", ".." + "k" * 25 + ".."]
-
 # id: dövüşte en uzun kenar (piksel), sap hangi köşede ("bl": sol alt, "c": orta = muşta)
 WEAPONS = {"sopa": (22, "bl"), "bicak": (12, "bl"), "musta": (10, "c"), "levye": (20, "bl"), "pala": (20, "bl"),
            "balta": (22, "bl")}
@@ -100,8 +93,27 @@ def draw_balta():
 
 
 def draw_musta():
-    px = [[MUSTA_PAL.get(ch, (0, 0, 0, 0)) for ch in row] for row in MUSTA]
-    assert all(len(r) == len(px[0]) for r in px)
+    """Muşta (elle): yan yana dört yuvarlak parmak halkası, altında kavisli avuç çubuğu; altın, üstten ışık."""
+    W, Hh = 38, 22
+    px = [[(0, 0, 0, 0)] * W for _ in range(Hh)]
+    gold = [(126, 86, 18, 255), (186, 136, 30, 255), (230, 182, 52, 255), (250, 222, 120, 255)]
+    rings = [(6, 7), (14, 6), (22, 6), (30, 7)]                     # ortadaki iki halka biraz yukarıda (parmak eğrisi)
+    for y in range(Hh):
+        for x in range(W):
+            for (cx, cy) in rings:
+                d = ((x - cx) ** 2 + (y - cy) ** 2) ** 0.5
+                if 2.9 < d <= 5.2:
+                    k = 3 if (y - cy) < -2 and (x - cx) < 1 else 2 if y <= cy else 1   # üst-sol parlak, alt koyu
+                    px[y][x] = gold[k]
+    for x in range(3, 34):                                             # avuç çubuğu: ortası kalın, uçlar yukarı kıvrık
+        t = (x - 18) / 15
+        top = 13 + round(2 * (1 - t * t)) - 1
+        for y in range(top, top + 3 + (1 if abs(t) < 0.5 else 0)):
+            px[y][x] = gold[2] if y == top else gold[1] if y < top + 2 else gold[0]
+    for (cx, cy) in rings:                                             # halka ile çubuk arası köprü
+        for y in range(cy + 5, 14):
+            px[y][cx] = gold[1]; px[y][cx + 1] = gold[0]
+    _outline(px, (52, 32, 10, 255))
     write_png(os.path.join(ROOT, "assets", "pixellab", "map", "weapon_musta.png"), px)
 
 

@@ -723,24 +723,23 @@ func _open_shop(s: Dictionary, _page: int = 0) -> void:
 
 
 func _outfit_items() -> Array:
-	var list: Array = [{"header": "Kıyafetler"}]
+	var list: Array = []
 	for id in Shop.OUTFITS:
 		var o: Dictionary = Shop.OUTFITS[id]
 		var owned: bool = GameState.outfits_owned.has(id)
 		var on: bool = GameState.outfit == id
 		var price := GameState.shop_price(o["price"])
-		list.append({"kind": "outfit", "id": id, "name": o["name"], "price": price, "desc": o["desc"],
+		list.append({"kind": "outfit", "tab": o["cat"], "id": id, "name": o["name"], "price": price, "desc": o["desc"],
 				"note": "üzerinde" if on else ("sende" if owned else ""), "disabled": on,
 				"action": "Üzerinde" if on else ("Giy" if owned else "Satın al  (%d TL)" % price)})
-	list.append({"header": "Şapkalar"})
-	list.append({"kind": "hat", "id": "", "name": "Şapkasız", "price": 0, "desc": "Saçın görünsün.",
+	list.append({"kind": "hat", "tab": "Şapka", "id": "", "name": "Şapkasız", "price": 0, "desc": "Saçın görünsün.",
 			"note": "şu an" if GameState.hat == "" else "", "disabled": GameState.hat == "", "action": "Çıkar"})
 	for id in Shop.HATS:
 		var h: Dictionary = Shop.HATS[id]
 		var owned: bool = GameState.hats_owned.has(id)
 		var on: bool = GameState.hat == id
 		var price := GameState.shop_price(h["price"])
-		list.append({"kind": "hat", "id": id, "name": h["name"], "price": price, "desc": h["desc"],
+		list.append({"kind": "hat", "tab": "Şapka", "id": id, "name": h["name"], "price": price, "desc": h["desc"],
 				"note": "başında" if on else ("sende" if owned else ""), "disabled": on,
 				"action": "Başında" if on else ("Tak" if owned else "Satın al  (%d TL)" % price)})
 	return list
@@ -776,7 +775,7 @@ func _open_wardrobe(s: Dictionary, page: int) -> void:
 		choices.append(["Çanta: %s%s" % [Shop.WEAPONS[id]["name"], "  (çantada)" if on else ""], "arm:" + id, on])
 	if GameState.weapon != "":
 		choices.append(["Silahı çantadan çıkar", "arm:", false])
-	var line: String = "Butikten aldıkların burada. Çarşıdaki butik ve hırdavatçıya uğra." if choices.size() <= 1 else s.get("lines", [""]).pick_random()
+	var line: String = "Butikten aldıkların burada. Çarşıdaki butiğe ve Av & Savunma'ya uğra." if choices.size() <= 1 else s.get("lines", [""]).pick_random()
 	_paged_dialog("Gardırop", line, choices, page, func(id: String):
 		if id.begins_with("wear:"):
 			GameState.outfit = id.trim_prefix("wear:")

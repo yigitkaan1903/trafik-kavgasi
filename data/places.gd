@@ -156,7 +156,7 @@ const PLACES := {
 		],
 	},
 	"carsi": {
-		"name": "Çarşı", "desc": "Kafe, kargo deposu, dershane, butik, hırdavat. İş ve alışveriş burada.",
+		"name": "Çarşı", "desc": "Kafe, kargo deposu, dershane, butik, Av & Savunma. İş ve alışveriş burada.",
 		"pos": Vector2(212, 176), "color": Color("b8902a"),
 		"spots": [
 			{"kind": "exit", "name": "Mahalleye dön", "at": "exit"},
@@ -167,7 +167,7 @@ const PLACES := {
 			{"kind": "npc", "name": "Dershane müdürü", "look": "plaza", "stand": "mudur", "at": "talk_mudur", "actions": ["tutor"],
 				"lines": ["Matematik bilen düzgün bir öğrenci arıyoruz.", "Önce kendi derslerine düzenli git, sonra konuşalım."]},
 			{"kind": "door", "name": "Butik Moda", "at": "door_butik", "to": "butik"},
-			{"kind": "door", "name": "Spor & Hırdavat", "at": "door_hirdavat", "to": "hirdavat"},
+			{"kind": "door", "name": "Av & Savunma", "at": "door_hirdavat", "to": "hirdavat"},
 			{"kind": "object", "name": "Messi büstü", "at": "bust", "dir": "up", "prop": "messi_bust",
 				"portrait": "res://assets/sprites/messi_portrait.png",
 				"lines": ["Çarşı esnafı toplanıp yaptırmış. Altında \"Gelmişlerin en iyisi\" yazıyor.",
@@ -193,10 +193,10 @@ const PLACES := {
 		"actions": [],
 	},
 	"hirdavat": {
-		"name": "Spor & Hırdavat", "desc": "Alet, spor malzemesi ve... başka şeyler.", "parent": "carsi",
+		"name": "Av & Savunma", "desc": "Kemal'in silah dükkanı. Cam vitrinde sopa, muşta, bıçak, levye, pala, balta.", "parent": "carsi",
 		"spots": [
 			{"kind": "exit", "name": "Çarşıya çık", "at": "exit", "to": "carsi", "spawn": "from_hirdavat"},
-			{"kind": "npc", "name": "Hırdavatçı Kemal", "look": "sivil31", "stand": "kemal", "at": "talk_kemal", "shop": "weapons",
+			{"kind": "npc", "name": "Silahçı Kemal", "look": "sivil31", "stand": "kemal", "at": "talk_kemal", "shop": "weapons",
 				"lines": ["Kendini korumak lazım evlat, devir kötü.", "Sopa beyzbol için, ona göre.", "Polise benden aldığını söyleme."]},
 		],
 		"actions": [],
@@ -276,7 +276,7 @@ const MAPS := {
 			"gym": {"name": "Rıza'nın Salonu", "desc": "Mahallenin spor salonu. 06:00-24:00 açık.", "pos": Vector2(372, 104), "go": "place"},
 			"galeri": {"name": "Necdet Oto Galeri", "desc": "Araba al, sat, yükselt.", "pos": Vector2(424, 178), "go": "place"},
 			"berber": {"name": "Berber Sabri", "desc": "Saç tıraşı, yeni saç modeli. 09:00-21:00 açık.", "pos": Vector2(88, 180), "go": "place"},
-			"carsi": {"name": "Çarşı", "desc": "İş (kafe, kargo, dershane) ve alışveriş (butik, hırdavat).", "pos": Vector2(212, 176), "go": "place"},
+			"carsi": {"name": "Çarşı", "desc": "İş (kafe, kargo, dershane) ve alışveriş (butik, Av & Savunma).", "pos": Vector2(212, 176), "go": "place"},
 			"durak": {"name": "Metrobüs Durağı", "desc": "Okula (YTÜ Davutpaşa) metrobüsle gidilir.", "pos": Vector2(250, 74), "go": "metro"},
 			"otopark": {"name": "Otopark", "desc": "Arabanla okula git: ~35 dk, 30 TL benzin. Trafikte kavga çıkabilir.", "pos": Vector2(338, 180), "go": "drive"},
 		},

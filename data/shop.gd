@@ -4,23 +4,24 @@
 ## Kıyafetlerin görünüşü tools/make_topdown.py OUTFITS içinde (aynı id); her biri ayrı karakter sayfası
 ## (assets/topdown/td_player_<id>.png). "esofman" başlangıç kıyafeti (td_player.png).
 
+## cat: butik menüsündeki sekme (Spor / Günlük / Ceket / Şık)
 const OUTFITS := {
-	"esofman": {"name": "YTÜ eşofmanı", "price": 0, "desc": "Başlangıç kıyafetin. Rahat, lacivert, efsane."},
-	"kapson": {"name": "Siyah kapüşonlu", "price": 220, "desc": "Gece metrobüsünde kimse yanına oturmaz."},
-	"hawaii": {"name": "Hawaii gömleği", "price": 180, "desc": "Yaz geldi, sen de geldin."},
-	"forma": {"name": "Futbol forması", "price": 280, "desc": "Maç günü değil ama olsun."},
-	"kot": {"name": "Kot ceket", "price": 340, "desc": "90'lar geri döndü."},
-	"deri": {"name": "Deri ceket", "price": 480, "desc": "Taksiciler bile saygı duyar."},
-	"mont": {"name": "Kışlık mont", "price": 560, "desc": "Davutpaşa'nın ayazına karşı."},
-	"takim": {"name": "Takım elbise", "price": 900, "desc": "Plaza Kerem kıskançlıktan çatlar."},
-	"pembe": {"name": "Pembe kapüşonlu", "price": 200, "desc": "Özgüven meselesi."},
-	"gomlek": {"name": "Ofis gömleği", "price": 260, "desc": "Staj mülakatına hazır."},
-	"kazak": {"name": "Bordo örgü kazak", "price": 300, "desc": "Anneannenin elinden çıkmış gibi."},
-	"kirmizi": {"name": "Kırmızı eşofman", "price": 320, "desc": "Mahallenin abisi havası."},
-	"metal": {"name": "Metalci tişörtü", "price": 240, "desc": "Kulaklıktan Metallica sızar."},
-	"yagmurluk": {"name": "Sarı yağmurluk", "price": 380, "desc": "Davutpaşa'da yağmur eksik olmaz."},
-	"kamuflaj": {"name": "Kamuflaj mont", "price": 620, "desc": "Metrobüste görünmez olursun (olmazsın)."},
-	"smokin": {"name": "Smokin", "price": 1200, "desc": "Mezuniyet balosu ya da trafik kavgası."},
+	"esofman": {"name": "YTÜ eşofmanı", "cat": "Spor", "price": 0, "desc": "Başlangıç kıyafetin. Rahat, lacivert, efsane."},
+	"kapson": {"name": "Siyah kapüşonlu", "cat": "Spor", "price": 220, "desc": "Gece metrobüsünde kimse yanına oturmaz."},
+	"hawaii": {"name": "Hawaii gömleği", "cat": "Günlük", "price": 180, "desc": "Yaz geldi, sen de geldin."},
+	"forma": {"name": "Futbol forması", "cat": "Spor", "price": 280, "desc": "Maç günü değil ama olsun."},
+	"kot": {"name": "Kot ceket", "cat": "Ceket", "price": 340, "desc": "90'lar geri döndü."},
+	"deri": {"name": "Deri ceket", "cat": "Ceket", "price": 480, "desc": "Taksiciler bile saygı duyar."},
+	"mont": {"name": "Kışlık mont", "cat": "Ceket", "price": 560, "desc": "Davutpaşa'nın ayazına karşı."},
+	"takim": {"name": "Takım elbise", "cat": "Şık", "price": 900, "desc": "Plaza Kerem kıskançlıktan çatlar."},
+	"pembe": {"name": "Pembe kapüşonlu", "cat": "Spor", "price": 200, "desc": "Özgüven meselesi."},
+	"gomlek": {"name": "Ofis gömleği", "cat": "Günlük", "price": 260, "desc": "Staj mülakatına hazır."},
+	"kazak": {"name": "Bordo örgü kazak", "cat": "Günlük", "price": 300, "desc": "Anneannenin elinden çıkmış gibi."},
+	"kirmizi": {"name": "Kırmızı eşofman", "cat": "Spor", "price": 320, "desc": "Mahallenin abisi havası."},
+	"metal": {"name": "Metalci tişörtü", "cat": "Günlük", "price": 240, "desc": "Kulaklıktan Metallica sızar."},
+	"yagmurluk": {"name": "Sarı yağmurluk", "cat": "Ceket", "price": 380, "desc": "Davutpaşa'da yağmur eksik olmaz."},
+	"kamuflaj": {"name": "Kamuflaj mont", "cat": "Ceket", "price": 620, "desc": "Metrobüste görünmez olursun (olmazsın)."},
+	"smokin": {"name": "Smokin", "cat": "Şık", "price": 1200, "desc": "Mezuniyet balosu ya da trafik kavgası."},
 }
 
 ## damage: yumruk (ve özel hareket) hasar çarpanı. range: yumruğun ek menzili (piksel).

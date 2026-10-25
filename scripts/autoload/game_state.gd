@@ -797,7 +797,7 @@ func pick_traffic_rival() -> String:
 	var pool: Array = []
 	for id in Rivals.RIVALS:
 		var r: Dictionary = Rivals.RIVALS[id]
-		if r["venue"] == "traffic" and traffic_wins >= Rivals.TIER_WINS[r["tier"]]:
+		if (r["venue"] == "traffic" or r.get("also", "") == "traffic") and traffic_wins >= Rivals.TIER_WINS[r["tier"]]:
 			for i in r["weight"]:
 				pool.append(id)
 	return pool.pick_random()

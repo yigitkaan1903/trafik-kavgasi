@@ -240,7 +240,7 @@ func _open_help() -> void:
 		"Gün kısıtlı: gymde antrenman yap, çarşıda çalış, haftada 3 gün derse git, yemek ye.",
 		"Metrobüste sıranı bekle ya da kaynak yap; koltuk kap, laf atanla kavga et.",
 		"Dövüş: J yumruk, K tekme, L blok, Boşluk kaç. W/S ile rakiple aynı hizaya gel.",
-		"Butikten kıyafet, hırdavattan silah al; evdeki gardıroptan giy ve çantana koy.",
+		"Butikten kıyafet ve şapka, Av & Savunma'dan silah al; evdeki gardıroptan giy ve çantana koy.",
 		"Gece 02:00'den önce yat, yoksa bayılırsın!"]:
 		var l := GameState.make_label(line, 8, Color(1, 1, 1, 0.85))
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

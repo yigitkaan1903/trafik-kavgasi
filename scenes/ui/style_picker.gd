@@ -10,7 +10,8 @@ const ACCENT := Color("e6b428")
 
 var title := ""
 var subtitle := ""
-## Satırlar: {"id", "name", "price", "desc", "action" (düğme yazısı), "disabled", "note"} ya da {"header": "Başlık"}
+## Satırlar: {"id", "name", "price", "desc", "action" (düğme yazısı), "disabled", "note", "tab"} ya da {"header": "Başlık"}.
+## "tab" verilen satırlar varsa listenin üstünde sekmeler çıkar (ör. Spor / Günlük / Ceket / Şık / Şapka).
 var items: Array = []
 var on_preview: Callable     # func(item: Dictionary)
 var on_buy: Callable         # func(item: Dictionary) -> String ("" ise oldu, değilse neden)
@@ -18,6 +19,8 @@ var image_for: Callable      # func(item: Dictionary) -> Texture2D (silah gibi g
 var keep_open := true        # alım sonrası menü açık kalsın mı (butik: evet, berber: hayır)
 
 var _sel: Dictionary = {}
+var _tab := ""
+var _tabs: HBoxContainer
 var _list: VBoxContainer
 var _desc: Label
 var _buy: Button
@@ -44,6 +47,9 @@ func _ready() -> void:
 		st.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		st.custom_minimum_size.x = PANEL.size.x - 20
 		box.add_child(st)
+	_tabs = HBoxContainer.new()
+	_tabs.add_theme_constant_override("separation", 2)
+	box.add_child(_tabs)
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(PANEL.size.x - 18, 96)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -99,6 +105,8 @@ func _ready() -> void:
 			for id in arg.trim_prefix("--pick=").split(","):
 				for it in items:
 					if it.get("id", "-") == id:
+						_tab = it.get("tab", _tab)
+						_rebuild()
 						_select.call_deferred(it)
 
 
@@ -120,12 +128,61 @@ func set_items(new_items: Array) -> void:
 	_rebuild()
 
 
+## Sekmeler: satırlardaki "tab" değerleri, ilk görüldükleri sırayla.
+func _tab_names() -> Array:
+	var names: Array = []
+	for it in items:
+		var t: String = it.get("tab", "")
+		if t != "" and not names.has(t):
+			names.append(t)
+	return names
+
+
+func _rebuild_tabs() -> void:
+	for ch in _tabs.get_children():
+		ch.queue_free()
+	var names := _tab_names()
+	_tabs.visible = not names.is_empty()
+	if names.is_empty():
+		return
+	if not names.has(_tab):
+		_tab = names[0]
+	for t in names:
+		var b := Button.new()
+		b.text = t
+		b.toggle_mode = true
+		b.button_pressed = t == _tab
+		b.focus_mode = Control.FOCUS_NONE
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		b.add_theme_font_size_override("font_size", 7)
+		var on := StyleBoxFlat.new()
+		on.bg_color = Color(ACCENT, 0.85)
+		on.set_corner_radius_all(3)
+		on.content_margin_top = 1
+		on.content_margin_bottom = 1
+		var off := on.duplicate() as StyleBoxFlat
+		off.bg_color = Color(1, 1, 1, 0.08)
+		b.add_theme_stylebox_override("pressed", on)
+		b.add_theme_stylebox_override("normal", off)
+		b.add_theme_stylebox_override("hover", off)
+		b.add_theme_color_override("font_pressed_color", Color("1b1024"))
+		b.add_theme_color_override("font_color", Color(1, 1, 1, 0.8))
+		var tab_name: String = t
+		b.pressed.connect(func():
+			_tab = tab_name
+			_rebuild())
+		_tabs.add_child(b)
+
+
 func _rebuild() -> void:
+	_rebuild_tabs()
 	for ch in _list.get_children():
 		ch.queue_free()
 	var first: Button = null
 	var keep: Button = null
 	for it in items:
+		if _tab != "" and it.get("tab", "") != _tab:
+			continue
 		if it.has("header"):
 			var h := GameState.make_label(it["header"], 8, Color(ACCENT, 0.8))
 			_list.add_child(h)

@@ -1233,7 +1233,7 @@ def room_carsi():
              (224, 416, H("9aa0aa"), "KARGO DEPOSU", NAVY[2], None),
              (432, 624, H("b8c8e0"), "DERSHANE", RED[1], (NAVY[3], H("dbe4f0"))),
              (640, 816, H("ecd2da"), "BUTİK MODA", H("6e2850"), (H("6e2850"), H("f0c8d8"))),
-             (832, 1008, H("cbb88e"), "SPOR & HIRDAVAT", H("3a3a44"), (GREEN[1], GREEN[3]))]
+             (832, 1008, H("cbb88e"), "AV & SAVUNMA", H("3a3a44"), (GREEN[1], GREEN[3]))]
     rng = random.Random(21)
     for (x0, x1, face, name, sign, awning) in shops:
         w = x1 - x0
@@ -1563,36 +1563,69 @@ def room_butik():
     r.borders(door=(20, 30))
     r.prop("fitting_room", fitting_room, 414, 26, foot=4)
     r.prop("fitting_room", fitting_room, 446, 26, foot=4)
-    r.prop("mannequin", lambda: mannequin(H("c84060"), H("2a2a30")), 50, 172, foot=4)
-    r.prop("mannequin_b", lambda: mannequin(H("3a6ab8"), H("8a7a5a")), 70, 176, foot=4)
-    for k, (x, y) in enumerate(((120, 96), (208, 130), (296, 96))):
+    # kasa: şapka rafının hemen sağında, duvarın dibinde
+    r.prop("butik_counter", lambda: reception_desk(64), 214, 78, foot=16)
+    c.fill(226, 52, 40, 12, H("1f4fa0")); c.fill(226, 52, 40, 1, H("4a7ad0"))
+    r.text(226, 61, 40, "KASA", 6, "ffffff")
+    # iki yan sütun: askılıklar ve katlı ürün masaları; ortada boş koridor
+    for k, (x, y) in enumerate(((56, 100), (56, 164), (382, 100), (382, 164))):
         r.prop("round_rack_%d" % k, lambda s=k: round_rack(s + 3), x, y, foot=8)
-    r.prop("fold_table", lambda: fold_table(9), 200, 84, foot=10)
-    r.prop("fold_table_b", lambda: fold_table(13), 300, 160, foot=10)
-    r.prop("butik_counter", lambda: reception_desk(64), 380, 120, foot=16)
-    c.fill(392, 98, 40, 10, H("1f4fa0")); r.text(392, 106, 40, "KASA", 6, "ffffff")
-    r.prop("plant_big", lambda: plant(True), 140, 54, foot=4)
-    for (x, y) in ((160, 140), (250, 190), (350, 200), (110, 200)):
+    r.prop("fold_table", lambda: fold_table(9), 124, 214, foot=10)
+    r.prop("fold_table_b", lambda: fold_table(13), 300, 214, foot=10)
+    r.prop("mannequin", lambda: mannequin(H("c84060"), H("2a2a30")), 60, 210, foot=4)
+    r.prop("mannequin_b", lambda: mannequin(H("3a6ab8"), H("8a7a5a")), 80, 214, foot=4)
+    r.prop("plant_big", lambda: plant(True), 290, 54, foot=4)
+    for (x, y) in ((112, 134), (112, 196), (366, 134), (366, 196)):
         r.add("crowd_stand", [x, y])
-    r.mark("selin", 412, 134); r.mark("talk_selin", 412, 172)
+    r.mark("selin", 250, 92); r.mark("talk_selin", 250, 128)
     r.mark("spawn", 35, r.H - 22); r.mark("exit", 35, r.H - 4)
-    for (x, y) in ((100, 120), (220, 120), (340, 120), (220, 210)):
+    for (x, y) in ((100, 120), (240, 120), (380, 120), (240, 210)):
         r.add("lamps", [x, y])
     return r.finish()
 
 
+def gun_case(c, x, y, w, h, kind):
+    """Duvardaki ışıklı cam dolap (GTA silahçısı gibi): koyu çerçeve, kadife fon, içinde tabancalar ya da tüfekler, cam parlaması."""
+    c.fill(x - 2, y - 2, w + 4, h + 4, H("15161c")); c.fill(x - 1, y - 1, w + 2, h + 2, H("3a3d48"))
+    c.grad_v(x, y, w, h, [H("5a1e26"), H("3e141a")])
+    c.fill(x, y, w, 1, H("fff2c0"))                                          # tepe ışığı
+    metal, dark, wood = H("8a909c"), H("2a2c34"), H("7a4a2a")
+    if kind == "pistol":
+        for row in range(2):
+            for col in range(w // 16):
+                px_, py_ = x + 3 + col * 16, y + 5 + row * (h // 2)
+                c.fill(px_, py_, 11, 3, metal); c.fill(px_, py_, 11, 1, H("c8ccd4"))          # namlu/sürgü
+                c.fill(px_ + 6, py_ + 3, 4, 6, dark); c.fill(px_ + 5, py_ + 3, 1, 3, dark)   # kabza, tetik
+                c.fill(px_ + 2, py_ + h // 2 - 7, 8, 2, H("f0e8d0"))                        # etiket
+    else:
+        for row in range(h // 9):
+            ry = y + 4 + row * 9
+            c.fill(x + 4, ry + 1, w - 18, 2, dark)                            # namlu
+            c.fill(x + w - 16, ry, 12, 4, wood); c.fill(x + w - 16, ry, 12, 1, H("a06a3a"))   # dipçik
+            c.fill(x + w - 24, ry + 3, 3, 4, dark)                            # şarjör
+            c.fill(x + 10, ry, 6, 1, metal)                                   # gez-arpacık
+    for i in range(0, w + h, 14):                                             # cam parlaması
+        for d in range(h):
+            px_ = x + i - d // 2
+            if x <= px_ < x + w and d % 6 < 2:
+                col = c.px[y + d][px_]
+                c.px[y + d][px_] = (min(255, col[0] + 34), min(255, col[1] + 34), min(255, col[2] + 40), 255)
+
+
 def room_hirdavat():
-    """Spor & Hırdavat (GTA silah dükkanı gibi): cam tezgahın içinde silahlar, Kemal tezgahın arkasında,
-    arka duvarda silah panoları ve neon tabela; yanlarda alet rafı ve koliler."""
+    """Av & Savunma (GTA silah dükkanı gibi): cam tezgahın içinde satılık silahlar, Kemal tezgahın arkasında,
+    arka duvarda ışıklı cam dolaplarda tabancalar ve uzun namlulular (süs), neon tabela; yanlarda raf ve koliler."""
     wids = ["musta", "sopa", "bicak", "levye", "pala", "balta"]
     r = Room("hirdavat", 400, 224, wall_h=64)
     c = r.c
     r.back_wall(H("3a3f4a"), base=H("23262e"))
     c.bricks(0, 8, r.W, 50, [H("2c3038"), H("353a44"), H("3a3f4a"), H("444a56")], bw=12, bh=6, seed=11)
-    c.fill(130, 4, 140, 14, H("1b1b22")); c.fill(130, 4, 140, 1, H("ff4a5a"))
-    r.text(130, 15, 140, "SPOR & HIRDAVAT · SAVUNMA", 6, "ff6a7a")
-    for k in range(len(wids)):                            # arka duvar panoları (tezgahın arkasında)
-        r.prop("wdisp_" + wids[k], lambda w=wids[k]: weapon_display(w), 70 + k * 44, 18, foot=2, shadow=False)
+    c.fill(150, 2, 100, 10, H("1b1b22")); c.fill(150, 2, 100, 1, H("ff4a5a"))
+    r.text(150, 10, 100, "AV & SAVUNMA", 7, "ff6a7a")
+    gun_case(c, 66, 16, 76, 40, "rifle")                  # tezgahın arkasında cam dolaplar
+    gun_case(c, 152, 16, 46, 40, "pistol")
+    gun_case(c, 204, 16, 46, 40, "pistol")
+    gun_case(c, 260, 16, 76, 40, "rifle")
     c.fill(18, 14, 34, 40, H("e8e4d6")); c.circle(35, 30, 12, RED[3]); c.circle(35, 30, 8, H("e8e4d6"))   # hedef afişi
     c.circle(35, 30, 4, RED[3]); c.circle(35, 30, 1, H("e8e4d6"))
     concrete(c, 0, 64, r.W, r.H - 64, H("8a8478"), 3, grid=32)
