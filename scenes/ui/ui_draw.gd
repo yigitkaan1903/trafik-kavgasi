@@ -8,6 +8,14 @@ const BG_SOFT := Color(0.09, 0.08, 0.14, 0.88)
 const GOLD := Color("e6b428")
 const TEXT_DIM := Color(1, 1, 1, 0.62)
 
+## Piksel simgeler (tools/make_icons.py): ad -> [hücre sırası, boyut].
+const ICONS := {
+	"energy": [0, Vector2(12, 12)], "food": [1, Vector2(12, 12)], "money": [2, Vector2(12, 12)],
+	"str": [3, Vector2(12, 12)], "agi": [4, Vector2(12, 12)], "sta": [5, Vector2(12, 12)],
+	"calendar": [6, Vector2(14, 15)],
+}
+const ICON_SHEET := preload("res://assets/sprites/ui_icons.png")
+
 static var _cache := {}
 
 
@@ -28,6 +36,12 @@ static func style(bg: Color, border: Color = Color(0, 0, 0, 0), radius: int = 3,
 ## Yuvarlak köşeli kutu.
 static func box(ci: CanvasItem, r: Rect2, bg: Color, border: Color = Color(0, 0, 0, 0), radius: int = 3) -> void:
 	style(bg, border, radius).draw(ci.get_canvas_item(), r)
+
+
+## Simge (sol üst köşesi pos'ta).
+static func icon(ci: CanvasItem, name: String, pos: Vector2) -> void:
+	var d: Array = ICONS[name]
+	ci.draw_texture_rect_region(ICON_SHEET, Rect2(pos, d[1]), Rect2(Vector2(d[0] * 16, 0), d[1]))
 
 
 ## Kart: koyu yarı saydam zemin, ince altın kenar, üstte hafif parlama.

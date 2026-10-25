@@ -44,6 +44,7 @@ func _ready() -> void:
 	_overlay.draw.connect(_draw_overlay)
 	add_child(_overlay)
 	Lighting.apply(self, true)
+	_add_night_lights()
 
 	if _spots.has("otopark") and GameState.has_car():   # araban otoparkta durur
 		var car := Sprite2D.new()
@@ -82,6 +83,25 @@ func _ready() -> void:
 		GameState.pending_notice = ""
 	elif not GameState.intro_seen:
 		_intro()
+
+
+## Gece: yanan pencereler, sokak lambaları, mekan önü ışıkları (tools/make_citymap.py, bg_*_lights.png).
+## Ayrı CanvasLayer'da durur ki CanvasModulate'in gece karartması ışıkları da söndürmesin.
+func _add_night_lights() -> void:
+	var night := Lighting.night_amount()
+	var path := "res://assets/backgrounds/%s_lights.png" % _map["bg"]
+	if night <= 0.0 or not ResourceLoader.exists(path):
+		return
+	var layer := CanvasLayer.new()
+	add_child(layer)
+	var lights := TextureRect.new()
+	lights.texture = load(path)
+	lights.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var mat := CanvasItemMaterial.new()
+	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	lights.material = mat
+	lights.modulate.a = night
+	layer.add_child(lights)
 
 
 func _process(_delta: float) -> void:

@@ -11,6 +11,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from make_backgrounds import Painter, H  # noqa: E402
+from make_sprites import write_png  # noqa: E402
 import pngio  # noqa: E402
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
@@ -42,6 +43,42 @@ def _shade(c, k):
     return tuple(max(0, min(255, int(v * k))) for v in c[:3])
 
 
+# ---------------------------------------------------------------- Gece ışıkları
+# Haritayla aynı boyutta ayrı katman (bg_*_lights.png): oyunda gece toplamalı (add) karışımla basılır.
+LIGHTS = [None]
+LIGHT_RNG = random.Random(42)
+WARM = (255, 206, 120)
+
+
+def light(x, y, c=WARM, a=255):
+    L = LIGHTS[0]
+    if L is not None and 0 <= x < W and 0 <= y < HGT and L[y][x][3] < a:
+        L[y][x] = (c[0], c[1], c[2], a)
+
+
+def glow(cx, cy, r, a=70, c=WARM):
+    for yy in range(-r, r + 1):
+        for xx in range(-r, r + 1):
+            d = (xx * xx + yy * yy) ** 0.5
+            if d <= r:
+                light(cx + xx, cy + yy, c, int(a * (1 - d / r) ** 1.5))
+
+
+def lamp(x, y):
+    """Sokak lambası: küçük sarı hale, ortada parlak nokta."""
+    glow(x, y, 8, 95)
+    light(x, y, (255, 240, 200))
+
+
+def start_lights():
+    LIGHTS[0] = [[(0, 0, 0, 0)] * W for _ in range(HGT)]
+
+
+def save_lights(name):
+    write_png(os.path.join(ROOT, "assets", "backgrounds", name), LIGHTS[0])
+    LIGHTS[0] = None
+
+
 # ---------------------------------------------------------------- Zemin parçaları
 
 def road(p, x, y, w, h, line=True):
@@ -52,11 +89,17 @@ def road(p, x, y, w, h, line=True):
         if line and h >= 6:
             for k in range(x, x + w, 10):
                 p.fill(k, y + h // 2, 5, 1, ROAD_LINE)
+        for k in range(x + 8, x + w, 28):
+            lamp(k, y)
+            lamp(k + 14, y + h - 1)
     else:
         p.fill(x, y, 1, h, ROAD_EDGE); p.fill(x + w - 1, y, 1, h, ROAD_EDGE)
         if line and w >= 6:
             for k in range(y, y + h, 10):
                 p.fill(x + w // 2, k, 1, 5, ROAD_LINE)
+        for k in range(y + 8, y + h, 28):
+            lamp(x, k)
+            lamp(x + w - 1, k + 14)
 
 
 def lane(p, x, y, w, h):
@@ -75,6 +118,9 @@ def highway(p, y, x0=0, x1=W):
     p.fill(x0, y + 9, w, 8, METRO_RED); p.fill(x0, y + 9, w, 1, _shade(METRO_RED, 1.2))
     for k in range(x0, x1, 16):
         p.fill(k, y + 13, 8, 1, _shade(METRO_RED, 0.8))
+    for k in range(x0 + 6, x1, 24):    # bariyer üstü direk lambaları
+        glow(k, y + 8, 7, 50, (255, 226, 170)); light(k, y + 8, (255, 245, 215))
+        glow(k + 12, y + 17, 7, 50, (255, 226, 170)); light(k + 12, y + 17, (255, 245, 215))
 
 
 def grass(p, x, y, w, h, seed, trees=0.012):
@@ -148,6 +194,8 @@ def tiny_building(p, x, y, w, d, h, rng):
         for wx in range(x + 1, x + w - 1, 2):
             if rng.random() < 0.7:
                 p.set(wx, wy, WIN)
+                if LIGHT_RNG.random() < 0.32:
+                    light(wx, wy, WARM if LIGHT_RNG.random() < 0.85 else (150, 190, 255))
     p.fill(x - 0, y, 1, d + h, _shade(roof, 0.92))
 
 
@@ -230,7 +278,7 @@ def shrink(px, s):
     return out
 
 
-def blit_art(p, px, cx, bottom, outline=True):
+def blit_art(p, px, cx, bottom, outline=True, lit=True):
     """Çizimi alt-orta hizalı basar, dışına ince koyu kontur ve yere gölge."""
     h, w = len(px), len(px[0])
     ox, oy = cx - w // 2, bottom - h
@@ -250,6 +298,12 @@ def blit_art(p, px, cx, bottom, outline=True):
         for x in range(w):
             if px[y][x][3]:
                 p.set(ox + x, oy + y, px[y][x][:3])
+                r, g, b = px[y][x][:3]
+                glass = b > r + 30 and b >= g and r + g + b < 520    # mavi camlar (duvarlar değil)
+                if lit and glass and y > h // 4 and LIGHT_RNG.random() < 0.75:
+                    light(ox + x, oy + y, (255, 196, 110), 190)
+    if lit:
+        glow(cx, bottom - 1, max(10, w // 3), 80)
     return oy
 
 
@@ -277,6 +331,7 @@ MAHALLE = {   # data/places.gd MAPS["mahalle"]["spots"] ile aynı
 
 
 def city_map():
+    start_lights()
     p = Painter(W, HGT)
     p.fill(0, 0, W, HGT, GROUND)
     # cadde ızgarası: E-5, iki ana cadde, bir yatay cadde, sahil yolu
@@ -323,8 +378,9 @@ def city_map():
     place(p, "mahalle", "durak", "durak", *MAHALLE["durak"], scale=0.36)
     bus = load_art("metrobus")
     if bus:
-        blit_art(p, shrink(bus, 0.4), 330, 56)
+        _bus(p, bus, 330)
     p.save("bg_map.png")
+    save_lights("bg_map_lights.png")
 
 
 # ---------------------------------------------------------------- YTÜ Davutpaşa
@@ -335,7 +391,16 @@ KAMPUS = {   # data/places.gd MAPS["kampus"]["spots"] ile aynı
 }
 
 
+def _bus(p, bus, cx):
+    """Hatta bekleyen metrobüs; gece camları yanar, önde farlar."""
+    small = shrink(bus, 0.4)
+    blit_art(p, small, cx, 56)
+    fx = cx + len(small[0]) // 2
+    glow(fx + 3, 52, 8, 90, (255, 248, 225))
+
+
 def campus_map():
+    start_lights()
     p = Painter(W, HGT)
     p.fill(0, 0, W, HGT, GROUND)
     fill_block(p, 0, TOP, W, 14, 77)
@@ -368,8 +433,13 @@ def campus_map():
     place(p, "kampus", "", "kisla", 430, 206)        # tarihi kışla (süs)
     bus = load_art("metrobus")
     if bus:
-        blit_art(p, shrink(bus, 0.4), 300, 56)
+        _bus(p, bus, 300)
+    for x in range(20, W, 40):                         # yol lambaları
+        lamp(x, 151)
+    for y in range(76, 150, 24):
+        lamp(57, y)
     p.save("bg_campus.png")
+    save_lights("bg_campus_lights.png")
 
 
 def write_map_art():

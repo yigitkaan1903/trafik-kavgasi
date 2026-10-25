@@ -79,29 +79,24 @@ func _draw() -> void:
 	draw_rect(Rect2(0, HEIGHT, 480, 2), Color(0, 0, 0, 0.3))
 
 	# takvim yaprağı ve saat
-	UIDraw.box(self, Rect2(3, 3, 17, 16), Color("f1f5f9"), Color(0, 0, 0, 0), 2)
-	UIDraw.box(self, Rect2(3, 3, 17, 6), Color("dc2626"), Color(0, 0, 0, 0), 2)
-	draw_rect(Rect2(3, 7, 17, 2), Color("dc2626"))
-	draw_rect(Rect2(7, 2, 1, 3), Color("6b6478")); draw_rect(Rect2(15, 2, 1, 3), Color("6b6478"))
-	draw_string(font, Vector2(3, 17.5), str(gs.day), HORIZONTAL_ALIGNMENT_CENTER, 17, 8, Color("1b1024"))
+	UIDraw.icon(self, "calendar", Vector2(5, 3))
+	draw_string(font, Vector2(5, 15.5), str(gs.day), HORIZONTAL_ALIGNMENT_CENTER, 14, 7, Color("1b1024"))
 	var late: bool = gs.minute >= 23 * 60 or gs.minute < Places.START_MINUTE
 	draw_string(font, Vector2(24, 12), gs.clock_text(), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("ff6a4a") if late else Color.WHITE)
 	draw_string(font, Vector2(24, 19.5), Places.DAY_NAMES[gs.weekday()], HORIZONTAL_ALIGNMENT_LEFT, -1, 6, UIDraw.TEXT_DIM)
 	_divider(70)
 
 	# enerji ve tokluk: parçalı çubuklar
-	_icon_energy(Vector2(75, 1))
+	UIDraw.icon(self, "energy", Vector2(73, 0))
 	UIDraw.meter(self, Rect2(86, 3, 52, 5), _energy / 100.0, Color("facc15") if _energy > 25.0 else Color("ef4444"), 10)
 	draw_string(font, Vector2(142, 8.5), "%d" % int(_energy), HORIZONTAL_ALIGNMENT_LEFT, -1, 7, Color(1, 1, 1, 0.75))
-	_icon_food(Vector2(75, 11))
+	UIDraw.icon(self, "food", Vector2(73, 10))
 	UIDraw.meter(self, Rect2(86, 13, 52, 5), _food / 100.0, Color("4ade80") if _food > 25.0 else Color("ef4444"), 10)
 	draw_string(font, Vector2(142, 18.5), "%d" % int(_food), HORIZONTAL_ALIGNMENT_LEFT, -1, 7, Color(1, 1, 1, 0.75))
 	_divider(160)
 
 	# para (değişince küçük +/- yazısı belirir)
-	draw_circle(Vector2(170, 11), 6.5, Color("8e611a"))
-	draw_circle(Vector2(170, 10.5), 6, Color("e6b428"))
-	draw_circle(Vector2(170, 10.5), 4, Color("c9971a"))
+	UIDraw.icon(self, "money", Vector2(164, 5))
 	draw_string(font, Vector2(180, 15), "%d TL" % int(round(_money)), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, UIDraw.GOLD)
 	if _money_pop_t > 0.0:
 		var a := clampf(_money_pop_t / 0.4, 0.0, 1.0)
@@ -124,9 +119,7 @@ func _draw() -> void:
 		var glow: float = _pulse[k] / 0.25
 		var r := Rect2(x, 2, BADGE_W - 4, 18)
 		UIDraw.box(self, r, Color("201c30").lerp(col.darkened(0.35), glow * 0.7), Color(col, 0.35 + glow * 0.5), 3)
-		draw_circle(Vector2(x + 9, 11), 7, col.darkened(0.25))
-		draw_circle(Vector2(x + 9, 10.5), 6.5, col)
-		_stat_icon(k, Vector2(x + 9, 10.5))
+		UIDraw.icon(self, k, Vector2(x + 3, 5))
 		draw_string(font, Vector2(x + 19, 12.5), str(int(_shown[k])), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color.WHITE)
 		draw_string(font, Vector2(x + 36, 10), Places.STAT_NAMES[k], HORIZONTAL_ALIGNMENT_LEFT, -1, 6, UIDraw.TEXT_DIM)
 		UIDraw.meter(self, Rect2(x + 36, 13, BADGE_W - 44, 3), fmod(_shown[k], 1.0), col.lightened(0.25))
@@ -134,29 +127,3 @@ func _draw() -> void:
 
 func _divider(x: float) -> void:
 	draw_rect(Rect2(x, 4, 1, HEIGHT - 8), Color(1, 1, 1, 0.1))
-
-
-func _icon_energy(p: Vector2) -> void:
-	draw_colored_polygon(PackedVector2Array([p + Vector2(5, 0), p + Vector2(1, 5), p + Vector2(4, 5),
-			p + Vector2(2, 9), p + Vector2(8, 3), p + Vector2(5, 3), p + Vector2(7, 0)]), Color("facc15"))
-
-
-func _icon_food(p: Vector2) -> void:
-	draw_circle(p + Vector2(5, 4), 3.5, Color("b8654a"))       # but
-	draw_rect(Rect2(p + Vector2(2, 6), Vector2(2, 3)), Color("f1f5f9"))
-
-
-func _stat_icon(k: String, c: Vector2) -> void:
-	var w := Color(1, 1, 1, 0.9)
-	match k:
-		"str":   # yumruk
-			draw_rect(Rect2(c + Vector2(-4, -3), Vector2(7, 6)), w)
-			draw_rect(Rect2(c + Vector2(-4, -3), Vector2(7, 1)), Color(0, 0, 0, 0.3))
-			draw_rect(Rect2(c + Vector2(3, -1), Vector2(2, 3)), w)
-		"agi":   # ayakkabı
-			draw_rect(Rect2(c + Vector2(-4, -1), Vector2(8, 4)), w)
-			draw_rect(Rect2(c + Vector2(-4, -4), Vector2(3, 3)), w)
-		"sta":   # kalp
-			draw_circle(c + Vector2(-2, -1), 2.5, w)
-			draw_circle(c + Vector2(2, -1), 2.5, w)
-			draw_colored_polygon(PackedVector2Array([c + Vector2(-4.5, 0), c + Vector2(4.5, 0), c + Vector2(0, 5)]), w)

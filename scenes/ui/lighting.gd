@@ -27,6 +27,18 @@ static func is_dark() -> bool:
 	return GameState.minute >= 1170.0 or GameState.minute < 400.0
 
 
+## Gece ışıklarının gücü (0 gündüz, 1 gece): 18:00-20:00 yanar, 05:30-07:00 söner.
+static func night_amount() -> float:
+	var m: float = GameState.minute
+	if m >= 1200.0 or m < 330.0:
+		return 1.0
+	if m >= 1080.0:
+		return (m - 1080.0) / 120.0
+	if m < 420.0:
+		return 1.0 - (m - 330.0) / 90.0
+	return 0.0
+
+
 ## Sahneye zaman rengi ve lambaları ekler. always_on: iç mekan lambaları gündüz de hafif yanar.
 static func apply(parent: Node, outdoor: bool, lamps: Array = [], radius: float = 90.0, always_on: bool = false) -> CanvasModulate:
 	var cm := CanvasModulate.new()

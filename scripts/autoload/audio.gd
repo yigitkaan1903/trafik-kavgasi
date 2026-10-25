@@ -6,7 +6,7 @@ extends Node
 const MUSIC := {"chill": "res://assets/audio/music_chill.wav", "fight": "res://assets/audio/music_fight.wav"}
 const FADE := 0.8
 const MUSIC_GAIN := {"chill": 1.0, "fight": 0.5}   # dövüş müziği daha kısık
-const SFX_GAIN := 0.3        # efektler müziğin altında kalsın (ayardaki %100 = bu kadar)
+const SFX_GAIN := 0.18       # efektler müziğin altında kalsın (ayardaki %100 = bu kadar)
 
 var music_volume := 0.6:
 	set(v):
