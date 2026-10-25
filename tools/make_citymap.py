@@ -310,28 +310,29 @@ def blit_art(p, px, cx, bottom, outline=True, lit=True):
 TOPS = {}
 
 
-def place(p, map_id, spot, art, cx, cy, scale=ART_SCALE):
-    """Mekan çizimi: alt kenarı cy + BASE. Etiket için tepe yüksekliği kaydedilir."""
+def place(p, map_id, spot, art, cx, cy, scale=ART_SCALE, base=BASE):
+    """Mekan çizimi: alt kenarı cy + base. Etiket için tepe yüksekliği kaydedilir."""
     px = load_art(art)
     if px is None:
         p.fill(cx - 14, cy - 10, 28, 22, ROOFS[0])
         top = cy - 10
     else:
-        top = blit_art(p, shrink(px, scale), cx, cy + BASE)
+        top = blit_art(p, shrink(px, scale), cx, cy + base)
     if spot:
         TOPS.setdefault(map_id, {})[spot] = top - cy
 
 
 # ---------------------------------------------------------------- Beylikdüzü (izometrik, ekrandan büyük, kayar)
 
-IW, IH = 960, 540                      # harita boyutu (ekran 480x270: kamera kayar)
-TW, THH = 32, 16                       # izometrik karo (genişlik, yükseklik)
-ISO_O = (480, -240)                    # (i, j) = (0, 0) karosunun merkezi
-E5_J = (13, 16)                        # E-5 bandı (j aralığı)
+IW, IH = 480, 270                      # harita ekrana sığar (kaymaz)
+TW, THH = 20, 10                       # izometrik karo (genişlik, yükseklik)
+ISO_O = (240, -120)                    # (i, j) = (0, 0) karosunun merkezi
+E5_J = (13, 15)                        # E-5 bandı (j aralığı)
+ISO_SCALE = 0.3                        # mekan çizimlerinin küçültmesi (karolara göre)
 
 # Mekanlar karo olarak (i, j); merkezleri data/places.gd MAPS["mahalle"]["spots"] pos ile aynı (iso() hesaplar)
-MAHALLE_ISO = {"durak": (26, 17), "ev": (22, 34), "market": (27, 29), "gym": (34, 25), "carsi": (33, 33),
-               "galeri": (41, 26), "otopark": (40, 31), "berber": (26, 38)}
+MAHALLE_ISO = {"durak": (27, 17), "ev": (22, 31), "market": (27, 28), "gym": (33, 23), "carsi": (31, 33),
+               "galeri": (41, 25), "otopark": (37, 29), "berber": (23, 37)}
 
 ISO_GRASS = [H("5e7a52"), H("6b8a5c"), H("78986a")]
 ISO_TREE = [H("2f4a30"), H("41623e"), H("5a7e4c")]
@@ -346,7 +347,7 @@ def iso(i, j):
 
 def coast_y(x):
     import math
-    return 318 + 0.24 * x + 8 * math.sin(x / 37.0) + 4 * math.sin(x / 13.0)
+    return 196 + 0.3 * x + 4 * math.sin(x / 19.0) + 2 * math.sin(x / 7.0)
 
 
 def on_land(x, y):
@@ -391,9 +392,18 @@ def iso_box(p, cx, cy, h, roof, rng, lit=True):
 
 
 def iso_tree(p, x, y):
-    p.darken(x - 2, y + 1, 7, 2, 0.75)
-    p.fill(x, y - 2, 1, 3, H("5a4030"))
-    p.circle(x, y - 5, 3, ISO_TREE[0]); p.circle(x - 1, y - 6, 2, ISO_TREE[1]); p.set(x - 2, y - 7, ISO_TREE[2])
+    p.darken(x - 1, y + 1, 5, 1, 0.75)
+    p.fill(x, y - 1, 1, 2, H("5a4030"))
+    p.circle(x, y - 3, 2, ISO_TREE[0]); p.set(x - 1, y - 4, ISO_TREE[1]); p.set(x, y - 4, ISO_TREE[1]); p.set(x - 1, y - 5, ISO_TREE[2])
+
+
+def iso_parking(p, cx, cy):
+    """Otopark: iki karo büyüklüğünde asfalt, beyaz park çizgileri, P tabelası."""
+    for (dx, dy) in ((0, 0), (TW // 2, THH // 2), (-TW // 2, THH // 2), (0, THH)):
+        diamond(p, cx + dx, cy + dy - THH // 2, H("4a5250"))
+    for k in range(-6, 8, 4):
+        p.fill(cx + k, cy - 2 + k // 2, 1, 3, ROAD_LINE)
+    p.fill(cx + 8, cy - 9, 5, 5, H("2d4e8c")); p.fill(cx + 9, cy - 8, 1, 3, (255, 255, 255)); p.set(cx + 10, cy - 8, (255, 255, 255))
 
 
 def city_map():
@@ -403,14 +413,14 @@ def city_map():
     p = Painter(IW, IH)
     rng = random.Random(7)
     p.fill(0, 0, IW, IH, ISO_SEA[1])
-    for _ in range(900):                          # deniz dalgaları
+    for _ in range(250):                          # deniz dalgaları
         x, y = rng.randrange(IW), rng.randrange(IH)
         p.fill(x, y, 3 + rng.randrange(5), 1, ISO_SEA[2] if rng.random() < 0.6 else ISO_SEA[0])
     for x in range(IW):                           # kara: çim zemin, kıyıda kumsal
         cy = int(coast_y(x))
-        p.fill(x, 0, 1, max(0, cy - 5), ISO_GRASS[1])
-        p.fill(x, max(0, cy - 5), 1, 5, SAND[1]); p.set(x, cy - 5, SAND[2]); p.set(x, cy, H("e8f4f8"))
-    p.speckle(0, 0, IW, IH - 120, [ISO_GRASS[0], ISO_GRASS[2]], 0.06, 3)
+        p.fill(x, 0, 1, max(0, cy - 3), ISO_GRASS[1])
+        p.fill(x, max(0, cy - 3), 1, 3, SAND[1]); p.set(x, cy - 3, SAND[2]); p.set(x, cy, H("e8f4f8"))
+    p.speckle(0, 0, IW, IH, [ISO_GRASS[0], ISO_GRASS[2]], 0.04, 3)
     places = {k: iso(*v) for k, v in MAHALLE_ISO.items()}
     near = lambda x, y, r: any(abs(x - px) < r and abs(y - py) < r * 0.6 for px, py in places.values())
     cells = []
@@ -420,13 +430,26 @@ def city_map():
             if -TW < x < IW + TW and -THH < y < IH + THH:
                 cells.append((i + j, i, j, x, y))
     cells.sort()
-    plaza = set()
-    for (pi, pj) in MAHALLE_ISO.values():
-        for di in (-1, 0, 1):
-            for dj in (-1, 0, 1):
-                plaza.add((pi + di, pj + dj))
+    plaza, low, at_cell = set(), set(), {}
+    for name, (pi, pj) in MAHALLE_ISO.items():
+        at_cell[(pi, pj)] = name
+        for (di, dj) in ((0, 0), (1, 0), (0, 1), (1, 1)):          # mekanın karosu ve önü: meydan (giriş açık kalsın)
+            plaza.add((pi + di, pj + dj))
+        for di in range(-1, 4):
+            for dj in range(-1, 4):
+                low.add((pi + di, pj + dj))                          # önündeki binalar alçak: mekan gömülmesin
     for _, i, j, x, y in cells:
-        if not on_land(x, y + 6):
+        if not on_land(x, y + 4):
+            continue
+        if (i, j) in at_cell:                                         # mekan: derinlik sırasında çizilir (önündekiler örtebilir)
+            name = at_cell[(i, j)]
+            diamond(p, x, y, H("c8c2b4"), 0, H("b0aa9c"))
+            if name == "otopark":
+                iso_parking(p, x, y)
+            elif name == "durak":
+                place(p, "mahalle", "durak", "durak", x, y, scale=0.26, base=4)
+            else:
+                place(p, "mahalle", name, name, x, y, scale=ISO_SCALE, base=4)
             continue
         e5 = E5_J[0] <= j <= E5_J[1]
         road = (i % 6 == 0 or j % 6 == 0) and not e5 and j > E5_J[1]
@@ -447,39 +470,36 @@ def city_map():
             diamond(p, x, y, H("c8c2b4"), 0, H("b0aa9c"))
         elif j < E5_J[0]:                          # E-5'in kuzeyi (Esenyurt): soluk, sık bloklar
             if rng.random() < 0.85:
-                iso_box(p, x, y, rng.randint(10, 26), _shade(rng.choice(ISO_ROOF), 0.92), rng)
+                iso_box(p, x, y, rng.randint(6, 16), _shade(rng.choice(ISO_ROOF), 0.92), rng)
         elif rng.random() < 0.27 or (28 <= i <= 31 and 35 <= j <= 39) or (36 <= i <= 38 and 18 <= j <= 22):   # parklar
             diamond(p, x, y, ISO_GRASS[0])
             for _t in range(rng.randint(0, 2)):
                 iso_tree(p, x + rng.randint(-7, 7), y + rng.randint(-2, 3))
-        elif near(x, y, 30):
-            diamond(p, x, y, ISO_GRASS[2])
+        elif (i, j) in low:
             if rng.random() < 0.5:
+                diamond(p, x, y, ISO_GRASS[2])
                 iso_tree(p, x, y)
+            else:
+                iso_box(p, x, y, rng.choice([3, 4, 5]), rng.choice(ISO_ROOF), rng)
         else:
-            h = rng.choice([6, 8, 10, 12, 14, 18, 24]) if not on_land(x, y + 40) is False else 8
-            iso_box(p, x, y, h, rng.choice(ISO_ROOF), rng)
-    # kıyı: sahil yolu boyunca ağaçlar, iskele ve tekneler
-    for x in range(20, IW, 26):
-        cy = int(coast_y(x)) - 10
-        if not near(x, cy, 30):
+            iso_box(p, x, y, rng.choice([4, 5, 6, 8, 10, 12, 16]), rng.choice(ISO_ROOF), rng)
+    # kıyı: sahil boyunca ağaçlar, iskele ve tekneler
+    for x in range(10, IW, 18):
+        cy = int(coast_y(x)) - 6
+        if cy < IH and not near(x, cy, 18):
             iso_tree(p, x, cy)
-    px0 = 360
+    px0 = 70
     pc = int(coast_y(px0))
-    p.fill(px0, pc - 2, 6, 46, WOOD[3]); p.fill(px0, pc - 2, 1, 46, WOOD[5])     # iskele
-    for (bx, by) in ((px0 + 14, pc + 28), (px0 - 40, pc + 52), (620, int(coast_y(620)) + 40)):
-        p.fill(bx, by, 18, 5, WHITE_L); p.fill(bx + 4, by - 3, 8, 3, H("dfe4ee")); p.darken(bx, by + 5, 18, 1, 0.7)
-    # mekanlar: renkli PixelLab çizimleri (diğer her şey renksiz)
-    parking(p, *places["otopark"])
-    for name in ("ev", "market", "gym", "carsi", "galeri", "berber"):
-        place(p, "mahalle", name, name, *places[name])
-    place(p, "mahalle", "durak", "durak", *places["durak"], scale=0.36)
+    p.fill(px0, pc - 1, 3, 24, WOOD[3]); p.fill(px0, pc - 1, 1, 24, WOOD[5])       # iskele
+    for (bx, by) in ((px0 + 8, pc + 14), (px0 - 26, pc + 26), (40, int(coast_y(40)) + 34)):
+        if by < IH:
+            p.fill(bx, by, 10, 3, WHITE_L); p.fill(bx + 2, by - 2, 5, 2, H("dfe4ee"))
     bus = load_art("metrobus")
-    if bus:
-        small = shrink(bus, 0.36)
-        bx, by = iso(31, 14)
-        blit_art(p, small, bx, by + 6)
-        glow(bx + len(small[0]) // 2, by, 8, 80, (255, 248, 225))
+    if bus:   # hatta bekleyen metrobüs
+        small = shrink(bus, 0.22)
+        bx, by = iso(33, 14)
+        blit_art(p, small, bx, by + 4)
+        glow(bx + len(small[0]) // 2, by, 5, 70, (255, 248, 225))
     p.save("bg_map.png")
     save_lights("bg_map_lights.png")
 

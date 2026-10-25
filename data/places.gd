@@ -160,12 +160,9 @@ const PLACES := {
 		"pos": Vector2(212, 176), "color": Color("b8902a"),
 		"spots": [
 			{"kind": "exit", "name": "Mahalleye dön", "at": "exit"},
-			{"kind": "npc", "name": "Kafe sahibi Melek Hanım", "look": "melek", "stand": "melek", "at": "talk_melek", "actions": ["waiter"],
-				"lines": ["Garson lazım, akşamlar çok yoğun.", "Tepsiyi düşürürsen maaştan keserim, ona göre!"]},
-			{"kind": "npc", "name": "Kargo şefi Bayram", "look": "hayri", "stand": "bayram", "at": "talk_bayram", "actions": ["cargo"],
-				"lines": ["Koliler ağır, bilek lazım!", "Güçsüzsen hiç başlama, bel fıtığı olursun."]},
-			{"kind": "npc", "name": "Dershane müdürü", "look": "plaza", "stand": "mudur", "at": "talk_mudur", "actions": ["tutor"],
-				"lines": ["Matematik bilen düzgün bir öğrenci arıyoruz.", "Önce kendi derslerine düzenli git, sonra konuşalım."]},
+			{"kind": "door", "name": "Kafe Yıldız", "at": "door_kafe", "to": "kafe_yildiz"},
+			{"kind": "door", "name": "Kargo deposu", "at": "door_kargo", "to": "kargo"},
+			{"kind": "door", "name": "Dershane", "at": "door_dershane", "to": "dershane"},
 			{"kind": "door", "name": "Butik Moda", "at": "door_butik", "to": "butik"},
 			{"kind": "door", "name": "Av & Savunma", "at": "door_hirdavat", "to": "hirdavat"},
 			{"kind": "object", "name": "Messi büstü", "at": "bust", "dir": "up", "prop": "messi_bust",
@@ -173,11 +170,44 @@ const PLACES := {
 				"lines": ["Çarşı esnafı toplanıp yaptırmış. Altında \"Gelmişlerin en iyisi\" yazıyor.",
 					"Büstün burnu parlamış: herkes uğur için dokunuyor.", "Biri ayağına top bırakmış."]},
 		],
+		"actions": [],
+	},
+	"kafe_yildiz": {
+		"name": "Kafe Yıldız", "desc": "Çarşının sıcak kafesi. Kahve iç, garsonluk yap.", "parent": "carsi",
+		"spots": [
+			{"kind": "exit", "name": "Çarşıya çık", "at": "exit", "to": "carsi", "spawn": "from_kafe"},
+			{"kind": "npc", "name": "Kafe sahibi Melek Hanım", "look": "melek", "stand": "melek", "at": "talk_melek",
+				"actions": ["coffee", "tea", "waiter"],
+				"lines": ["Hoş geldin! Kahve mi, iş mi?", "Garson lazım, akşamlar çok yoğun.", "Tepsiyi düşürürsen maaştan keserim, ona göre!"]},
+		],
 		"actions": [
+			{"id": "coffee", "name": "Türk kahvesi", "time": 15, "energy": 18, "food": -1, "money": -35, "needs": {"open": [480, 1440]}},
+			{"id": "tea", "name": "Çay + poğaça", "time": 20, "energy": 8, "food": 18, "money": -25, "needs": {"open": [480, 1440]}},
 			{"id": "waiter", "name": "Garsonluk vardiyası (4 sa, sipariş başı 4 TL + bahşiş)", "time": 240, "energy": -25,
 				"food": -10, "per_order": 4, "scene": "waiter", "needs": {"open": [480, 1440], "min_energy": 25}},
+		],
+	},
+	"kargo": {
+		"name": "Kargo Deposu", "desc": "Raflar, koliler, bant. Güçlüysen iş var.", "parent": "carsi",
+		"spots": [
+			{"kind": "exit", "name": "Çarşıya çık", "at": "exit", "to": "carsi", "spawn": "from_kargo"},
+			{"kind": "npc", "name": "Kargo şefi Bayram", "look": "hayri", "stand": "bayram", "at": "talk_bayram", "actions": ["cargo"],
+				"lines": ["Koliler ağır, bilek lazım!", "Güçsüzsen hiç başlama, bel fıtığı olursun.", "Bant durmaz, sen de durma!"]},
+		],
+		"actions": [
 			{"id": "cargo", "name": "Koli taşı (4 sa, +güç)", "time": 240, "energy": -40, "food": -16, "money": 180, "gain": {"str": 0.6},
 				"needs": {"open": [420, 1380], "min_energy": 40, "min_str": 15}},
+		],
+	},
+	"dershane": {
+		"name": "Dershane", "desc": "YKS'ye hazırlık. Düzenli öğrenciye özel ders işi var.", "parent": "carsi",
+		"spots": [
+			{"kind": "exit", "name": "Çarşıya çık", "at": "exit", "to": "carsi", "spawn": "from_dershane"},
+			{"kind": "npc", "name": "Dershane müdürü", "look": "plaza", "stand": "mudur", "at": "talk_mudur", "actions": ["tutor"],
+				"lines": ["Matematik bilen düzgün bir öğrenci arıyoruz.", "Önce kendi derslerine düzenli git, sonra konuşalım.",
+					"Velilerimiz çok titiz, ona göre."]},
+		],
+		"actions": [
 			{"id": "tutor", "name": "Özel ders ver (2 sa)",
 				"time": 120, "energy": -10, "food": -5, "money": 150,
 				"needs": {"open": [600, 1380], "min_energy": 10, "good_weeks": 2}},
@@ -269,16 +299,16 @@ const CAMPUS_ACTIONS := {
 const MAPS := {
 	"mahalle": {
 		"name": "BEYLİKDÜZÜ", "bg": "bg_map", "walk": 15, "start": "ev",
-		"line": [Vector2(560, 60), "E-5 · metrobüs hattı → Davutpaşa"],
+		"line": [Vector2(330, 52), "E-5 · metrobüs → Davutpaşa"],
 		"spots": {
-			"ev": {"name": "Ev", "desc": "Küçük, rutubetli ama senin.", "pos": Vector2(288, 208), "go": "place"},
-			"market": {"name": "Market", "desc": "Köşedeki market. 07:00-01:00 açık.", "pos": Vector2(448, 208), "go": "place"},
-			"gym": {"name": "Rıza'nın Salonu", "desc": "Mahallenin spor salonu. 06:00-24:00 açık.", "pos": Vector2(624, 232), "go": "place"},
-			"galeri": {"name": "Necdet Oto Galeri", "desc": "Araba al, sat, yükselt.", "pos": Vector2(720, 296), "go": "place"},
-			"berber": {"name": "Berber Sabri", "desc": "Saç tıraşı, yeni saç modeli. 09:00-21:00 açık.", "pos": Vector2(288, 272), "go": "place"},
-			"carsi": {"name": "Çarşı", "desc": "İş (kafe, kargo, dershane) ve alışveriş (butik, Av & Savunma).", "pos": Vector2(480, 288), "go": "place"},
-			"durak": {"name": "Metrobüs Durağı", "desc": "Okula (YTÜ Davutpaşa) metrobüsle gidilir.", "pos": Vector2(624, 104), "go": "metro"},
-			"otopark": {"name": "Otopark", "desc": "Arabanla okula git: ~35 dk, 30 TL benzin. Trafikte kavga çıkabilir.", "pos": Vector2(624, 328), "go": "drive"},
+			"ev": {"name": "Ev", "desc": "Küçük, rutubetli ama senin.", "pos": Vector2(150, 145), "go": "place"},
+			"market": {"name": "Market", "desc": "Köşedeki market. 07:00-01:00 açık.", "pos": Vector2(230, 155), "go": "place"},
+			"gym": {"name": "Rıza'nın Salonu", "desc": "Mahallenin spor salonu. 06:00-24:00 açık.", "pos": Vector2(340, 160), "go": "place"},
+			"galeri": {"name": "Necdet Oto Galeri", "desc": "Araba al, sat, yükselt.", "pos": Vector2(400, 210), "go": "place"},
+			"berber": {"name": "Berber Sabri", "desc": "Saç tıraşı, yeni saç modeli. 09:00-21:00 açık.", "pos": Vector2(100, 180), "go": "place"},
+			"carsi": {"name": "Çarşı", "desc": "İş (kafe, kargo, dershane) ve alışveriş (butik, Av & Savunma).", "pos": Vector2(220, 200), "go": "place"},
+			"durak": {"name": "Metrobüs Durağı", "desc": "Okula (YTÜ Davutpaşa) metrobüsle gidilir.", "pos": Vector2(340, 100), "go": "metro"},
+			"otopark": {"name": "Otopark", "desc": "Arabanla okula git: ~35 dk, 30 TL benzin. Trafikte kavga çıkabilir.", "pos": Vector2(320, 210), "go": "drive"},
 		},
 	},
 	"kampus": {

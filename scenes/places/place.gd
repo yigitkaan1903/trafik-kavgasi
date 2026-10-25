@@ -30,6 +30,9 @@ const LIGHTS := {
 	"butik": [false, 100.0, true],
 	"hirdavat": [false, 100.0, true],
 	"berber": [false, 100.0, true],
+	"kafe_yildiz": [false, 90.0, true],
+	"kargo": [false, 110.0, true],
+	"dershane": [false, 100.0, true],
 }
 ## Spotun tıklama alanı hangi eşyanın görseli (işaret adı -> [eşya, kaçıncısı]); yoksa duruş noktasından hesaplanır.
 const SPOT_PROPS := {
@@ -653,7 +656,7 @@ func _open_picker(picker, zoom: bool) -> void:
 func _open_barber(s: Dictionary, _page: int = 0) -> void:
 	var picker := StylePicker.new()
 	picker.title = "Saç modeli"
-	picker.subtitle = "Üstüne gel, aynada gör. %d dakika sürer." % Shop.HAIRCUT_MINUTES
+	picker.subtitle = "Bir modele tıkla, aynada gör. %d dakika sürer." % Shop.HAIRCUT_MINUTES
 	picker.keep_open = false
 	var list: Array = []
 	for id in Shop.HAIRCUTS:
@@ -678,7 +681,7 @@ func _open_shop(s: Dictionary, _page: int = 0) -> void:
 	var picker := StylePicker.new()
 	if s["shop"] == "outfits":
 		picker.title = "Butik Moda"
-		picker.subtitle = "Üstüne gel, üzerinde gör. Aldığın gardırobuna gelir."
+		picker.subtitle = "Tıkla, üzerinde gör. Aldığın gardırobuna gelir."
 		var pv := {"outfit": GameState.outfit, "hat": GameState.hat}
 		picker.items = _outfit_items()
 		picker.on_preview = func(it: Dictionary):

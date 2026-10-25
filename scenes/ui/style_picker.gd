@@ -192,23 +192,33 @@ func _rebuild() -> void:
 			text += "  ·  " + it["note"]
 		elif it.get("price", 0) > 0:
 			text += "  ·  %d TL" % it["price"]
-		var b := UIDraw.flat_button(text, ACCENT, 8)
+		var b := UIDraw.flat_button(text, ACCENT, 8, false)
 		b.custom_minimum_size.x = PANEL.size.x - 30
+		b.toggle_mode = true                      # seçili satır işaretli kalsın
+		b.button_pressed = not _sel.is_empty() and it.get("id") == _sel.get("id") and it.get("kind") == _sel.get("kind")
 		var item: Dictionary = it
-		b.focus_entered.connect(func(): _select(item))
-		b.pressed.connect(func(): _select(item); _buy.grab_focus())
+		b.set_meta("item", item)
+		b.pressed.connect(func(): _select(item))   # üstüne gelmek seçmez: tıklayınca (ya da Enter) seçer ve önizler
 		_list.add_child(b)
 		if first == null:
 			first = b
-		if not _sel.is_empty() and it.get("id") == _sel.get("id"):
+		if not _sel.is_empty() and it.get("id") == _sel.get("id") and it.get("kind") == _sel.get("kind"):
 			keep = b
 	var target: Button = keep if keep else first
 	if target:
 		target.grab_focus.call_deferred()
+	if _sel.is_empty():   # açılışta şu an kullanılan (seçilemez) satırı göster
+		for it in items:
+			if it.get("disabled", false) and (_tab == "" or it.get("tab", "") == _tab):
+				_select.call_deferred(it)
+				break
 
 
 func _select(item: Dictionary) -> void:
 	_sel = item
+	for b in _list.get_children():   # işaretli satırı güncelle
+		if b is Button:
+			b.set_pressed_no_signal(false)
 	_msg.text = ""
 	_desc.text = item.get("desc", "")
 	_buy.text = item.get("action", "Satın al")
@@ -218,6 +228,14 @@ func _select(item: Dictionary) -> void:
 	if _img:
 		_img.texture = image_for.call(item)
 		_img_name.text = item["name"]
+	_mark_selected.call_deferred()
+
+
+func _mark_selected() -> void:
+	for b in _list.get_children():
+		if b is Button and b.has_meta("item"):
+			var it: Dictionary = b.get_meta("item")
+			b.set_pressed_no_signal(it.get("id") == _sel.get("id") and it.get("kind") == _sel.get("kind"))
 
 
 func _on_buy() -> void:

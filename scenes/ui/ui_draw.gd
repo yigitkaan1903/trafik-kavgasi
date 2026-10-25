@@ -45,7 +45,7 @@ static func icon(ci: CanvasItem, name: String, pos: Vector2) -> void:
 
 
 ## Düz seçenek butonu (konuşma kutusu, olay pencereleri): üstüne gelince/seçilince vurgu rengi ve solda çubuk.
-static func flat_button(text: String, accent: Color = GOLD, font_size: int = 10) -> Button:
+static func flat_button(text: String, accent: Color = GOLD, font_size: int = 10, hover_focus: bool = true) -> Button:
 	var b := Button.new()
 	b.text = text
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -74,9 +74,10 @@ static func flat_button(text: String, accent: Color = GOLD, font_size: int = 10)
 	b.add_theme_stylebox_override("disabled", off)
 	for st in ["hover", "focus", "pressed"]:
 		b.add_theme_stylebox_override(st, hot)
-	b.mouse_entered.connect(func():
-		if not b.disabled:
-			b.grab_focus())
+	if hover_focus:   # üstüne gelince odaklan (seçim menüsünde kapalı: orada tıklayınca seçilir)
+		b.mouse_entered.connect(func():
+			if not b.disabled:
+				b.grab_focus())
 	return b
 
 
