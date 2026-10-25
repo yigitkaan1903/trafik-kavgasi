@@ -124,6 +124,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("phone"):
 		toggle()
 		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("back") and _open:   # Esc: telefonu kapat (sahneden çıkma)
+		close()
+		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("skills") and not is_instance_valid(_skills):
 		open_skills()
 		get_viewport().set_input_as_handled()
@@ -299,12 +302,17 @@ func _draw_home() -> void:
 			r.position + Vector2(6, 21)]), Color.WHITE)
 	if GameState.unread > 0:
 		_badge(r, GameState.unread)
-	# Yetenek ağacı: mor zemin, altın yıldız
+	# Yetenek ağacı: mor zemin, kökten dallanan üç düğüm
 	r = HOME_ICONS["skill"]
 	_app_tile(r, Color("6d28d9"))
-	_body.draw_colored_polygon(PackedVector2Array([r.position + Vector2(13, 4), r.position + Vector2(16, 11), r.position + Vector2(23, 11),
-			r.position + Vector2(17, 15), r.position + Vector2(20, 22), r.position + Vector2(13, 18), r.position + Vector2(6, 22),
-			r.position + Vector2(9, 15), r.position + Vector2(3, 11), r.position + Vector2(10, 11)]), GOLD)
+	var root := r.position + Vector2(13, 20)
+	var kids := [r.position + Vector2(6, 8), r.position + Vector2(13, 6), r.position + Vector2(20, 8)]
+	for k in kids:
+		_body.draw_line(root, k, Color("e9d5ff"), 1.5)
+	_body.draw_circle(root, 3.5, GOLD)
+	for i in kids.size():
+		_body.draw_circle(kids[i], 3, Color("1b1024"))
+		_body.draw_circle(kids[i], 2.3, [Color("ef4444"), Color("22c55e"), Color("3b82f6")][i])
 	if GameState.skill_points > 0:
 		_badge(r, GameState.skill_points)
 	for key in HOME_ICONS:

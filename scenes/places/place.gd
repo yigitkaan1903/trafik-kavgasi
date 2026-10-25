@@ -672,7 +672,7 @@ func _perform(a: Dictionary, speaker = null) -> void:
 	if not lines.is_empty():
 		_say(_player, "  ".join(lines), 2.6)
 	elif speaker:
-		_say(speaker, ["Afiyet olsun!", "Buyur.", "Kolay gelsin!"].pick_random(), 1.6)
+		_say(speaker, a.get("replies", ["Afiyet olsun!", "Buyur.", "Kolay gelsin!"]).pick_random(), 1.6)
 	_busy = false
 
 

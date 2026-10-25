@@ -231,7 +231,7 @@ const PLACES := {
 			{"id": "coffee", "name": "Filtre kahve", "time": 10, "energy": 20, "food": -2, "money": -30, "needs": {"open": [420, 1440]}},
 			{"id": "tea", "name": "Çay + poğaça", "time": 20, "energy": 8, "food": 18, "money": -20, "needs": {"open": [420, 1440]}},
 			{"id": "chat", "name": "Sohbet et (1 sa)", "time": 60, "energy": 10, "food": -3,
-				"needs": {"open": [420, 1440]}},
+				"needs": {"open": [420, 1440]}, "replies": ["İyi ki geldin, kafam dağıldı.", "Yine gel, muhabbet güzeldi!", "Hadi bir çay daha?"]},
 		],
 	},
 	"galeri": {

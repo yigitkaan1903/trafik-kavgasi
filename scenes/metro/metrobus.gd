@@ -214,7 +214,7 @@ func _provoke(p) -> void:
 				return false
 			"intimidate":
 				GameState.intimidate(id)
-				_say(p, "Tamam abi, tamam...")
+				_say(p, GameState.rival(id)["lines"].get("scared", ["Tamam, tamam..."]).pick_random())
 		return true)
 
 
@@ -559,7 +559,7 @@ func _give_seat_to(rival_id: String) -> void:
 	var p = _person(GameState.rival(rival_id)["look"], _seat_pos[seat])   # yer isteyen oturur
 	p.sit("right")
 	_seats[seat] = p
-	_say(p, "Sağ ol evladım, Allah razı olsun.")
+	_say(p, GameState.rival(rival_id)["lines"].get("thanks", ["Sağ ol, çok iyisin."]).pick_random())
 
 
 func _neutral_popup(title: String) -> ChoicePopup:
