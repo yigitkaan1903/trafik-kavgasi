@@ -176,6 +176,7 @@ MAP_SPOTS = {   # data/places.gd ile aynı konumlar
 
 
 def city_map():
+    CURRENT_MAP[0] = "mahalle"
     p = Painter(480, 270)
     p.fill(0, 0, 480, 270, GREEN[3])
     p.speckle(0, 0, 480, 270, [GREEN[2], GREEN[4]], 0.07, 1)
@@ -196,7 +197,7 @@ def city_map():
         for k in range(0, 16, 3):
             p.fill(x - 6, y + k, 4, 2, WHITE); p.fill(x + 18, y + k, 4, 2, WHITE)
     # metrobüs hattı
-    p.fill(102, 212, 318, 10, STONE[3]); p.fill(102, 214, 318, 6, RED[2]); p.fill(102, 216, 318, 1, RED[4])
+    p.fill(102, 226, 318, 10, STONE[3]); p.fill(102, 228, 318, 6, RED[2]); p.fill(102, 230, 318, 1, RED[4])
     parking_lot(p, 332, 186)
     # ağaçlar
     rng = random.Random(5)
@@ -209,7 +210,9 @@ def city_map():
     for name, ((cx, cy), ramp) in MAP_SPOTS.items():
         draw_place(p, name, cx, cy, ramp)
     # durak
-    bus_shelter(p, 70, 180)
+    if not pixellab_place(p, "durak", 102, 196, "durak"):
+        bus_shelter(p, 70, 180)
+    pixellab_place(p, "metrobus", 222, 214)      # hatta bekleyen metrobüs
     p.save("bg_map.png")
 
 
@@ -336,7 +339,39 @@ def kisla(p, x, y):
     p.fill(tx + 3, y + 30, 8, 14, H("3a2a22")); p.fill(tx + 4, y + 29, 6, 1, H("3a2a22"))
 
 
+MAP_TOPS = {}          # harita -> {spot: binanın tepesinin spot merkezine göre y'si} (etiketler için)
+CURRENT_MAP = ["mahalle"]
+PIXELLAB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "pixellab", "map")
+
+
+def pixellab_place(p, name, cx, cy, spot=""):
+    """assets/pixellab/map/<ad>.png varsa onu bas: boş kenarlar kırpılır, alt kenar binanın kapı hizasına
+    (cy + 20), ortası cx'e oturur; yere gölge düşer. Yoksa False (kodla çizilen bina kullanılır)."""
+    path = os.path.join(PIXELLAB_DIR, name + ".png")
+    if not os.path.exists(path):
+        return False
+    import pngio
+    px = pngio.read_png(path)
+    ys = [y for y, row in enumerate(px) if any(c[3] > 40 for c in row)]
+    xs = [x for x in range(len(px[0])) if any(px[y][x][3] > 40 for y in range(len(px)))]
+    if not ys:
+        return False
+    w, h = xs[-1] - xs[0] + 1, ys[-1] - ys[0] + 1
+    ox, oy = cx - w // 2, cy + 22 - h
+    if spot:
+        MAP_TOPS.setdefault(CURRENT_MAP[0], {})[spot] = oy - cy
+    _ground_shadow(p, ox + 2, oy + h - 14, w - 4, 12)
+    for y in range(h):
+        for x in range(w):
+            c = px[ys[0] + y][xs[0] + x]
+            if c[3] > 40:
+                p.set(ox + x, oy + y, c[:3])
+    return True
+
+
 def draw_place(p, name, cx, cy, ramp):
+    if pixellab_place(p, name, cx, cy, name):
+        return
     x0, y0 = cx - 32, cy - 22
     if name == "ev":   # 4 katlı apartman: kiremit çatı, balkonlar
         x, w = x0 + 4, 56
@@ -466,6 +501,7 @@ CAMPUS_SPOTS = {   # data/places.gd MAPS["kampus"] ile aynı konumlar
 
 
 def campus_map():
+    CURRENT_MAP[0] = "kampus"
     p = Painter(480, 270)
     p.fill(0, 0, 480, 270, GREEN[3])
     p.speckle(0, 0, 480, 270, [GREEN[2], GREEN[4]], 0.08, 7)
@@ -487,11 +523,14 @@ def campus_map():
                 p.set(170 + xx, 105 + yy, SKY[1] if (xx + yy) % 5 else SKY[3])
     # kampüs duvarı ve kapı
     p.fill(0, 228, 480, 6, CREAM[2]); p.fill(0, 228, 480, 1, CREAM[4])
-    campus_gate(p, 70, 228)
-    bus_shelter(p, 38, 184)
+    has_art = os.path.exists(os.path.join(PIXELLAB_DIR, "durak.png"))
+    if not has_art:
+        campus_gate(p, 70, 228)
+        bus_shelter(p, 38, 184)
     parking_lot(p, 446, 52)
     # tarihi kışla (süs)
-    kisla(p, 418, 168)
+    if not os.path.exists(os.path.join(PIXELLAB_DIR, "kisla.png")):
+        kisla(p, 418, 168)
     # ağaçlar
     rng = random.Random(9)
     for _ in range(40):
@@ -502,6 +541,9 @@ def campus_map():
         p.circle(x, y + 2, 5, GREEN[0]); p.circle(x, y, 5, GREEN[1]); p.circle(x - 1, y - 1, 3, GREEN[2]); p.set(x - 2, y - 2, GREEN[4])
     for name, ((cx, cy), ramp) in CAMPUS_SPOTS.items():
         draw_place(p, name, cx, cy, ramp)
+    if has_art:   # PixelLab çizimleri ağaçların üstüne
+        pixellab_place(p, "durak", 70, 196, "giris")
+        pixellab_place(p, "kisla", 447, 190)
     p.save("bg_campus.png")
 
 
@@ -527,10 +569,23 @@ def ui():
     ui_piece("ui_bubble.png", WHITE, WHITE, BLACK, BLACK)
 
 
+def write_map_art():
+    """Etiket yükseklikleri: data/map_art.gd (elle düzenlenmez)."""
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "map_art.gd")
+    lines = ["## tools/make_backgrounds.py üretir. Haritada binanın tepesi (spot merkezine göre y); isim etiketi buraya konur.", "",
+             "const TOPS := {"]
+    for m, tops in MAP_TOPS.items():
+        lines.append('\t"%s": {%s},' % (m, ", ".join('"%s": %d' % (k, v) for k, v in tops.items())))
+    lines.append("}")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     for f in (city_map, campus_map, ui):
         f()
+    write_map_art()
     print("Arka planlar üretildi:", os.path.normpath(OUT))
 
 

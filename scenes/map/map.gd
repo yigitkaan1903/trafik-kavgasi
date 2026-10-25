@@ -4,6 +4,7 @@ extends Control
 ## Klavyeyle: Sol/Sağ seç, E ya da Enter git.
 
 const Places = preload("res://data/places.gd")
+const MapArt = preload("res://data/map_art.gd")
 const Person = preload("res://scenes/metro/person.gd")
 const StatusBar = preload("res://scenes/ui/status_bar.gd")
 const ChoicePopup = preload("res://scenes/ui/choice_popup.gd")
@@ -91,8 +92,11 @@ func _door(id: String) -> Vector2:
 	return _spots[id]["pos"] + Vector2(0, BUILDING.y / 2.0 + 8)
 
 
+## Binanın alanı: altı kapı hizası, üstü çizimin tepesi (PixelLab binaları daha uzun, bkz. data/map_art.gd).
 func _rect(id: String) -> Rect2:
-	return Rect2(_spots[id]["pos"] - BUILDING / 2.0, BUILDING)
+	var pos: Vector2 = _spots[id]["pos"]
+	var top: float = MapArt.TOPS.get(GameState.map_id, {}).get(id, -BUILDING.y / 2.0)
+	return Rect2(pos.x - BUILDING.x / 2.0, pos.y + top, BUILDING.x, BUILDING.y / 2.0 - top)
 
 
 func _gui_input(event: InputEvent) -> void:
@@ -235,6 +239,8 @@ func _draw_overlay() -> void:
 		var name: String = _spots[id]["name"]
 		var w := font.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x
 		var lp := Vector2(r.get_center().x - w / 2.0, r.position.y - 4)
+		if lp.y < 38.0:   # tepesi durum çubuğuna değen uzun binalarda etiket kapının altına
+			lp.y = r.end.y + 11.0
 		_overlay.draw_rect(Rect2(lp.x - 3, lp.y - 9, w + 6, 12), Color(0, 0, 0, 0.6))
 		_overlay.draw_string(font, lp, name, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color("e6b428") if hot else Color.WHITE)
 	_overlay.draw_string(font, _map["line"][0], _map["line"][1], HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color(1, 1, 1, 0.75))
