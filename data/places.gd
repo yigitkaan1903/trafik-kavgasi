@@ -168,6 +168,10 @@ const PLACES := {
 				"lines": ["Matematik bilen düzgün bir öğrenci arıyoruz.", "Önce kendi derslerine düzenli git, sonra konuşalım."]},
 			{"kind": "door", "name": "Butik Moda", "at": "door_butik", "to": "butik"},
 			{"kind": "door", "name": "Spor & Hırdavat", "at": "door_hirdavat", "to": "hirdavat"},
+			{"kind": "object", "name": "Messi büstü", "at": "bust", "dir": "up", "prop": "messi_bust",
+				"portrait": "res://assets/pixellab/map/messi_bust.png",
+				"lines": ["Çarşı esnafı toplanıp yaptırmış. Altında \"Gelmişlerin en iyisi\" yazıyor.",
+					"Büstün burnu parlamış: herkes uğur için dokunuyor.", "Biri ayağına top bırakmış."]},
 		],
 		"actions": [
 			{"id": "waiter", "name": "Garsonluk vardiyası (4 sa, sipariş başı 4 TL + bahşiş)", "time": 240, "energy": -25,

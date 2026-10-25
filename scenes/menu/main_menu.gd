@@ -1,6 +1,6 @@
 extends Control
 ## Ana menü: solda koyu panel üstünde logo ve seçenekler, arkada hareketli gün batımı (iki kat şehir silueti,
-## E-5'te akan arabalar ve metrobüs), sağda karşı karşıya iki karakter. Devam / Yeni oyun / Ayarlar /
+## E-5'te akan arabalar ve metrobüs). Devam / Yeni oyun / Ayarlar /
 ## Nasıl oynanır / Çıkış. Yeni oyunda zorluk seçilir. Ayarlar: müzik, efekt sesi, tam ekran, sarsıntı.
 
 const ChoicePopup = preload("res://scenes/ui/choice_popup.gd")
@@ -55,8 +55,6 @@ func _ready() -> void:
 	add_child(_bus)
 	for k in 5:
 		_spawn_car(rng.randf_range(-60, 480), k % 2)
-	_sprite(GameState.fighter_texture("player", "idle"), Vector2(286, 132), false)
-	_sprite(GameState.fighter_texture("selim", "idle"), Vector2(376, 132), true)
 
 	var shade := Control.new()   # solda koyu panel (sağa doğru saydamlaşır)
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -148,7 +146,8 @@ func _save_summary() -> String:
 	if not d is Dictionary:
 		return ""
 	var m := int(d.get("minute", 0))
-	return "%d. gün  ·  %02d:%02d  ·  %d TL" % [int(d.get("day", 1)), (m / 60) % 24, m % 60, int(d.get("money", 0))]
+	var money := "∞" if d.get("difficulty", "") == "god" else str(int(d.get("money", 0)))
+	return "%d. gün  ·  %02d:%02d  ·  %s TL" % [int(d.get("day", 1)), (m / 60) % 24, m % 60, money]
 
 
 func _logo(text: String, pos: Vector2, color: Color) -> Label:
@@ -322,16 +321,6 @@ func _button(parent: Control, text: String, action: Callable, note: String = "")
 		b.focus_exited.connect(func(): n.position.x = 10)
 	parent.add_child(b)
 	return b
-
-
-func _sprite(tex: Texture2D, pos: Vector2, flip: bool) -> void:
-	var s := Sprite2D.new()
-	s.texture = tex
-	s.centered = false
-	s.scale = Vector2(2, 2)
-	s.flip_h = flip
-	s.position = pos
-	add_child(s)
 
 
 # ---------------------------------------------------------------- Arka plan

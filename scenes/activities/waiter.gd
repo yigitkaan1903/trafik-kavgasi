@@ -9,7 +9,7 @@ const ChoicePopup = preload("res://scenes/ui/choice_popup.gd")
 const Person = preload("res://scenes/metro/person.gd")
 const MetroEvents = preload("res://data/metro_events.gd")
 
-const SPEED := 95.0
+const SPEED := 108.0
 const SHIFT_SECONDS := 70.0
 const PATIENCE := 26.0
 const COOK_TIME := [3.0, 5.5]

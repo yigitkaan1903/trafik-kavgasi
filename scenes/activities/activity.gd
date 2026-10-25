@@ -9,7 +9,7 @@ const Person = preload("res://scenes/metro/person.gd")
 const MetroEvents = preload("res://data/metro_events.gd")
 
 const REACH := 12.0
-const WALK_SPEED := 70.0
+const WALK_SPEED := 82.0
 const LECTURE_LINES := ["Bu konu sınavda çıkar!", "Arkadakiler, sessiz!", "Yoklama kağıdı dolaşıyor...",
 		"Bunu bir daha anlatmayacağım.", "Tahtaya kim çıkmak ister?", "Telefonlar cebe!"]
 

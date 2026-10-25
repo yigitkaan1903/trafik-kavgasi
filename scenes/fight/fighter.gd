@@ -11,6 +11,12 @@ signal knocked_out(target: Fighter)
 
 enum S { IDLE, WALK, ATTACK, BLOCK, HURT, DODGE, STUN, KO }
 
+const WeaponArt = preload("res://data/weapon_art.gd")
+const WEAPON_TEX := {   # önceden yüklenir: _draw içinde load() edilen doku çizilmeden serbest kalıp beyaz görünür
+	"sopa": preload("res://assets/sprites/weapon_sopa.png"),
+	"bicak": preload("res://assets/sprites/weapon_bicak.png"),
+	"musta": preload("res://assets/sprites/weapon_musta.png"),
+}
 const CELL := Vector2(28, 30)
 const POSES := ["idle", "walk1", "walk2", "punch", "kick", "block", "hurt", "sit", "lift1", "lift2", "special"]
 const DEPTH := 6.0             # vuruşun tutması için derinlik farkı en fazla bu kadar
@@ -268,24 +274,22 @@ func _update_pose() -> void:
 	_weapon_fx.queue_redraw()
 
 
-## Eldeki silah: hücre koordinatından (yan görünüş, sağa bakan) dünyaya çevirip çizer.
+## Eldeki silah (tools/make_weapons.py görseli): sap ele oturur, uç vuruş yönüne döner; sola bakarken aynalanır.
 func _draw_weapon() -> void:
-	if weapon_id == "" or state == S.KO:
+	if weapon_id == "" or state == S.KO or not WEAPON_TEX.has(weapon_id):
 		return
+	var art: Dictionary = WeaponArt.ART[weapon_id]
+	var tex: Texture2D = WEAPON_TEX[weapon_id]
 	var striking := state == S.ATTACK and attack_name != "kick"
 	var hand := Vector2(24, 14) if striking else Vector2(14, 20)
 	var p := func(c: Vector2) -> Vector2:
 		return Vector2(facing * (c.x - 14.0) + _sprite.position.x, c.y - 30.0 + _sprite.position.y)
-	match weapon_id:
-		"sopa":
-			var tip := Vector2(37, 11) if striking else Vector2(8, 6)
-			_weapon_fx.draw_line(p.call(hand), p.call(tip), Color("2a1a10"), 3.0)
-			_weapon_fx.draw_line(p.call(hand), p.call(tip), Color("b07d50"), 2.0)
-			_weapon_fx.draw_circle(p.call(tip), 1.6, Color("d0a070"))
-		"bicak":
-			var tip := Vector2(31, 14) if striking else Vector2(14, 26)
-			_weapon_fx.draw_line(p.call(hand), p.call(tip), Color("1b1024"), 2.0)
-			_weapon_fx.draw_line(p.call(hand), p.call(tip), Color("dfe4ee"), 1.0)
-		"musta":
-			var c: Vector2 = p.call(hand)
-			_weapon_fx.draw_rect(Rect2(c - Vector2(1.5, 2), Vector2(3, 4)), Color("e6b428"))
+	var at: Vector2 = p.call(hand)
+	var rot := 0.0
+	if weapon_id != "musta":   # sopa ve bıçak: sap elde, uç hedefe
+		var tip := (Vector2(37, 11) if striking else Vector2(8, 6)) if weapon_id == "sopa" else (Vector2(31, 14) if striking else Vector2(14, 26))
+		var art_dir: Vector2 = (art["tip"] - art["handle"]) * Vector2(facing, 1)
+		rot = (p.call(tip) - at).angle() - art_dir.angle()
+	_weapon_fx.draw_set_transform(at, rot, Vector2(facing, 1))
+	_weapon_fx.draw_texture(tex, -art["handle"])
+	_weapon_fx.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)

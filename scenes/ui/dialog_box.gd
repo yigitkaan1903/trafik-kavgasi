@@ -113,7 +113,9 @@ func _ready() -> void:
 		var pic := TextureRect.new()
 		pic.texture = portrait
 		pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		# 48'lik portre tam 2x büyür; daha büyük görseller (eşya çizimleri) 1x ortalanır, pikseller bozulmaz
+		var big := maxf(portrait.get_width(), portrait.get_height()) > 48.0
+		pic.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED if big else TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		pic.custom_minimum_size = Vector2(96, 96)
 		inner.add_child(pic)
 		var plate := PanelContainer.new()

@@ -46,7 +46,15 @@ for _id, _desc in {
     "mercedes": "silver Mercedes C-class luxury sedan",
 }.items():
     PROMPTS["car_" + _id] = CAR_FRONT.format(_desc)
-SIZES = {"metrobus": (128, 64)}   # varsayılan 96x96; arabalar 64x64
+PROMPTS.update({   # silahlar (yandan, sağa bakar) ve çarşıdaki büst
+    "weapon_musta": "golden brass knuckles weapon, side view, single item, shiny metal",
+    "weapon_sopa": "wooden baseball bat lying horizontally pointing right, black grip tape on handle, side view, single item",
+    "weapon_bicak": "folding pocket knife with steel blade pointing right and dark wooden handle, side view, single item",
+    "messi_bust": "bronze bust statue of a bearded football legend wearing a striped national team jersey, on a stone pedestal with a small golden plaque",
+})
+SIZES = {"metrobus": (128, 64), "weapon_musta": (32, 32), "weapon_sopa": (48, 48), "weapon_bicak": (32, 32),
+         "messi_bust": (64, 64)}   # varsayılan 96x96; arabalar 64x64
+VIEWS = {"weapon_musta": "side", "weapon_sopa": "side", "weapon_bicak": "side"}   # varsayılan low top-down
 CAR_OUT = os.path.join(ROOT, "assets", "pixellab", "cars")
 
 
@@ -74,7 +82,7 @@ def generate(name):
     status, res = call("POST", "/map-objects", {
         "description": PROMPTS[name] + STYLE,
         "image_size": {"width": w, "height": h},
-        "view": "low top-down",
+        "view": VIEWS.get(name, "low top-down"),
         "outline": "single color outline",
         "shading": "medium shading",
         "detail": "medium detail",

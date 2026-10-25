@@ -13,7 +13,7 @@ const DialogBox = preload("res://scenes/ui/dialog_box.gd")
 const Shop = preload("res://data/shop.gd")
 const PAGE_SIZE := 5          # uzun listelerde (mağaza, gardırop) bir sayfadaki seçenek
 
-const WALK_SPEED := 70.0
+const WALK_SPEED := 82.0
 const REACH := 16.0
 const TRAIN_SECONDS := 2.4
 const STAT_BUBBLES := 6
@@ -490,6 +490,8 @@ func _open_dialog(s: Dictionary, _i: int) -> void:
 	d.line = s.get("lines", [""]).pick_random()
 	if s.has("look"):
 		d.portrait = GameState.portrait_texture(s["look"])
+	elif s.has("portrait"):   # eşyanın kendi çizimi (ör. Messi büstü)
+		d.portrait = load(s["portrait"])
 	for id in s.get("actions", []):
 		var a := _action(id)
 		if a.is_empty() or GameState.action_hidden(a):
@@ -548,6 +550,8 @@ func _item_dialog(s: Dictionary) -> void:
 	d.speaker = "%s  ·  %d TL" % [it["name"], price] + ("  (Pazarlıkçı indirimi)" if price < it["price"] else "")
 	d.line = it["desc"] if outfits else "%s  Yumruk hasarı x%.2f%s." % [it["desc"], it["damage"],
 			", menzil +%d" % it["range"] if it["range"] > 0 else ""]
+	# portre: kıyafette onu giymiş halin, silahta silahın kendisi
+	d.portrait = GameState.portrait_texture("player" if id == "esofman" else "player_" + id) if outfits 			else load("res://assets/pixellab/map/weapon_%s.png" % id)
 	if _item_owned(s):
 		if outfits:
 			d.add_choice("Hemen giy" if GameState.outfit != id else "Zaten üzerinde", "wear", GameState.outfit == id)

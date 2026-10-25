@@ -249,7 +249,7 @@ func _move_player(delta: float) -> void:
 		if _player.step_to(_slot(_fair_rank), 20.0, delta):
 			_player.face_dir("up")
 	else:
-		_room.walk(_player, dir, 62.0 * slow, delta)
+		_room.walk(_player, dir, 72.0 * slow, delta)
 	# itişme: insanlar kenara kayar, sen de biraz geri itilirsin
 	for p in _queue:
 		var d: Vector2 = p.position - _player.position
