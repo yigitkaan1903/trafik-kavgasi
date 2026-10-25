@@ -211,14 +211,14 @@ def planks(c, x, y, w, h, ramp, seed, board=6):
             c.set(x + rng.randrange(w), by + 1 + rng.randrange(max(1, bh - 2)), shade(base, rng.choice([0.88, 1.08])))
 
 
-def rug(c, x, y, w, h, ramp, accent):
+def rug(c, x, y, w, h, ramp, accent, motif=True):
     c.fill(x, y, w, h, ramp[1])
     c.fill(x + 2, y + 2, w - 4, h - 4, ramp[2])
     c.fill(x + 4, y + 4, w - 8, h - 8, ramp[3])
     for k in range(x + 6, x + w - 6, 6):
         c.set(k, y + 6, accent); c.set(k + 3, y + h - 7, accent)
     cx, cy = x + w // 2, y + h // 2
-    for d in range(min(w, h) // 4):
+    for d in range(min(w, h) // 4 if motif else 0):   # ortada artı deseni
         c.set(cx - d, cy, accent); c.set(cx + d, cy, accent); c.set(cx, cy - d // 2, accent); c.set(cx, cy + d // 2, accent)
     for k in range(x, x + w, 2):   # saçaklar
         c.set(k, y - 1, ramp[4]); c.set(k, y + h, ramp[4])
@@ -1000,55 +1000,57 @@ def room_market():
 
 
 def room_gym():
-    r = Room("gym", 640, 208, wall_h=64)
+    """Kareye yakın salon: üst sırada resepsiyon, halter platformu, dambıl rafı; alt sırada koşu bantları ve kum torbaları."""
+    r = Room("gym", 416, 272, wall_h=64)
     c = r.c
     r.back_wall(H("3a4058"), base=H("20232f"))
-    c.fill(136, 18, 392, 40, H("9aa8bc"))                     # aynalar
-    c.grad_v(138, 20, 388, 36, [H("c8d4e4"), H("a8b8cc"), H("8a9ab0")])
-    for x in range(138, 526, 64):
+    c.fill(110, 18, 284, 40, H("9aa8bc"))                     # aynalar
+    c.grad_v(112, 20, 280, 36, [H("c8d4e4"), H("a8b8cc"), H("8a9ab0")])
+    for x in range(112, 392, 56):
         c.fill(x, 18, 2, 40, STONE[2])
         for d in range(30):
             if (d % 6) < 3:
                 c.set(x + 10 + d // 2, 22 + d, H("e8eef6"))
-    c.fill(228, 6, 208, 12, GOLD[3]); c.fill(228, 6, 208, 1, GOLD[4]); c.fill(228, 17, 208, 1, GOLD[1])
-    r.text(228, 15, 208, "RIZA'NIN SALONU  ·  1987'DEN BERİ", 8, "1b1024")
+    c.fill(148, 6, 208, 12, GOLD[3]); c.fill(148, 6, 208, 1, GOLD[4]); c.fill(148, 17, 208, 1, GOLD[1])
+    r.text(148, 15, 208, "RIZA'NIN SALONU  ·  1987'DEN BERİ", 8, "1b1024")
     c.fill(20, 16, 26, 36, RED[2]); c.fill(24, 20, 18, 16, H("e8b88c")); c.fill(22, 38, 22, 10, BLACK)   # afiş
-    c.fill(560, 16, 30, 36, NAVY[3]); c.fill(566, 22, 18, 20, GOLD[3])
-    c.fill(0, 64, r.W, 144, H("2a2c34"))
-    c.speckle(0, 64, r.W, 144, [H("33363f"), H("24262d")], 0.12, 9)
+    c.fill(0, 64, r.W, r.H - 64, H("2a2c34"))
+    c.speckle(0, 64, r.W, r.H - 64, [H("33363f"), H("24262d")], 0.12, 9)
     for x in range(0, r.W, 32):
-        c.fill(x, 64, 1, 144, H("1f2128"))
-    for y in range(64, 208, 32):
+        c.fill(x, 64, 1, r.H - 64, H("1f2128"))
+    for y in range(64, r.H, 32):
         c.fill(0, y, r.W, 1, H("1f2128"))
-    planks(c, 116, 70, 152, 64, WOOD, 3)                       # halter platformu
-    c.fill(116, 70, 152, 1, GOLD[3]); c.fill(116, 133, 152, 1, GOLD[1])
-    for k, x in enumerate((322, 392, 462)):                    # koşu bandı tabanları
-        c.fill(x, 100, 46, 18, STONE[1]); c.fill(x + 2, 102, 42, 14, H("17171c")); c.fill(x, 100, 46, 1, STONE[3])
-        r.add("belts", [x + 2, 102, 42, 14])
+    planks(c, 108, 70, 152, 64, WOOD, 3)                       # halter platformu
+    c.fill(108, 70, 152, 1, GOLD[3]); c.fill(108, 133, 152, 1, GOLD[1])
+    c.fill(96, 160, 196, 52, H("23252c")); c.fill(96, 160, 196, 1, H("3a3d48"))   # kardiyo köşesi paspası
+    tm_y = 178
+    for k, x in enumerate((110, 168, 226)):                    # koşu bandı tabanları
+        c.fill(x, tm_y, 46, 18, STONE[1]); c.fill(x + 2, tm_y + 2, 42, 14, H("17171c")); c.fill(x, tm_y, 46, 1, STONE[3])
+        r.add("belts", [x + 2, tm_y + 2, 42, 14])
     r.borders(door=(20, 32))
     r.prop("reception", reception_desk, 22, 88, foot=16)
-    for i, x in enumerate((126, 206)):
+    for i, x in enumerate((118, 188)):
         r.prop("squat_rack", squat_rack, x, 64, shadow=False)
         r.solid(x, 104, 6, 6); r.solid(x + 44, 104, 6, 6)
         r.mark("lift_%d" % i, x + 25, 112)
         r.add("bars", [x + 25, 86])
-    r.prop("dumbbells", dumbbell_rack, 282, 58, foot=10)
-    for i, x in enumerate((322, 392, 462)):
-        r.prop("tm_console", treadmill_console, x + 36, 84, shadow=False)
-        r.solid(x, 100, 46, 6)
-        r.mark("run_%d" % i, x + 18, 112)
-    for i, x in enumerate((546, 596)):
-        r.prop("bag", punching_bag, x, 70)
-        r.solid(x + 2, 116, 12, 6)
-        r.mark("bag_%d" % i, x - 8, 124)
-        r.add("bag_pos", [x + 8, 70])
-    r.prop("water_cooler", water_cooler, 616, 40, foot=6)
-    r.prop("gym_bench", gym_bench, 300, 152, foot=8)
-    r.prop("plant_big", lambda: plant(True), 100, 40, foot=4)
-    r.mark("spawn", 36, 186); r.mark("exit", 36, 204)
-    r.mark("riza", 58, 100); r.mark("talk_riza", 60, 140); r.mark("water", 622, 88)
-    for x in range(80, 640, 120):
-        r.add("lamps", [x, 110])
+    r.prop("dumbbells", dumbbell_rack, 278, 58, foot=10)
+    for i, x in enumerate((110, 168, 226)):
+        r.prop("tm_console", treadmill_console, x + 36, tm_y - 16, shadow=False)
+        r.solid(x, tm_y, 46, 6)
+        r.mark("run_%d" % i, x + 18, tm_y + 12)
+    for i, x in enumerate((316, 366)):
+        r.prop("bag", punching_bag, x, 146)
+        r.solid(x + 2, 192, 12, 6)
+        r.mark("bag_%d" % i, x - 8, 200)
+        r.add("bag_pos", [x + 8, 146])
+    r.prop("water_cooler", water_cooler, 388, 40, foot=6)
+    r.prop("gym_bench", gym_bench, 300, 232, foot=8)
+    r.prop("plant_big", lambda: plant(True), 80, 40, foot=4)
+    r.mark("spawn", 36, r.H - 22); r.mark("exit", 36, r.H - 4)
+    r.mark("riza", 58, 100); r.mark("talk_riza", 60, 140); r.mark("water", 392, 88)
+    for (x, y) in ((80, 110), (200, 110), (320, 110), (140, 210), (330, 220)):
+        r.add("lamps", [x, y])
     return r.finish()
 
 
@@ -1142,9 +1144,9 @@ def room_carsi():
 
 
 def room_kampus_kafe():
-    """Büyük kampüs kafesi: 10 masa (her birinde iki kişilik yer), uzun tezgah, pencere önü bar.
-    crowd_seats / crowd_stand: oyun her girişte bunları rastgele doldurur (doluluk değişir)."""
-    r = Room("kampus_kafe", 640, 216, wall_h=64)
+    """Büyük kampüs kafesi: 18 masa (3 sıra x 6, her birinde iki kişilik yer), uzun tezgah.
+    crowd_seats / crowd_stand: oyun her girişte bunları saate göre doldurur (bkz. place.gd _crowd_level)."""
+    r = Room("kampus_kafe", 640, 272, wall_h=64)
     c = r.c
     r.back_wall(H("a85a40"), base=WOOD[1])
     c.bricks(0, 12, r.W, 46, [H("6e2f22"), H("8e4a34"), H("a85a40"), H("b86a4c")], bw=10, bh=5, seed=5)
@@ -1154,12 +1156,12 @@ def room_kampus_kafe():
     for k in range(4):
         c.fill(28, 22 + k * 5, 30 + (k * 7) % 20, 1, WHITE); c.fill(76, 22 + k * 5, 14, 1, GOLD[4])
     r.text(22, 20, 76, "MENÜ", 8, "f6d86a")
-    planks(c, 0, 64, r.W, 152, [WOOD[0], WOOD[1], H("7a5038"), H("9a6a48"), WOOD[4], WOOD[5]], 11)
-    rug(c, 156, 92, 448, 112, TEAL, GOLD[4])
+    planks(c, 0, 64, r.W, r.H - 64, [WOOD[0], WOOD[1], H("7a5038"), H("9a6a48"), WOOD[4], WOOD[5]], 11)
+    rug(c, 146, 84, 470, 176, TEAL, GOLD[4], motif=False)
     r.borders(door=(20, 30))
     r.prop("espresso_counter", espresso_counter, 14, 68, foot=18)
-    for row, ty in enumerate((96, 156)):
-        for col, tx in enumerate((170, 262, 354, 446, 538)):
+    for row, ty in enumerate((92, 148, 204)):
+        for col, tx in enumerate((160, 236, 312, 388, 464, 540)):
             r.prop("chair_top", chair_top, tx + 11, ty - 14, shadow=False)
             r.prop("table_sq", lambda: table(36, 18), tx, ty, foot=18)
             r.add("tables", [tx, ty])
@@ -1167,16 +1169,17 @@ def room_kampus_kafe():
             r.add("crowd_seats", [tx + 18, ty + 38, "up"])
     r.prop("plant_big", lambda: plant(True), 124, 50, foot=4)
     r.prop("plant_big", lambda: plant(True), 612, 52, foot=4)
-    r.prop("plant", plant, 612, 180, foot=4)
+    r.prop("plant", plant, 612, 236, foot=4)
+    r.prop("plant", plant, 100, 236, foot=4)
     r.mark("barista", 60, 82); r.mark("talk_barista", 60, 126)
-    r.mark("friends", 188, 106); r.mark("friends2", 188, 134); r.mark("talk_friends", 230, 124)
-    r.mark("elif", 556, 106); r.mark("talk_elif", 598, 124)
+    r.mark("friends", 178, 102); r.mark("friends2", 178, 130); r.mark("talk_friends", 220, 120)
+    r.mark("elif", 558, 102); r.mark("talk_elif", 600, 120)
     r.mark("window", 418, 72)
-    for (x, y) in ((92, 130), (104, 140), (34, 132), (146, 96), (308, 72), (500, 74)):
+    for (x, y) in ((92, 130), (104, 140), (34, 132), (140, 150), (300, 72), (500, 74), (620, 150), (140, 230)):
         r.add("crowd_stand", [x, y])
-    r.mark("spawn", 35, 194); r.mark("exit", 35, 212)
-    for x in (120, 240, 360, 480, 590):
-        r.add("lamps", [x, 120])
+    r.mark("spawn", 35, r.H - 22); r.mark("exit", 35, r.H - 4)
+    for (x, y) in ((120, 120), (240, 120), (360, 120), (480, 120), (590, 120), (240, 220), (480, 220)):
+        r.add("lamps", [x, y])
     return r.finish()
 
 

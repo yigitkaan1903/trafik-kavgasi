@@ -11,48 +11,34 @@ from make_sprites import write_png  # noqa: E402
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "sprites")
 SCALE = 2
-PAL = {"k": (27, 16, 36, 255), "W": (250, 248, 240, 255), "g": (206, 200, 214, 255), "Y": (230, 180, 40, 255)}
+PAL = {"k": (36, 22, 48, 255), "W": (255, 250, 236, 255), "g": (214, 200, 196, 255), "Y": (240, 190, 60, 255)}
 
-ARROW = [
-    "k...........",
-    "kk..........",
-    "kWk.........",
-    "kWWk........",
-    "kWWWk.......",
-    "kWWWWk......",
-    "kWWWWWk.....",
-    "kWWWWWWk....",
-    "kWWWWWWWk...",
-    "kWWWWWWWWk..",
-    "kWWWWWWWgYk.",
-    "kWWWWWWkkkkk",
-    "kWWgkWWk....",
-    "kWgk.kWWk...",
-    "kgk..kWWk...",
-    "kk....kWgk..",
-    "k.....kWgk..",
-    ".......kk...",
+ARROW = [   # küçük, yuvarlak hatlı ok; uçta altın parıltı
+    "k.......",
+    "kk......",
+    "kYk.....",
+    "kWWk....",
+    "kWWWk...",
+    "kWWWWk..",
+    "kWWWWWk.",
+    "kWWWkkkk",
+    "kWkWk...",
+    "kk.kWk..",
+    "....kk..",
 ]
 
-HAND = [
-    ".....kk.........",
-    "....kWWk........",
-    "....kWWk........",
-    "....kWWk........",
-    "....kWWkkk......",
-    "....kWWkWWkkk...",
-    "....kWWkWWkWWkk.",
-    ".kk.kWWkWWkWWkWk",
-    "kWWkkWWWWWWWWkWk",
-    "kWWWkWWWWWWWWWWk",
-    ".kWWWWWWWWWWWWWk",
-    "..kWWWWWWWWWWWgk",
-    "..kWWWWWWWWWWWgk",
-    "...kWWWWWWWWWgk.",
-    "...kWWWWWWWWWgk.",
-    "....kWWWWWWWgk..",
-    "....kYYYYYYYYk..",
-    "....kkkkkkkkkk..",
+HAND = [   # tombul işaret parmağı, bilekte altın şerit
+    "..kk......",
+    ".kWWk.....",
+    ".kWWkkk...",
+    ".kWWWWWkk.",
+    "kkWWgWgWWk",
+    "kWkWWWWWWk",
+    "kWWWWWWWWk",
+    ".kWWWWWWWk",
+    ".kWWWWWWk.",
+    "..kYYYYYk.",
+    "..kkkkkkk.",
 ]
 
 

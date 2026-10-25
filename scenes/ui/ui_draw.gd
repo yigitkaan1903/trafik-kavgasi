@@ -49,6 +49,7 @@ static func flat_button(text: String, accent: Color = GOLD, font_size: int = 10)
 	var b := Button.new()
 	b.text = text
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART   # uzun seçenek kutuyu genişletmez, alt satıra geçer
 	b.add_theme_font_size_override("font_size", font_size)
 	b.add_theme_color_override("font_color", Color(1, 1, 1, 0.85))
 	b.add_theme_color_override("font_hover_color", accent)

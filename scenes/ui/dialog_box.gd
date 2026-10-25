@@ -56,6 +56,7 @@ func _ready() -> void:
 	var text_panel := PanelContainer.new()
 	text_panel.add_theme_stylebox_override("panel", _frame_style(Color("17131f", 0.97)))
 	text_panel.custom_minimum_size = Vector2(TEXT_W, 124 if portrait else 0)
+	text_panel.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	row.add_child(text_panel)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 3)
@@ -82,6 +83,7 @@ func _ready() -> void:
 	for c in _choices + [{"text": "Görüşürüz", "id": "close", "disabled": false}]:
 		var b := UIDraw.flat_button("›  " + c["text"], FRAME, 9)
 		b.disabled = c["disabled"]
+		b.custom_minimum_size.x = TEXT_W - 20
 		var id: String = c["id"]
 		b.pressed.connect(func(): _pick(id))
 		box.add_child(b)
@@ -124,10 +126,11 @@ func _ready() -> void:
 		psb.content_margin_bottom = 1
 		plate.add_theme_stylebox_override("panel", psb)
 		col.add_child(plate)
-		var name_l := GameState.make_label(speaker, 9, Color("2a1a10"))
+		var name_l := GameState.make_label(speaker, 9 if speaker.length() <= 16 else 7, Color("2a1a10"))
 		name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		name_l.custom_minimum_size.x = 96
 		name_l.clip_text = true
+		name_l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		plate.add_child(name_l)
 	# açılış: alttan hafifçe kayarak gelir
 	row.modulate.a = 0.0

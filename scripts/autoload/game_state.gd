@@ -1113,7 +1113,7 @@ func fighter_texture(look: String, pose: String) -> Texture2D:
 ## Oyuna özel fare imleçleri (tools/make_cursors.py): ok ve tıklanabilir şeylerin üstünde el.
 func _setup_cursors() -> void:
 	Input.set_custom_mouse_cursor(load("res://assets/sprites/cursor_arrow.png"), Input.CURSOR_ARROW, Vector2(0, 0))
-	Input.set_custom_mouse_cursor(load("res://assets/sprites/cursor_hand.png"), Input.CURSOR_POINTING_HAND, Vector2(10, 1))
+	Input.set_custom_mouse_cursor(load("res://assets/sprites/cursor_hand.png"), Input.CURSOR_POINTING_HAND, Vector2(5, 1))
 
 
 ## Sahnede tıklanabilir bir şeyin üstündeyken el imleci (Control olmayan sahneler için: mekan, metrobüs...).

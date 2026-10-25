@@ -155,7 +155,7 @@ func _add_crowd() -> float:
 	var stands: Array = _room.points("crowd_stand")
 	if seats.is_empty() and stands.is_empty():
 		return -1.0
-	var fill := randf_range(0.15, 0.95)
+	var fill := _crowd_level()
 	var taken: Array = []
 	for s in _spots:
 		if s.has("node"):
@@ -174,6 +174,25 @@ func _add_crowd() -> float:
 			p.face_dir(["up", "left", "right"].pick_random())
 			_room.add_blocker(p)
 	return fill
+
+
+## Doluluk: saate göre (sabah sakin, öğle tıklım tıklım, akşam azalır), hafta sonu kampüs boş; biraz da şans.
+func _crowd_level() -> float:
+	var h := GameState.minute / 60.0
+	var base := 0.12
+	if h >= 8.0 and h < 11.0:
+		base = 0.35
+	elif h >= 11.0 and h < 14.0:
+		base = 0.8
+	elif h >= 14.0 and h < 17.0:
+		base = 0.55
+	elif h >= 17.0 and h < 20.0:
+		base = 0.35
+	elif h >= 20.0 and h < 23.0:
+		base = 0.2
+	if GameState.weekday() >= 5 and _id == "kampus_kafe":
+		base *= 0.4
+	return clampf(base + randf_range(-0.12, 0.12), 0.05, 0.95)
 
 
 func _person(look: String, at: Vector2):
