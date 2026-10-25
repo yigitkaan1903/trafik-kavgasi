@@ -79,10 +79,13 @@ func _ready() -> void:
 	_ui.add_child(_phone)
 
 	if GameState.pending_notice != "":
-		_notice("Bayıldın!", GameState.pending_notice)
+		_notice("Bayıldın!", GameState.pending_notice, "")
 		GameState.pending_notice = ""
 	elif not GameState.intro_seen:
 		_intro()
+	for a in OS.get_cmdline_user_args():   # test: -- --go=yemekhane (o yere tıklamış gibi)
+		if a.begins_with("--go="):
+			_go.call_deferred(a.trim_prefix("--go="))
 
 
 ## Gece: yanan pencereler, sokak lambaları, mekan önü ışıkları (tools/make_citymap.py, bg_*_lights.png).
@@ -155,12 +158,13 @@ func _go(id: String) -> void:
 	if spot["go"] in ["lecture", "cafeteria"]:
 		var why: String = GameState.action_block_reason(Places.CAMPUS_ACTIONS[spot["go"]])
 		if why != "":
-			_notice(spot["name"], why)
+			var timed := why.begins_with("Şu an kapalı") or why.begins_with("Hafta sonu")
+			_notice(spot["name"], why + ".", "clock" if timed else "warn")
 			return
 	if spot["go"] == "drive":
 		var why := GameState.drive_block_reason()
 		if why != "":
-			_notice(spot["name"], why)
+			_notice(spot["name"], why, "warn")
 			return
 	_busy = true
 	var dest := _door(id)
@@ -229,11 +233,15 @@ func _intro() -> void:
 		GameState.save_game())
 
 
-func _notice(title: String, text: String) -> void:
+## Uyarı kartı. icon: "clock" (kapalı, saat dışı), "warn" (ünlem) ya da "" (oyuncunun portresi, ör. bayılınca).
+func _notice(title: String, text: String, icon: String = "clock") -> void:
 	var popup := ChoicePopup.new()
-	popup.portrait = GameState.fighter_texture("player", "hurt")
+	popup.icon = icon
+	popup.accent = Color("f59e0b")
+	if icon == "":
+		popup.portrait = GameState.fighter_texture("player", "hurt")
 	popup.title = title
-	popup.add_line(text)
+	popup.add_line(text, 10, Color(1, 1, 1, 0.85))
 	popup.add_choice("Tamam", "ok")
 	_open_popup(popup, func(_c): pass)
 

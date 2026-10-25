@@ -96,14 +96,14 @@ func _draw() -> void:
 
 	# para (değişince küçük +/- yazısı belirir)
 	UIDraw.icon(self, "money", Vector2(164, 5))
-	draw_string(font, Vector2(180, 15), "%d TL" % int(round(_money)), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, UIDraw.GOLD)
+	draw_string(font, Vector2(180, 15), _money_text(), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, UIDraw.GOLD)
 	if _money_pop_t > 0.0:
 		var a := clampf(_money_pop_t / 0.4, 0.0, 1.0)
 		var up := (1.6 - _money_pop_t) * 4.0
 		draw_string(font, Vector2(214, 10 - up), ("+%d" if _money_pop > 0 else "%d") % _money_pop, HORIZONTAL_ALIGNMENT_LEFT, -1, 8,
 				Color(0.3, 0.9, 0.5, a) if _money_pop > 0 else Color(1, 0.4, 0.3, a))
 	# seviye rozeti ve XP çubuğu
-	var mw := font.get_string_size("%d TL" % int(round(_money)), HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x
+	var mw := font.get_string_size(_money_text(), HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x
 	var lx := minf(184.0 + mw, BADGE_X - 34.0)
 	UIDraw.box(self, Rect2(lx, 4, 26, 12), Color("1e3a5f"), Color("7dd3fc", 0.6), 4)
 	draw_string(font, Vector2(lx, 13), "Sv %d" % gs.level, HORIZONTAL_ALIGNMENT_CENTER, 26, 7, Color.WHITE)
@@ -126,3 +126,8 @@ func _draw() -> void:
 
 func _divider(x: float) -> void:
 	draw_rect(Rect2(x, 4, 1, HEIGHT - 8), Color(1, 1, 1, 0.1))
+
+
+## God Mode'da (test) para sınırsız: sayı yerine sonsuz işareti.
+func _money_text() -> String:
+	return "∞ TL" if GameState.difficulty == "god" else "%d TL" % int(round(_money))

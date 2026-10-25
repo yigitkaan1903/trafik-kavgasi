@@ -64,6 +64,8 @@ const DIFFICULTIES := {
 		"desc": "O gün çalışmadığın her stat gece 1 puan düşer (10'un altına inmez). Aç yatarsan kayıp iki katı. Düzenli gym şart."},
 	"zor": {"name": "Punch Club", "decay": 3.0, "floor": STAT_START, "hunger_mult": 2.0,
 		"desc": "Çalışmadığın her stat gece 3 puan düşer. Aç kalırsan iki katı ve enerjin de erir. Her saat hesaplı olmalı."},
+	"god": {"name": "God Mode (test)", "decay": 0.0, "floor": STAT_START, "hunger_mult": 1.0,   # test bitince kaldırılacak
+		"desc": "Sınırsız para, statlar düşmez. Sadece oyunu test etmek için."},
 }
 
 const STAT_NAMES := {"str": "Güç", "agi": "Çeviklik", "sta": "Dayanıklılık"}

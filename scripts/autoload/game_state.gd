@@ -12,6 +12,7 @@ const Skills = preload("res://data/skills.gd")
 
 const SAVE_VERSION := 2
 const SAVE_PATH := "user://save.json"
+const GOD_MONEY := 999999      # God Mode (test zorluğu): sınırsız para. Test bitince kaldırılacak.
 const SETTINGS_PATH := "user://settings.cfg"
 const FONT_PATH := "res://assets/fonts/Rubik.ttf"              # gövde metinleri: okunaklı
 const TITLE_FONT_PATH := "res://assets/fonts/PixelifySans.ttf"  # büyük başlıklar: pixel havası
@@ -83,7 +84,9 @@ var place_spawn := ""         # mekan açılınca nerede başlanır (ör. butikt
 var pending_notice := ""      # haritaya dönünce gösterilecek uyarı (ör. bayıldın)
 
 # ---- para, arabalar, kavgalar
-var money := START_MONEY
+var money := START_MONEY:      # God Mode'da (test) para hiç azalmaz
+	set(v):
+		money = maxi(v, GOD_MONEY) if difficulty == "god" else v
 var cars: Array = []          # her biri {"id", "engine", "armor", "horn", "damage"}
 var active_car := -1          # -1: araba yok, metrobüsle gidiyoruz
 var nam := {}                 # rakip id -> kaç kez yendin
