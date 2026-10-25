@@ -50,7 +50,7 @@ PROMPTS.update({   # silahlar (yandan, sağa bakar) ve çarşıdaki büst
     "weapon_musta": "golden brass knuckles weapon, side view, single item, shiny metal",
     "weapon_sopa": "wooden baseball bat lying horizontally pointing right, black grip tape on handle, side view, single item",
     "weapon_bicak": "folding pocket knife with steel blade pointing right and dark wooden handle, side view, single item",
-    "messi_bust": "bronze bust statue of a bearded football legend wearing a striped national team jersey, on a stone pedestal with a small golden plaque",
+    "messi_bust": "statue bust of a bearded football legend with short brown hair, painted, wearing the Argentina national team jersey with light blue and white vertical stripes, on a wide grey stone pedestal with a large blank golden plaque on the front",
 })
 SIZES = {"metrobus": (128, 64), "weapon_musta": (32, 32), "weapon_sopa": (48, 48), "weapon_bicak": (32, 32),
          "messi_bust": (64, 64)}   # varsayılan 96x96; arabalar 64x64

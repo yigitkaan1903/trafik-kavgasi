@@ -169,7 +169,7 @@ const PLACES := {
 			{"kind": "door", "name": "Butik Moda", "at": "door_butik", "to": "butik"},
 			{"kind": "door", "name": "Spor & Hırdavat", "at": "door_hirdavat", "to": "hirdavat"},
 			{"kind": "object", "name": "Messi büstü", "at": "bust", "dir": "up", "prop": "messi_bust",
-				"portrait": "res://assets/pixellab/map/messi_bust.png",
+				"portrait": "res://assets/sprites/messi_portrait.png",
 				"lines": ["Çarşı esnafı toplanıp yaptırmış. Altında \"Gelmişlerin en iyisi\" yazıyor.",
 					"Büstün burnu parlamış: herkes uğur için dokunuyor.", "Biri ayağına top bırakmış."]},
 		],

@@ -1153,9 +1153,42 @@ def planter():
     return c
 
 
+# 3x5 piksel harfler (plaket yazıları); M 5 geniş, İ'nin noktası üstte
+GLYPHS = {"M": ["1...1", "11.11", "1.1.1", "1...1", "1...1"], "E": ["111", "1..", "11.", "1..", "111"],
+          "S": ["111", "1..", "111", "..1", "111"], "İ": ["1", "1", "1", "1", "1"]}
+
+
+def pixel_text(c, text, cx, y, col):
+    """Ortalanmış küçük piksel yazı (y: harflerin üstü; İ'nin noktası bir üstte)."""
+    w = sum(len(GLYPHS[ch][0]) for ch in text) + len(text) - 1
+    x = cx - w // 2
+    for ch in text:
+        g = GLYPHS[ch]
+        for gy, row in enumerate(g):
+            for gx, v in enumerate(row):
+                if v == "1":
+                    c.set(x + gx, y + gy, col)
+        if ch == "İ":
+            c.set(x, y - 2, col)
+        x += len(g[0]) + 1
+
+
+def messi_art():
+    """PixelLab büstü (Arjantin forması), kaidedeki altın plakete "MESSİ" yazılır."""
+    c = pixellab_art("messi_bust")
+    gold = [(x, y) for y in range(c.h) for x in range(c.w)
+            if c.px[y][x][3] and c.px[y][x][0] > 170 and c.px[y][x][1] > 120 and c.px[y][x][2] < 110 and y > c.h // 2]
+    xs, ys = [p[0] for p in gold], [p[1] for p in gold]
+    cx, cy = (min(xs) + max(xs) + 1) // 2, (min(ys) + max(ys) + 1) // 2
+    c.fill(cx - 13, cy - 5, 26, 11, H("6a4a14"))                                  # yazıya yetecek büyüklükte plaket
+    c.fill(cx - 12, cy - 4, 24, 9, H("e8b830")); c.fill(cx - 12, cy - 4, 24, 1, H("f8dc70"))
+    pixel_text(c, "MESSİ", cx, cy - 1, H("4a2a10"))
+    return c
+
+
 def messi_bust():
-    """Çarşı meydanındaki Messi büstü (PixelLab), altında küçük çiçeklik."""
-    art = pixellab_art("messi_bust", 48, 52)
+    """Çarşı meydanındaki Messi büstü, altında küçük çiçeklik."""
+    art = messi_art()
     c = Painter(art.w + 8, art.h + 6)
     c.fill(0, art.h - 2, art.w + 8, 8, H("8a8478")); c.fill(0, art.h - 2, art.w + 8, 1, H("b8b2a4"))
     for x in range(2, art.w + 6, 3):
@@ -1164,6 +1197,14 @@ def messi_bust():
         for x in range(art.w):
             if art.px[y][x][3]:
                 c.set(x + 4, y, art.px[y][x][:3])
+    # konuşma kutusu portresi: yazılı büstün kendisi (64x64 içinde ortalı)
+    port = Painter(64, 64)
+    ox, oy = (64 - art.w) // 2, (64 - art.h) // 2
+    for y in range(art.h):
+        for x in range(art.w):
+            if art.px[y][x][3]:
+                port.set(ox + x, oy + y, art.px[y][x][:3])
+    write_png(os.path.join(ROOT, "assets", "sprites", "messi_portrait.png"), port.px)
     return c
 
 
@@ -1292,7 +1333,6 @@ def room_carsi():
     r.prop("planter", planter, 870, 150 + D, foot=6)
     r.prop("trash_bin", trash_bin, 990, 150 + D, foot=4)
     r.prop("trash_bin", trash_bin, 196, 150 + D, foot=4)
-    r.text(598, 168 + D, 52, "MESSİ · 10", 6, "1b1024")
     r.mark("bust", 620, 160 + D)
     r.mark("spawn", 22, 140 + D); r.mark("exit", 4, 140 + D)
     r.mark("melek", 160, 110 + D); r.mark("talk_melek", 160, 136 + D)

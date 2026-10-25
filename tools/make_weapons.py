@@ -12,8 +12,15 @@ from make_sprites import write_png  # noqa: E402
 from make_citymap import load_art, shrink  # noqa: E402
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+# Muşta elle çizilir (PixelLab 4 yerine 6 delik çizdi): dört parmak deliği, altta avuç çubuğu.
+# assets/pixellab/map/weapon_musta.png bunun üstüne yazılır; pano ve inceleme portresi de onu kullanır.
+MUSTA_PAL = {"k": (58, 36, 16, 255), "Y": (230, 180, 40, 255), "W": (255, 242, 176, 255), "y": (184, 134, 20, 255)}
+MUSTA = [".kkkkkk.kkkkkk.kkkkkk.kkkkkk."] + [
+    "k" + (row + "k") * 4 for row in ("YWYYYY", "YkkkkY", "Yk..kY", "Yk..kY", "YkkkkY", "YYYYYY")
+] + ["k" + "y" * 27 + "k", ".k" + "y" * 25 + "k.", ".." + "k" * 25 + ".."]
+
 # id: dövüşte en uzun kenar (piksel), sap hangi köşede ("bl": sol alt, "c": orta = muşta)
-WEAPONS = {"sopa": (22, "bl"), "bicak": (12, "bl"), "musta": (8, "c")}
+WEAPONS = {"sopa": (22, "bl"), "bicak": (12, "bl"), "musta": (10, "c")}
 
 
 def ends(px, grip):
@@ -28,7 +35,14 @@ def ends(px, grip):
     return handle, tip
 
 
+def draw_musta():
+    px = [[MUSTA_PAL.get(ch, (0, 0, 0, 0)) for ch in row] for row in MUSTA]
+    assert all(len(r) == len(px[0]) for r in px)
+    write_png(os.path.join(ROOT, "assets", "pixellab", "map", "weapon_musta.png"), px)
+
+
 def main():
+    draw_musta()
     lines = ["## tools/make_weapons.py üretir. Dövüşte eldeki silah: sap (tutulan nokta) ve uç, görsel pikseli olarak.", "",
              "const ART := {"]
     for wid, (size, grip) in WEAPONS.items():
