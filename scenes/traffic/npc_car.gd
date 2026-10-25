@@ -11,13 +11,15 @@ var cutter := false
 var _did_cut := false
 
 
-func setup(id: String, lane_index: int, x: float) -> void:
+## recent: son çıkan rakipler ve araba görselleri (aynısı art arda gelmesin diye)
+func setup(id: String, lane_index: int, x: float, recent: Array = []) -> void:
 	rival_id = id
 	lane = lane_index
 	texture = GameState.car_texture(GameState.rival(id)["car"])
-	if randf() < 0.45:   # trafik çeşitlensin: sürücü aynı, araba süs modellerden biri
+	if randf() < 0.45 or recent.has(texture.resource_path):   # trafik çeşitlensin: araba süs modellerden biri
 		decor = true
-		texture = GameState.car_texture(Cars.DECOR.pick_random())
+		var pool: Array = Cars.DECOR.filter(func(c): return not recent.has(GameState.car_texture(c).resource_path))
+		texture = GameState.car_texture((pool if not pool.is_empty() else Cars.DECOR).pick_random())
 	position = Vector2(x, -40)
 	match GameState.rival(id)["car"]:
 		"kamyon", "dolmus":

@@ -1,7 +1,8 @@
 extends Control
 ## Harita: Beylikdüzü mahallesi ya da YTÜ Davutpaşa kampüsü (GameState.map_id).
 ## Binaya tıklayınca oraya yürürsün ve mekan/ders/yemekhane açılır. İki harita arası metrobüsle.
-## Klavyeyle: Sol/Sağ seç, E ya da Enter git.
+## Klavyeyle: Sol/Sağ seç, E ya da Enter git. Harita ekrandan büyükse kayar: kamera oyuncuyu ve seçili yeri izler,
+## fare ekran kenarına gelince ya da sağ/orta tuşla sürükleyince de kayar.
 
 const Places = preload("res://data/places.gd")
 const MapArt = preload("res://data/map_art.gd")
@@ -11,6 +12,9 @@ const ChoicePopup = preload("res://scenes/ui/choice_popup.gd")
 const Phone = preload("res://scenes/ui/phone.gd")
 
 const BUILDING := Vector2(40, 24)    # uzaktan bakış: küçük binalar (tools/make_citymap.py)
+const VIEW := Vector2(480, 270)
+const BAND := Vector2(22, 235)       # durum çubuğu ile alt bilgi kartı arası (görünen dikey alan)
+const EDGE_PAN := 260.0              # fare kenardayken kayma hızı (piksel/sn)
 
 var _map: Dictionary
 var _spots := {}      # id -> {"name", "desc", "pos", "go"}
@@ -23,6 +27,11 @@ var _ui: CanvasLayer
 var _info: Label
 var _phone
 var _overlay: Control
+var _world: Control       # harita, isimler, araba ve oyuncu: kaydırılan katman
+var _lights: TextureRect
+var _scroll := Vector2.ZERO
+var _scroll_target := Vector2.ZERO
+var _drag := false
 
 
 func _ready() -> void:
@@ -34,15 +43,19 @@ func _ready() -> void:
 		GameState.place = _map["start"]
 	_selected = _order.find(GameState.place)
 
-	var bg := TextureRect.new()   # harita görseli (tools/make_backgrounds.py)
+	_world = Control.new()
+	_world.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_world)
+	var bg := TextureRect.new()   # harita görseli (tools/make_citymap.py)
 	bg.texture = load("res://assets/backgrounds/%s.png" % _map["bg"])
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(bg)
-	_overlay = Control.new()      # seçili bina çerçevesi ve isimler
-	_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_world.add_child(bg)
+	_world.size = bg.texture.get_size()
+	_overlay = Control.new()      # isimler ve seçili yer oku
+	_overlay.size = _world.size
 	_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_overlay.draw.connect(_draw_overlay)
-	add_child(_overlay)
+	_world.add_child(_overlay)
 	Lighting.apply(self, true)
 	_add_night_lights()
 
@@ -52,18 +65,22 @@ func _ready() -> void:
 		car.rotation = PI / 2.0
 		car.scale = Vector2(0.5, 0.5)
 		car.position = _spots["otopark"]["pos"] + Vector2(-6, 0)
-		add_child(car)
+		_world.add_child(car)
 
 	_player = Person.new()
 	_player.look = GameState.player_look()
 	_player.marker = true
 	_player.scale_px = 0.6
 	_player.position = _door(GameState.place)
-	add_child(_player)
+	_world.add_child(_player)
+	_center_on(_player.position, true)
 
 	_ui = CanvasLayer.new()
 	add_child(_ui)
 	_ui.add_child(StatusBar.new())
+	var title := GameState.make_label(_map["name"], 12, Color(1, 1, 1, 0.6))   # harita adı (kaymaz)
+	title.position = Vector2(6, 23)
+	_ui.add_child(title)
 	var panel := Control.new()   # alt bilgi kartı
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -97,19 +114,58 @@ func _add_night_lights() -> void:
 		return
 	var layer := CanvasLayer.new()
 	add_child(layer)
-	var lights := TextureRect.new()
-	lights.texture = load(path)
-	lights.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_lights = TextureRect.new()
+	_lights.texture = load(path)
+	_lights.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var mat := CanvasItemMaterial.new()
 	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
-	lights.material = mat
-	lights.modulate.a = night
-	layer.add_child(lights)
+	_lights.material = mat
+	_lights.modulate.a = night
+	layer.add_child(_lights)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	_update_info()
 	_overlay.queue_redraw()
+	if _scrollable():
+		if not _busy and not _phone.is_open() and not _drag:   # fare kenarda: kaydır
+			var m := get_local_mouse_position()
+			var pan := Vector2.ZERO
+			if m.x < 12.0:
+				pan.x = -1.0
+			elif m.x > VIEW.x - 12.0:
+				pan.x = 1.0
+			if m.y < BAND.x + 10.0 and m.y >= 0.0:
+				pan.y = -1.0
+			elif m.y > BAND.y - 8.0 and m.y < VIEW.y:
+				pan.y = 1.0
+			if pan != Vector2.ZERO and get_viewport().get_visible_rect().has_point(get_viewport().get_mouse_position()):
+				_scroll_target = _clamp_scroll(_scroll_target + pan * EDGE_PAN * delta)
+		if _busy:   # yürürken oyuncuyu izle
+			_center_on(_player.position)
+		_scroll = _scroll.lerp(_scroll_target, minf(1.0, delta * 8.0))
+	_world.position = (-_scroll).round()
+	if _lights:
+		_lights.position = _world.position
+
+
+## Harita ekrandan büyük mü (kampüs gibi tek ekranlık haritalar kaymaz).
+func _scrollable() -> bool:
+	return _world.size.x > VIEW.x or _world.size.y > VIEW.y
+
+
+func _clamp_scroll(v: Vector2) -> Vector2:
+	if not _scrollable():
+		return Vector2.ZERO
+	return Vector2(clampf(v.x, 0.0, maxf(0.0, _world.size.x - VIEW.x)),
+			clampf(v.y, -BAND.x, maxf(-BAND.x, _world.size.y - BAND.y)))
+
+
+## Bir noktayı görünen alanın ortasına getir (now: hemen, kaydırmadan).
+func _center_on(p: Vector2, now: bool = false) -> void:
+	_scroll_target = _clamp_scroll(p - Vector2(VIEW.x / 2.0, (BAND.x + BAND.y) / 2.0))
+	if now:
+		_scroll = _scroll_target
 
 
 func _door(id: String) -> Vector2:
@@ -126,10 +182,18 @@ func _rect(id: String) -> Rect2:
 func _gui_input(event: InputEvent) -> void:
 	if _busy or _phone.is_open():
 		return
+	if event is InputEventMouseButton and event.button_index in [MOUSE_BUTTON_RIGHT, MOUSE_BUTTON_MIDDLE]:
+		_drag = event.pressed   # sağ / orta tuşla sürükleyerek kaydır
+		return
 	if event is InputEventMouseMotion:
+		if _drag and _scrollable():
+			_scroll_target = _clamp_scroll(_scroll_target - event.relative)
+			_scroll = _scroll_target
+			return
+		var wp: Vector2 = event.position + _scroll   # ekran -> harita koordinatı
 		_hover = ""
 		for id in _spots:
-			if _rect(id).grow(4).has_point(event.position):
+			if _rect(id).grow(4).has_point(wp):
 				_hover = id
 		mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if _hover != "" else Control.CURSOR_ARROW
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and _hover != "":
@@ -142,9 +206,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("move_right") or event.is_action_pressed("move_down"):
 		_selected = (_selected + 1) % _order.size()
 		_hover = _order[_selected]
+		_center_on(_spots[_hover]["pos"])
 	elif event.is_action_pressed("move_left") or event.is_action_pressed("move_up"):
 		_selected = (_selected - 1 + _order.size()) % _order.size()
 		_hover = _order[_selected]
+		_center_on(_spots[_hover]["pos"])
 	elif (event.is_action_pressed("interact") or event.is_action_pressed("ui_accept")) and _hover != "":
 		_go(_hover)
 	elif event.is_action_pressed("back"):
@@ -171,9 +237,10 @@ func _go(id: String) -> void:
 	var dest := _door(id)
 	if id != GameState.place:
 		var tw := create_tween()
+		var dur := clampf(_player.position.distance_to(dest) / 220.0, 0.5, 1.6)   # büyük haritada uzak yer daha uzun yürünür
 		tw.tween_method(func(t: float):
 			_player.position = _player.position.lerp(dest, t)
-			_player.set_moving(true, dest.x - _player.position.x), 0.0, 1.0, 0.6)
+			_player.set_moving(true, dest.x - _player.position.x), 0.0, 1.0, dur)
 		await tw.finished
 		_player.set_moving(false, 0.0)
 	GameState.walk_to(id)
@@ -266,7 +333,7 @@ func _draw_overlay() -> void:
 		var hot: bool = id == _hover
 		var name: String = _spots[id]["name"]
 		var w := font.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x
-		var lp := Vector2(clampf(r.get_center().x - w / 2.0, 4.0, 476.0 - w), r.position.y - 3)
+		var lp := Vector2(clampf(r.get_center().x - w / 2.0, 4.0, _world.size.x - 4.0 - w), r.position.y - 3)
 		if lp.y < 32.0:   # durum çubuğuna değecekse etiket binanın altına
 			lp.y = r.end.y + 10.0
 		_overlay.draw_rect(Rect2(lp.x - 2, lp.y - 8, w + 4, 10), Color(0, 0, 0, 0.55))
@@ -276,4 +343,3 @@ func _draw_overlay() -> void:
 			_overlay.draw_colored_polygon(PackedVector2Array([tip + Vector2(-4, -4), tip + Vector2(4, -4), tip]), Color("1b1024"))
 			_overlay.draw_colored_polygon(PackedVector2Array([tip + Vector2(-3, -4), tip + Vector2(3, -4), tip + Vector2(0, -1)]), Color("e6b428"))
 	_overlay.draw_string(font, _map["line"][0], _map["line"][1], HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color(1, 1, 1, 0.75))
-	_overlay.draw_string(font, Vector2(6, 34), _map["name"], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(1, 1, 1, 0.6))

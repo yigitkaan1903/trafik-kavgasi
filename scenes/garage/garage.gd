@@ -68,7 +68,7 @@ func _ready() -> void:
 	metro.pressed.connect(_on_metro)
 	bottom.add_child(metro)
 	_drive_button = Button.new()
-	_drive_button.text = "Trafiğe çık!"
+	_drive_button.text = "Arabayla okula git"
 	_drive_button.pressed.connect(_on_drive)
 	bottom.add_child(_drive_button)
 	if not GameState.has_car():
@@ -88,12 +88,13 @@ func _draw() -> void:
 		draw_rect(Rect2(x, 0, 1, size.y), Color("24212e"))
 
 
+## Garajdan okula yolculuk (serbest sürüş yok: hep bir hedef ve ilerleme çubuğu olur).
 func _on_drive() -> void:
-	if GameState.car()["damage"] >= GameState.car_max_hp():
-		_message.text = "Araban hurda! Önce tamir ettir."
+	var why := GameState.drive_block_reason()
+	if why != "":
+		_message.text = why
 		return
-	GameState.save_game()
-	GameState.go_to(GameState.SCENE_TRAFFIC)
+	GameState.start_drive("kampus" if GameState.map_id == "mahalle" else "mahalle")
 
 
 func _on_metro() -> void:

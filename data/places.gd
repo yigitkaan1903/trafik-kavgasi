@@ -269,16 +269,16 @@ const CAMPUS_ACTIONS := {
 const MAPS := {
 	"mahalle": {
 		"name": "BEYLİKDÜZÜ", "bg": "bg_map", "walk": 15, "start": "ev",
-		"line": [Vector2(330, 34), "metrobüs hattı → Davutpaşa"],
+		"line": [Vector2(560, 60), "E-5 · metrobüs hattı → Davutpaşa"],
 		"spots": {
-			"ev": {"name": "Ev", "desc": "Küçük, rutubetli ama senin.", "pos": Vector2(64, 108), "go": "place"},
-			"market": {"name": "Market", "desc": "Köşedeki market. 07:00-01:00 açık.", "pos": Vector2(186, 114), "go": "place"},
-			"gym": {"name": "Rıza'nın Salonu", "desc": "Mahallenin spor salonu. 06:00-24:00 açık.", "pos": Vector2(372, 104), "go": "place"},
-			"galeri": {"name": "Necdet Oto Galeri", "desc": "Araba al, sat, yükselt.", "pos": Vector2(424, 178), "go": "place"},
-			"berber": {"name": "Berber Sabri", "desc": "Saç tıraşı, yeni saç modeli. 09:00-21:00 açık.", "pos": Vector2(88, 180), "go": "place"},
-			"carsi": {"name": "Çarşı", "desc": "İş (kafe, kargo, dershane) ve alışveriş (butik, Av & Savunma).", "pos": Vector2(212, 176), "go": "place"},
-			"durak": {"name": "Metrobüs Durağı", "desc": "Okula (YTÜ Davutpaşa) metrobüsle gidilir.", "pos": Vector2(250, 74), "go": "metro"},
-			"otopark": {"name": "Otopark", "desc": "Arabanla okula git: ~35 dk, 30 TL benzin. Trafikte kavga çıkabilir.", "pos": Vector2(338, 180), "go": "drive"},
+			"ev": {"name": "Ev", "desc": "Küçük, rutubetli ama senin.", "pos": Vector2(288, 208), "go": "place"},
+			"market": {"name": "Market", "desc": "Köşedeki market. 07:00-01:00 açık.", "pos": Vector2(448, 208), "go": "place"},
+			"gym": {"name": "Rıza'nın Salonu", "desc": "Mahallenin spor salonu. 06:00-24:00 açık.", "pos": Vector2(624, 232), "go": "place"},
+			"galeri": {"name": "Necdet Oto Galeri", "desc": "Araba al, sat, yükselt.", "pos": Vector2(720, 296), "go": "place"},
+			"berber": {"name": "Berber Sabri", "desc": "Saç tıraşı, yeni saç modeli. 09:00-21:00 açık.", "pos": Vector2(288, 272), "go": "place"},
+			"carsi": {"name": "Çarşı", "desc": "İş (kafe, kargo, dershane) ve alışveriş (butik, Av & Savunma).", "pos": Vector2(480, 288), "go": "place"},
+			"durak": {"name": "Metrobüs Durağı", "desc": "Okula (YTÜ Davutpaşa) metrobüsle gidilir.", "pos": Vector2(624, 104), "go": "metro"},
+			"otopark": {"name": "Otopark", "desc": "Arabanla okula git: ~35 dk, 30 TL benzin. Trafikte kavga çıkabilir.", "pos": Vector2(624, 328), "go": "drive"},
 		},
 	},
 	"kampus": {

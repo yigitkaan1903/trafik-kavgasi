@@ -138,6 +138,14 @@ LOOKS = {
                   shoes=(110, 40, 40), glasses=(10, 10, 12), chain=(240, 200, 60)),
     "mert": dict(skin=(200, 146, 106), hair=(30, 24, 20), shirt=(120, 40, 160), stripe=(250, 210, 40),
                  pants=(40, 40, 50), shoes=(240, 240, 240), hat=(120, 40, 160)),
+    # hem metrobüste hem trafikte çıkan rakipler
+    "kokan": dict(skin=(206, 152, 112), hair=(24, 20, 20), shirt=(30, 30, 36), stripe=(236, 236, 236), pants=(30, 30, 36),
+                  shoes=(236, 236, 236), mustache=True, chain=(240, 200, 60)),
+    "buse": dict(skin=(238, 204, 176), hair=(214, 170, 96), shirt=(236, 130, 180), pants=(232, 232, 236), shoes=(240, 240, 240)),
+    "rifat": dict(skin=(214, 164, 124), hair=(150, 150, 156), shirt=(44, 44, 54), tie=(140, 30, 40), pants=(44, 44, 54),
+                  shoes=(30, 24, 24), mustache=True, glasses=(16, 16, 20)),
+    "husnu": dict(skin=(226, 182, 150), hair=(226, 226, 226), shirt=(90, 104, 72), pants=(70, 74, 60), shoes=(30, 26, 22),
+                  mustache=True),
     # mekan sahipleri (isimleriyle uyumlu kendi görünüşleri)
     "melek": dict(skin=(226, 180, 146), hair=(62, 36, 28), shirt=(168, 52, 66), pants=(70, 52, 62), shoes=(40, 30, 30)),
     "selin": dict(skin=(236, 200, 170), hair=(196, 146, 78), shirt=(232, 120, 168), pants=(40, 40, 60), shoes=(30, 30, 34)),

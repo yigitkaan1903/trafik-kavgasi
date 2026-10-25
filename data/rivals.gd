@@ -14,6 +14,59 @@
 const TIER_WINS := [0, 2, 5]
 
 const RIVALS := {
+	# ------------------------------------------------------------ Hem metrobüste hem trafikte
+	"kokan": {
+		"name": "Kökan Abi", "venue": "metro", "look": "kokan", "weight": 2, "also": "traffic", "car": "bmw", "tier": 1,
+		"hp": 120, "power": 1.25, "speed": 0.9, "aggro": 0.6, "block": 0.4, "reward": 90, "bet": false,
+		"lines": {
+			"laf": ["Kökan Abi'yi tanımayan kaldı mı bu mahallede?", "Tespihimi düşürttün, bunun hesabı sorulur."],
+			"carpma": ["Kökan Abi'nin arabasına sürtülmez kardeşim!", "Bu çiziği sana ödetmezsem adım Kökan değil."],
+			"korna": ["Bana korna çalan daha doğmadı.", "Kornayı kime çaldığını biliyon mu sen?"],
+			"thanks": ["Eyvallah, delikanlısın. Bir çayımı iç."],
+			"scared": ["Tamam aslanım, bugün senin günün.", "Seni Kökan Abi bile tanıyor, geç."],
+			"win": ["Kökan Abi'den daha çok yersin sen."],
+			"lose": ["Kimseye söylemiyoruz... anlaştık mı?"],
+		},
+	},
+	"buse": {
+		"name": "Fenomen Buse", "venue": "metro", "look": "buse", "weight": 2, "also": "traffic", "car": "egea", "tier": 0,
+		"hp": 60, "power": 0.9, "speed": 1.25, "aggro": 0.45, "block": 0.3, "reward": 40, "bet": false,
+		"lines": {
+			"laf": ["Şu an canlı yayındayız, bir özür bekliyoruz!", "Takipçilerim seni bulur, biliyorsun değil mi?"],
+			"carpma": ["Kamerama sürttün! Bu story'ye girecek!", "Herkes kaydediyor mu? Bu adam bana çarptı!"],
+			"korna": ["Korna sesi yayını mahvetti, tebrikler!", "Beni korna ile mi uyarıyorsun? 2 milyon takipçi!"],
+			"thanks": ["Teşekkürler canım, seni etiketliyorum!"],
+			"scared": ["Tamam tamam, yayını kapattım...", "Seni viral videodan tanıyorum, geçiyorum."],
+			"win": ["Bu an trend olacak!"],
+			"lose": ["Bu kısmı kesiyoruz... kesiyoruz..."],
+		},
+	},
+	"rifat": {
+		"name": "Dayı Rıfat", "venue": "metro", "look": "rifat", "weight": 1, "also": "traffic", "car": "mercedes", "tier": 2,
+		"hp": 130, "power": 1.3, "speed": 0.85, "aggro": 0.4, "block": 0.6, "reward": 150, "bet": false,
+		"lines": {
+			"laf": ["Yeğenim, bu vagonda benim sözüm geçer.", "Saygıyı unutmuşsunuz siz, hatırlatayım."],
+			"carpma": ["Mercedes'imin boyası senin bir yıllık harçlığın evlat.", "Yeğenim, arabadan inelim de konuşalım."],
+			"korna": ["Bana korna çalınmaz, rica edilir.", "Kornanı al, cebine koy yeğenim."],
+			"thanks": ["Terbiyeli çocuksun. Babana selam söyle."],
+			"scared": ["Seni duydum yeğenim. Bugün kimse kimseye dokunmuyor.", "Dayın sana kızmaz. Geç bakalım."],
+			"win": ["Eski toprak kolay kırılmaz yeğenim."],
+			"lose": ["Yaşlandık be... ama unutmam."],
+		},
+	},
+	"husnu": {
+		"name": "Emekli Albay Hüsnü", "venue": "metro", "look": "husnu", "weight": 2, "also": "traffic", "car": "toros", "tier": 0,
+		"hp": 85, "power": 1.05, "speed": 0.9, "aggro": 0.5, "block": 0.5, "reward": 55, "bet": false,
+		"lines": {
+			"laf": ["Hazır ol! Bu vagonda disiplin var!", "Benim zamanımda gençler büyüğe yer verirdi."],
+			"carpma": ["Sağa çek asker! Ehliyet ruhsat!", "Toros'uma sürtmek... bu bir saldırıdır!"],
+			"korna": ["Korna emir değildir asker!", "Bana korna çalan neferi cezalandırırım!"],
+			"thanks": ["Aferin evladım, vatan sizlere emanet."],
+			"scared": ["Geri çekil emri verdim kendime. Geç.", "Bu cephede savaşmayacağım. Geç asker."],
+			"win": ["Talim, terbiye, disiplin!"],
+			"lose": ["Rahat... geç..."],
+		},
+	},
 	# ------------------------------------------------------------ Metrobüs
 	"teyze": {
 		"name": "Pazar Çantalı Teyze", "venue": "metro", "look": "teyze", "weight": 3,

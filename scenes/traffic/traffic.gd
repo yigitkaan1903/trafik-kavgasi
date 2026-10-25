@@ -29,6 +29,7 @@ var _max_speed := 0.0
 var _paused := false
 var _scroll := 0.0
 var _spawn_t := 0.5
+var _recent: Array = []       # son çıkan rakipler ve araba görselleri (art arda tekrar olmasın)
 var _honk_cd := 0.0
 var _invuln := 0.0
 var _shake := 0.0
@@ -128,7 +129,15 @@ func _spawn(delta: float) -> void:
 	if not lane_free(l, -40.0, null):
 		return
 	var n := NpcCar.new()
-	n.setup(GameState.pick_traffic_rival(), l, LANES[l])
+	var rid := GameState.pick_traffic_rival()
+	for k in 4:   # aynı rakip / aynı araba art arda gelmesin
+		if rid not in _recent:
+			break
+		rid = GameState.pick_traffic_rival()
+	n.setup(rid, l, LANES[l], _recent)
+	_recent.push_front(rid)
+	_recent.push_front(n.texture.resource_path)
+	_recent.resize(mini(_recent.size(), 6))
 	n.z_index = 1
 	add_child(n)
 	npcs.append(n)

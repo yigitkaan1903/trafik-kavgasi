@@ -532,8 +532,10 @@ func _open_dialog(s: Dictionary, _i: int) -> void:
 		d.add_choice(_choice_text(a, why), id, why != "")
 	if _id == "galeri" and s["kind"] == "npc":
 		d.add_choice("Arabamı yönet (yükselt, tamir, sat)", "garage", GameState.cars.is_empty())
-		if GameState.has_car():
-			d.add_choice("Trafiğe çık", "traffic", GameState.car()["damage"] >= GameState.car_max_hp())
+		if GameState.has_car():   # galeriden doğrudan okula sürülür (yolculuk çubuğu ve benzin dahil)
+			var why := GameState.drive_block_reason()
+			d.add_choice("Arabayla okula git  (%d TL benzin)" % GameState.Places.FUEL_COST if why == "" else "Arabayla okula git  (%s)" % why,
+					"traffic", why != "")
 	_show_dialog(d, _on_pick.bind(s))
 
 
@@ -546,8 +548,7 @@ func _on_pick(id: String, s: Dictionary) -> void:
 			GameState.go_to(GameState.SCENE_GARAGE)
 		"traffic":
 			_busy = true
-			GameState.save_game()
-			GameState.go_to(GameState.SCENE_TRAFFIC)
+			GameState.start_drive("kampus")
 		_:
 			await _perform(_action(id), s.get("node"))
 
