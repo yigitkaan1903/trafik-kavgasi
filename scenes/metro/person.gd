@@ -21,7 +21,9 @@ var marker := false:        # oyuncunun başının üstünde kalabalıkta kaybol
 		if is_inside_tree():
 			_make_marker()
 
+var hat := ""               # oyuncunun şapkası (ayrı katman); oyuncu görünüşlerinde GameState'ten gelir
 var _sprite: Sprite2D
+var _hat: Sprite2D
 var _pose := "idle"
 var _moving := false
 var _marker_node: Node2D
@@ -35,6 +37,9 @@ func _ready() -> void:
 	_sprite.offset = -Vector2(CELL.x / 2.0, CELL.y)
 	_sprite.scale = Vector2(scale_px, scale_px)
 	add_child(_sprite)
+	if look.begins_with("player") and hat == "":
+		hat = GameState.hat
+	set_hat(hat)
 	_apply()
 	_make_marker()
 
@@ -68,10 +73,39 @@ func _apply() -> void:
 	if _pose == "ko":
 		_sprite.region_rect = Rect2(0, CELL.y * 3, CELL.x, CELL.y)
 		_sprite.flip_h = facing == "left"
+		_sync_hat()
 		return
 	var col := POSES.find(_pose)
 	_sprite.region_rect = Rect2(CELL.x * maxi(col, 0), CELL.y * ROWS[facing], CELL.x, CELL.y)
 	_sprite.flip_h = facing == "left"
+	_sync_hat()
+
+
+## Şapka katmanı gövdeyle aynı kareyi gösterir (sayfa düzeni aynı).
+func _sync_hat() -> void:
+	if _hat:
+		_hat.region_rect = _sprite.region_rect
+		_hat.flip_h = _sprite.flip_h
+
+
+## Şapka tak / çıkar ("" çıkarır).
+func set_hat(id: String) -> void:
+	hat = id
+	if _sprite == null:
+		return
+	if id == "":
+		if _hat:
+			_hat.queue_free()
+			_hat = null
+		return
+	if _hat == null:
+		_hat = Sprite2D.new()
+		_hat.region_enabled = true
+		_hat.centered = false
+		_hat.offset = _sprite.offset
+		_sprite.add_child(_hat)
+	_hat.texture = GameState.hat_texture(id)
+	_sync_hat()
 
 
 ## Başın tepesi (ayaklara göre). Oturunca biraz aşağı iner. Baloncuklar buna göre konur.

@@ -72,6 +72,8 @@ var technique := false        # Direksiyon Kilidi
 var messages: Array = []      # telefondaki mesajlar: [gönderen, metin], yeniden eskiye
 var unread := 0               # okunmamış mesaj sayısı (telefondaki bildirim)
 var outfit := "esofman"       # üzerindeki kıyafet (data/shop.gd OUTFITS)
+var hat := ""                  # takılı şapka ("" yok; data/shop.gd HATS)
+var hats_owned: Array = []
 var hair := "sidepart"          # berberde seçilen saç (data/shop.gd HAIRCUTS)
 var outfits_owned: Array = ["esofman"]
 var weapons_owned: Array = []
@@ -169,6 +171,8 @@ func new_game(diff: String = "normal") -> void:
 	unread = 0
 	outfit = "esofman"
 	hair = "sidepart"
+	hat = ""
+	hats_owned = []
 	outfits_owned = ["esofman"]
 	weapons_owned = []
 	weapon = ""
@@ -215,7 +219,7 @@ func save_game() -> void:
 		"metro_station": metro_station, "metro_dir": metro_dir, "intro_seen": intro_seen,
 		"metro_on_board": metro_on_board, "metro_seated": metro_seated, "simit_buff": simit_buff,
 		"blast_best": blast_best, "drive_dest": drive_dest, "drive_left": drive_left, "unread": unread,
-		"outfit": outfit, "hair": hair, "outfits_owned": outfits_owned, "weapons_owned": weapons_owned, "weapon": weapon,
+		"outfit": outfit, "hair": hair, "hat": hat, "hats_owned": hats_owned, "outfits_owned": outfits_owned, "weapons_owned": weapons_owned, "weapon": weapon,
 		"skills_owned": skills_owned, "skill_points": skill_points, "level": level, "xp": xp,
 		"metro_seat": metro_seat,
 	}
@@ -308,6 +312,8 @@ func load_game() -> bool:
 		outfits_owned.push_front("esofman")
 	outfit = data.get("outfit", "esofman") if outfits_owned.has(data.get("outfit", "")) else "esofman"
 	hair = data.get("hair", "sidepart") if Shop.HAIRCUTS.has(data.get("hair", "")) else "sidepart"
+	hats_owned = data.get("hats_owned", []).filter(func(h): return Shop.HATS.has(h))
+	hat = data.get("hat", "") if hats_owned.has(data.get("hat", "")) else ""
 	weapons_owned = data.get("weapons_owned", []).filter(func(w): return Shop.WEAPONS.has(w))
 	weapon = data.get("weapon", "") if weapons_owned.has(data.get("weapon", "")) else ""
 	skills_owned = data.get("skills_owned", []).filter(func(k): return Skills.SKILLS.has(k))
@@ -827,7 +833,7 @@ func apply_fight_result(won: bool) -> Dictionary:
 		var reward := fight_reward()
 		money += reward
 		result["money"] = reward
-		if weapon == "bicak" and randf() < Shop.KNIFE_POLICE_CHANCE:
+		if Shop.WEAPONS.get(weapon, {}).get("police", false) and randf() < Shop.KNIFE_POLICE_CHANCE:
 			var fine := mini(money, Shop.KNIFE_POLICE_FINE)
 			money -= fine
 			result["police"] = "Polis çevirdi, bıçağı gördü: -%d TL ceza!" % fine
@@ -996,8 +1002,27 @@ func make_label(text: String, size: int = 10, color: Color = Color.WHITE) -> Lab
 
 ## Oyuncunun görünüşü (üzerindeki kıyafete göre karakter sayfası).
 func player_look() -> String:
-	var base := "player" if outfit == "esofman" else "player_" + outfit
-	return base if hair == "sidepart" else base + "__" + hair
+	return look_for(outfit, hair)
+
+
+## Kıyafet + saç bileşiminin görünüş adı (önizleme için de): td_player[_<kıyafet>][__<saç>].png
+func look_for(o: String, h: String) -> String:
+	var base := "player" if o == "esofman" else "player_" + o
+	return base if h == "sidepart" else base + "__" + h
+
+
+## Şapka katmanı (yoksa null).
+func hat_texture(id: String) -> Texture2D:
+	return load("res://assets/topdown/hat_%s.png" % id) if id != "" else null
+
+
+func buy_hat(id: String) -> bool:
+	if hats_owned.has(id) or not try_spend(shop_price(Shop.HATS[id]["price"])):
+		return false
+	hats_owned.append(id)
+	hat = id
+	save_game()
+	return true
 
 
 ## Berberde tıraş: para, zaman ve yeni saç. Olmazsa neden ("" ise oldu).

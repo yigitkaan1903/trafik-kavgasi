@@ -50,12 +50,16 @@ PROMPTS.update({   # silahlar (yandan, sağa bakar) ve çarşıdaki büst
     "weapon_musta": "golden brass knuckles weapon, side view, single item, shiny metal",
     "weapon_sopa": "wooden baseball bat lying horizontally pointing right, black grip tape on handle, side view, single item",
     "weapon_bicak": "folding pocket knife with steel blade pointing right and dark wooden handle, side view, single item",
+    "weapon_levye": "red steel crowbar lying diagonally, hooked end at top right, side view, single item",
+    "weapon_pala": "machete with long wide steel blade pointing to the top right and black handle at bottom left, side view, single item",
+    "weapon_balta": "wood axe with steel head at top right and long wooden handle to bottom left, side view, single item",
     "berber": "small neighborhood barber shop building, red white and blue striped barber pole beside the glass door, big shop window with a barber chair visible inside, flat roof, old Istanbul style",
     "messi_bust": "statue bust of a bearded football legend with short brown hair, painted, wearing the Argentina national team jersey with light blue and white vertical stripes, on a wide grey stone pedestal with a large blank golden plaque on the front",
 })
-SIZES = {"metrobus": (128, 64), "weapon_musta": (32, 32), "weapon_sopa": (48, 48), "weapon_bicak": (32, 32),
+SIZES = {"metrobus": (128, 64), "weapon_musta": (32, 32), "weapon_sopa": (48, 48), "weapon_bicak": (32, 32), "weapon_levye": (48, 48), "weapon_pala": (48, 48), "weapon_balta": (48, 48),
          "messi_bust": (64, 64)}   # varsayılan 96x96; arabalar 64x64
-VIEWS = {"weapon_musta": "side", "weapon_sopa": "side", "weapon_bicak": "side"}   # varsayılan low top-down
+VIEWS = {"weapon_musta": "side", "weapon_sopa": "side", "weapon_bicak": "side", "weapon_levye": "side", "weapon_pala": "side",
+         "weapon_balta": "side"}   # varsayılan low top-down
 CAR_OUT = os.path.join(ROOT, "assets", "pixellab", "cars")
 
 

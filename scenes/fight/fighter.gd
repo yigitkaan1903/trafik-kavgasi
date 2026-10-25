@@ -16,7 +16,11 @@ const WEAPON_TEX := {   # önceden yüklenir: _draw içinde load() edilen doku �
 	"sopa": preload("res://assets/sprites/weapon_sopa.png"),
 	"bicak": preload("res://assets/sprites/weapon_bicak.png"),
 	"musta": preload("res://assets/sprites/weapon_musta.png"),
+	"levye": preload("res://assets/sprites/weapon_levye.png"),
+	"pala": preload("res://assets/sprites/weapon_pala.png"),
+	"balta": preload("res://assets/sprites/weapon_balta.png"),
 }
+const SWUNG := ["sopa", "levye", "pala", "balta"]   # uzun silahlar: omuzda durur, öne savrulur
 const CELL := Vector2(28, 30)
 const POSES := ["idle", "walk1", "walk2", "punch", "kick", "block", "hurt", "sit", "lift1", "lift2", "special"]
 const DEPTH := 6.0             # vuruşun tutması için derinlik farkı en fazla bu kadar
@@ -67,16 +71,25 @@ var special_cd := 0.0
 var _flash := 0.0
 
 var _sprite: Sprite2D
+var _hat: Sprite2D
 var _weapon_fx: Node2D
 
 
 func _ready() -> void:
 	_sprite = Sprite2D.new()
 	_sprite.texture = GameState.td_texture(look)
+	if look.begins_with("player") and GameState.hat != "":
+		_hat = Sprite2D.new()
+		_hat.texture = GameState.hat_texture(GameState.hat)
+		_hat.region_enabled = true
+		_hat.centered = false
+		_hat.offset = -Vector2(CELL.x / 2.0, CELL.y)
 	_sprite.region_enabled = true
 	_sprite.centered = false
 	_sprite.offset = -Vector2(CELL.x / 2.0, CELL.y)
 	add_child(_sprite)
+	if _hat:
+		_sprite.add_child(_hat)
 	_weapon_fx = Node2D.new()
 	_weapon_fx.draw.connect(_draw_weapon)
 	add_child(_weapon_fx)
@@ -258,6 +271,9 @@ func _update_pose() -> void:
 	else:
 		_sprite.region_rect = Rect2(CELL.x * POSES.find(pose), CELL.y * 2, CELL.x, CELL.y)
 	_sprite.flip_h = facing < 0
+	if _hat:   # şapka katmanı gövdeyle aynı kareyi gösterir
+		_hat.region_rect = _sprite.region_rect
+		_hat.flip_h = _sprite.flip_h
 	if _flash > 0.0:
 		_sprite.modulate = Color(1.0, 0.45, 0.45)
 	elif state == S.DODGE:
@@ -287,7 +303,7 @@ func _draw_weapon() -> void:
 	var at: Vector2 = p.call(hand)
 	var rot := 0.0
 	if weapon_id != "musta":   # sopa ve bıçak: sap elde, uç hedefe
-		var tip := (Vector2(37, 11) if striking else Vector2(8, 6)) if weapon_id == "sopa" else (Vector2(31, 14) if striking else Vector2(14, 26))
+		var tip := (Vector2(37, 11) if striking else Vector2(8, 6)) if weapon_id in SWUNG else (Vector2(31, 14) if striking else Vector2(14, 26))
 		var art_dir: Vector2 = (art["tip"] - art["handle"]) * Vector2(facing, 1)
 		rot = (p.call(tip) - at).angle() - art_dir.angle()
 	_weapon_fx.draw_set_transform(at, rot, Vector2(facing, 1))

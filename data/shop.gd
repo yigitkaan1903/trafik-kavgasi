@@ -25,6 +25,15 @@ const OUTFITS := {
 
 ## damage: yumruk (ve özel hareket) hasar çarpanı. range: yumruğun ek menzili (piksel).
 ## startup: yumruğun ek hazırlanma süresi (ağır silah yavaştır).
+## Şapkalar (butik): oyuncunun üstüne ayrı katman (assets/topdown/hat_<id>.png, tools/make_topdown.py HATS).
+const HATS := {
+	"kep": {"name": "Kırmızı kep", "price": 120, "desc": "Siperi öne, özgüven arkaya."},
+	"siyah_kep": {"name": "Siyah kep", "price": 140, "desc": "Her kıyafete gider."},
+	"bere": {"name": "Lacivert bere", "price": 90, "desc": "Davutpaşa ayazına birebir."},
+	"kova": {"name": "Balıkçı şapka", "price": 150, "desc": "90'lar rap klibi havası."},
+	"fotr": {"name": "Fötr şapka", "price": 280, "desc": "Mafya babası değilsin ama öyle duruyorsun."},
+}
+
 ## Berber: saç modelleri (tools/make_topdown.py PLAYER_HAIRS ile aynı id'ler; "sidepart" başlangıç saçı).
 const HAIRCUTS := {
 	"sidepart": {"name": "Klasik yan ayrık", "price": 60},
@@ -44,8 +53,14 @@ const WEAPONS := {
 		"desc": "Yumruklar %30 daha sert."},
 	"sopa": {"name": "Beyzbol sopası", "price": 520, "damage": 1.6, "range": 8.0, "startup": 0.05,
 		"desc": "Uzun menzil, %60 hasar ama biraz yavaş."},
-	"bicak": {"name": "Bıçak", "price": 820, "damage": 1.85, "range": 2.0, "startup": 0.0,
+	"bicak": {"name": "Bıçak", "price": 820, "damage": 1.85, "range": 2.0, "startup": 0.0, "police": true,
 		"desc": "Çok tehlikeli. Kazanırsan bile polis çevirebilir."},
+	"levye": {"name": "Levye", "price": 400, "damage": 1.45, "range": 5.0, "startup": 0.02,
+		"desc": "Kapı da açar, kafa da. Hızlı ve orta menzilli."},
+	"pala": {"name": "Pala", "price": 950, "damage": 1.95, "range": 6.0, "startup": 0.04, "police": true,
+		"desc": "Uzun ve keskin. Polis görürse yandın."},
+	"balta": {"name": "Balta", "price": 1300, "damage": 2.2, "range": 7.0, "startup": 0.1, "police": true,
+		"desc": "En sert vuruş ama en yavaşı. Polis riski var."},
 }
 const KNIFE_POLICE_CHANCE := 0.3     # bıçakla kazanınca polisin çevirme ihtimali
 const KNIFE_POLICE_FINE := 150

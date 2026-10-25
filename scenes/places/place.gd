@@ -11,6 +11,7 @@ const StatusBar = preload("res://scenes/ui/status_bar.gd")
 const Phone = preload("res://scenes/ui/phone.gd")
 const DialogBox = preload("res://scenes/ui/dialog_box.gd")
 const Shop = preload("res://data/shop.gd")
+const StylePicker = preload("res://scenes/ui/style_picker.gd")
 const PAGE_SIZE := 5          # uzun listelerde (mağaza, gardırop) bir sayfadaki seçenek
 
 const WALK_SPEED := 82.0
@@ -63,6 +64,7 @@ var _busy := false            # eylem/antrenman sürüyor
 var _walk_goal := Vector2(-1, -1)   # tıklanan yere yürüme
 var _walk_then := -1          # vardığında etkileşilecek spot
 var _hover := -1
+var _barbers: Array = []     # berberde çalışan berberler (makas hareketi)
 var _anim := ""               # oyuncunun antrenman animasyonu
 var _anim_t := 0.0
 var _anim_spot := -1
@@ -165,9 +167,28 @@ func _add_crowd() -> float:
 			taken.append(s["node"].position)
 	for e in _data.get("extras", []):
 		taken.append(_room.mark(e[1]))
-	for it in seats:
+	# berber: Sabri ortada hep çalışır; doluluk artınca çırak ve ikinci usta da gelir, müşteri sadece
+	# berberi olan koltuğa oturur (ilk üç oturma yeri koltuklar)
+	var chairs_on := [1]
+	if _id == "berber":
+		if fill > 0.3:
+			chairs_on.append(2)
+			_barbers.append(_person("cirak", _room.mark("barber_2")))
+		if fill > 0.6:
+			chairs_on.append(0)
+			_barbers.append(_person("berber2", _room.mark("barber_0")))
+		for b in _barbers:
+			b.face_dir("left")
+			_room.add_blocker(b)
+	for i in seats.size():
+		var it: Array = seats[i]
 		var at := Vector2(it[0], it[1])
-		if taken.any(func(t): return t.distance_to(at) < 6.0) or randf() > fill:
+		if taken.any(func(t): return t.distance_to(at) < 6.0):
+			continue
+		if _id == "berber" and i < 3:
+			if not chairs_on.has(i) or randf() > 0.9:
+				continue
+		elif randf() > fill:
 			continue
 		var p = _person(GameState.MetroEvents.random_look(), at)
 		p.sit(it[2])
@@ -603,53 +624,140 @@ func _wear(id: String) -> void:
 	_say(_player, "Yakıştı mı? Bence yakıştı.")
 
 
-## Butik (kıyafet) ya da hırdavat (silah): alınanlar gardıroba gelir.
-func _open_shop(s: Dictionary, page: int) -> void:
-	var items: Dictionary = Shop.OUTFITS if s["shop"] == "outfits" else Shop.WEAPONS
-	var owned: Array = GameState.outfits_owned if s["shop"] == "outfits" else GameState.weapons_owned
-	var choices: Array = []
-	for id in items:
-		var it: Dictionary = items[id]
-		if it["price"] <= 0:
-			continue
-		var price := GameState.shop_price(it["price"])
-		var text := "%s  (%d TL)  %s" % [it["name"], price, it["desc"]]
-		if owned.has(id):
-			text = "%s  (sende var)" % it["name"]
-		elif GameState.money < price:
-			text = "%s  (%d TL, paran yetmiyor)" % [it["name"], price]
-		choices.append([text, id, owned.has(id) or GameState.money < price])
-	_paged_dialog(_spot_name(s), s.get("lines", [""]).pick_random(), choices, page, func(id: String):
-		var ok := GameState.buy_outfit(id) if s["shop"] == "outfits" else GameState.buy_weapon(id)
-		if ok:
-			Audio.sfx("buy")
-			_say(s["node"], "Güle güle giy! Gardırobuna koydum." if s["shop"] == "outfits" else "Çantana koydum. Dikkatli ol evlat.")
-			_say(_player, "+ %s" % items[id]["name"], 2.0), func(pg: int): _open_shop(s, pg),
-			GameState.portrait_texture(s["look"]) if s.has("look") else null)
+## Seçim menüsü (berber / butik / silahçı). zoom: kamera karaktere yaklaşır, önizleme karakterin üstünde görünür.
+func _open_picker(picker, zoom: bool) -> void:
+	_dialog_open = true
+	_player.set_moving(false)
+	if zoom:
+		_player.face_dir("down")
+		_room.cam_free = true
+		var tw := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_method(func(z: float):
+			_room.follow(_player, z)
+			_room.cam.offset = Vector2(-34.0 * (z - 1.0) / 2.0, 6.0 * (z - 1.0) / 2.0), 1.0, 3.0, 0.35)
+	_ui.add_child(picker)
+	picker.closed.connect(func():
+		_player.set_look(GameState.player_look())   # önizlemeyi geri al (alındıysa zaten yeni hali)
+		_player.set_hat(GameState.hat)
+		if zoom:
+			var tw2 := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+			tw2.tween_method(func(z: float):
+				_room.follow(_player, z)
+				_room.cam.offset = Vector2(-34.0 * (z - 1.0) / 2.0, 6.0 * (z - 1.0) / 2.0), 3.0, 1.0, 0.3)
+			tw2.tween_callback(func(): _room.cam_free = false)
+		_dialog_open = false)
 
 
-## Berber: saç modeli seç (para + 30 dakika); seçilince karakterin saçı hemen değişir.
-func _open_barber(s: Dictionary, page: int) -> void:
-	var choices: Array = []
+## Berber: saç modelleri; üstüne gelince karakterin saçı o modele döner (önizleme), "Kes" ile para + 30 dk.
+func _open_barber(s: Dictionary, _page: int = 0) -> void:
+	var picker := StylePicker.new()
+	picker.title = "Saç modeli"
+	picker.subtitle = "Üstüne gel, aynada gör. %d dakika sürer." % Shop.HAIRCUT_MINUTES
+	picker.keep_open = false
+	var list: Array = []
 	for id in Shop.HAIRCUTS:
 		var h: Dictionary = Shop.HAIRCUTS[id]
 		var mine: bool = id == GameState.hair
-		var text := "%s  (%d TL, %d dk)" % [h["name"], h["price"], Shop.HAIRCUT_MINUTES]
-		if mine:
-			text = "%s  (şu anki saçın)" % h["name"]
-		elif GameState.money < h["price"]:
-			text = "%s  (%d TL, paran yetmiyor)" % [h["name"], h["price"]]
-		choices.append([text, id, mine or GameState.money < h["price"]])
-	_paged_dialog(_spot_name(s), s.get("lines", [""]).pick_random(), choices, page, func(id: String):
-		var why := GameState.get_haircut(id)
-		if why != "":
-			_say(s["node"], why)
-			return
-		Audio.sfx("buy")
-		_player.set_look(GameState.player_look())
-		_say(s["node"], ["Oldu mu? Bir de ense tıraşı yaptım!", "Aynaya bak, adam oldun!", "Sıhhatler olsun!"].pick_random())
-		_say(_player, "Yeni saç: %s" % Shop.HAIRCUTS[id]["name"], 2.0), func(pg: int): _open_barber(s, pg),
-			GameState.portrait_texture(s["look"]))
+		list.append({"id": id, "name": h["name"], "price": h["price"], "note": "şu anki saçın" if mine else "",
+				"action": "Bu saçla devam" if mine else "Kes  (%d TL)" % h["price"], "disabled": mine,
+				"desc": "Sabri Usta: \"%s\"" % s.get("lines", [""]).pick_random() if mine else "%d TL, %d dakika." % [h["price"], Shop.HAIRCUT_MINUTES]})
+	picker.items = list
+	picker.on_preview = func(it: Dictionary): _player.set_look(GameState.look_for(GameState.outfit, it["id"]))
+	picker.on_buy = func(it: Dictionary) -> String:
+		var why := GameState.get_haircut(it["id"])
+		if why == "":
+			Audio.sfx("buy")
+			_say(s["node"], ["Oldu mu? Bir de ense tıraşı yaptım!", "Aynaya bak, adam oldun!", "Sıhhatler olsun!"].pick_random())
+		return why
+	_open_picker(picker, true)
+
+
+## Butik (kıyafet + şapka, karakterin üstünde önizleme) ya da silahçı (silahın büyük görseli). Tek menüden alınır.
+func _open_shop(s: Dictionary, _page: int = 0) -> void:
+	var picker := StylePicker.new()
+	if s["shop"] == "outfits":
+		picker.title = "Butik Moda"
+		picker.subtitle = "Üstüne gel, üzerinde gör. Aldığın gardırobuna gelir."
+		var pv := {"outfit": GameState.outfit, "hat": GameState.hat}
+		picker.items = _outfit_items()
+		picker.on_preview = func(it: Dictionary):
+			if it["kind"] == "outfit":
+				pv["outfit"] = it["id"]
+			else:
+				pv["hat"] = it["id"]
+			_player.set_look(GameState.look_for(pv["outfit"], GameState.hair))
+			_player.set_hat(pv["hat"])
+		picker.on_buy = func(it: Dictionary) -> String:
+			var ok := true
+			if it["kind"] == "outfit":
+				ok = GameState.outfits_owned.has(it["id"]) or GameState.buy_outfit(it["id"])
+				if ok:
+					GameState.outfit = it["id"]
+			else:
+				ok = it["id"] == "" or GameState.hats_owned.has(it["id"]) or GameState.buy_hat(it["id"])
+				if ok:
+					GameState.hat = it["id"]
+			if not ok:
+				return "Paran yetmiyor"
+			GameState.save_game()
+			Audio.sfx("buy")
+			_say(s["node"], ["Çok yakıştı!", "Güle güle kullan!", "Tam senlik, yemin ederim."].pick_random())
+			picker.set_items(_outfit_items())
+			return ""
+		_open_picker(picker, true)
+	else:
+		picker.title = "Silah vitrini"
+		picker.subtitle = "Camın arkasındakiler. Aldığın çantana girer, kavgada elinde olur."
+		picker.items = _weapon_items()
+		picker.image_for = func(it: Dictionary) -> Texture2D: return load("res://assets/pixellab/map/weapon_%s.png" % it["id"])
+		picker.on_buy = func(it: Dictionary) -> String:
+			if not GameState.weapons_owned.has(it["id"]) and not GameState.buy_weapon(it["id"]):
+				return "Paran yetmiyor"
+			GameState.weapon = it["id"]
+			GameState.save_game()
+			Audio.sfx("buy")
+			_say(s["node"], "Çantana koydum. Dikkatli ol evlat.")
+			picker.set_items(_weapon_items())
+			return ""
+		_open_picker(picker, false)
+
+
+func _outfit_items() -> Array:
+	var list: Array = [{"header": "Kıyafetler"}]
+	for id in Shop.OUTFITS:
+		var o: Dictionary = Shop.OUTFITS[id]
+		var owned: bool = GameState.outfits_owned.has(id)
+		var on: bool = GameState.outfit == id
+		var price := GameState.shop_price(o["price"])
+		list.append({"kind": "outfit", "id": id, "name": o["name"], "price": price, "desc": o["desc"],
+				"note": "üzerinde" if on else ("sende" if owned else ""), "disabled": on,
+				"action": "Üzerinde" if on else ("Giy" if owned else "Satın al  (%d TL)" % price)})
+	list.append({"header": "Şapkalar"})
+	list.append({"kind": "hat", "id": "", "name": "Şapkasız", "price": 0, "desc": "Saçın görünsün.",
+			"note": "şu an" if GameState.hat == "" else "", "disabled": GameState.hat == "", "action": "Çıkar"})
+	for id in Shop.HATS:
+		var h: Dictionary = Shop.HATS[id]
+		var owned: bool = GameState.hats_owned.has(id)
+		var on: bool = GameState.hat == id
+		var price := GameState.shop_price(h["price"])
+		list.append({"kind": "hat", "id": id, "name": h["name"], "price": price, "desc": h["desc"],
+				"note": "başında" if on else ("sende" if owned else ""), "disabled": on,
+				"action": "Başında" if on else ("Tak" if owned else "Satın al  (%d TL)" % price)})
+	return list
+
+
+func _weapon_items() -> Array:
+	var list: Array = []
+	for id in Shop.WEAPONS:
+		var w: Dictionary = Shop.WEAPONS[id]
+		var owned: bool = GameState.weapons_owned.has(id)
+		var on: bool = GameState.weapon == id
+		var price := GameState.shop_price(w["price"])
+		list.append({"id": id, "name": w["name"], "price": price,
+				"desc": "%s  Hasar x%.2f%s." % [w["desc"], w["damage"], ", menzil +%d" % w["range"] if w["range"] > 0 else ""],
+				"note": "çantanda" if on else ("sende" if owned else ""), "disabled": on,
+				"action": "Çantanda" if on else ("Çantaya koy" if owned else "Satın al  (%d TL)" % price)})
+	return list
 
 
 ## Evdeki gardırop: kıyafet giy, çantaya silah koy ya da çıkar.
@@ -658,6 +766,11 @@ func _open_wardrobe(s: Dictionary, page: int) -> void:
 	for id in GameState.outfits_owned:
 		var on: bool = id == GameState.outfit
 		choices.append(["%s%s" % [Shop.OUTFITS[id]["name"], "  (üzerinde)" if on else ""], "wear:" + id, on])
+	for id in GameState.hats_owned:
+		var on: bool = id == GameState.hat
+		choices.append(["Şapka: %s%s" % [Shop.HATS[id]["name"], "  (başında)" if on else ""], "hat:" + id, on])
+	if GameState.hat != "":
+		choices.append(["Şapkayı çıkar", "hat:", false])
 	for id in GameState.weapons_owned:
 		var on: bool = id == GameState.weapon
 		choices.append(["Çanta: %s%s" % [Shop.WEAPONS[id]["name"], "  (çantada)" if on else ""], "arm:" + id, on])
@@ -669,6 +782,10 @@ func _open_wardrobe(s: Dictionary, page: int) -> void:
 			GameState.outfit = id.trim_prefix("wear:")
 			_player.set_look(GameState.player_look())
 			_say(_player, "Yakıştı mı? Bence yakıştı.")
+		elif id.begins_with("hat:"):
+			GameState.hat = id.trim_prefix("hat:")
+			_player.set_hat(GameState.hat)
+			_say(_player, "Şapkasız daha rahat." if GameState.hat == "" else "Şapka da tamam.")
 		else:
 			GameState.weapon = id.trim_prefix("arm:")
 			_say(_player, "Çanta boş." if GameState.weapon == "" else "%s çantada. Kavgada işime yarar." % Shop.WEAPONS[GameState.weapon]["name"])
@@ -854,6 +971,8 @@ func _animate(delta: float) -> void:
 	for s in _spots:
 		if s.has("user_node"):
 			_pose(s["user_node"], s["anim"], _time + s["index"] * 0.37)
+	for i in _barbers.size():
+		_pose(_barbers[i], "cut", _time + i * 0.5)
 	# kum torbaları: vuran varsa sallanır
 	if _room.props.has("bag"):
 		for s in _spots:
@@ -874,6 +993,9 @@ func _pose(p, anim: String, t: float) -> void:
 		"bag":
 			p.face_dir("right")
 			p.set_pose("punch" if int(t / 0.27) % 2 == 0 else "idle")
+		"cut":   # berber: makas şıkırtısı
+			p.face_dir("left")
+			p.set_pose("block" if int(t / 0.35) % 2 == 0 else "idle")
 
 
 ## Eylem sürerken üstte dönen bir saat.

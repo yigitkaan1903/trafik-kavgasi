@@ -50,6 +50,7 @@ STYLE = {
     "selin": dict(hair_style="long", top="jacket", inner=(240, 240, 236), height=1),
     "riza": dict(hair_style="bald", top="jacket", inner=(236, 236, 236), height=1),
     "berber": dict(hair_style="sidepart", top="coat", inner=(60, 60, 70), height=1),
+    "berber2": dict(hair_style="short", top="coat", inner=(90, 90, 100), height=1),
     "cirak": dict(hair_style="buzz", top="tee", height=1, sleeves="short"),
 }
 
@@ -239,6 +240,17 @@ def head_front(c, L, y0, back=False, eyes="normal"):
         c.rows(y0 - 1, [(5, 10), (4, 11), (3, 12), (3, 12), (3, 12)], L["beanie"])
         c.r(3, y0 + 3, 12, y0 + 3, shade(L["beanie"], 0.78))
         c.p(7, y0 - 2, shade(L["beanie"], 1.2)); c.p(8, y0 - 2, shade(L["beanie"], 1.2))
+    if L.get("fedora"):   # fötr: geniş kenar, tepede çukur, kurdele
+        f = L["fedora"]
+        c.rows(y0 - 3, [(5, 10), (4, 11), (4, 11), (4, 11)], f)
+        c.r(6, y0 - 3, 9, y0 - 3, shade(f, 0.8))
+        c.r(4, y0, 11, y0, shade(f, 0.55))
+        c.r(1, y0 + 1, 14, y0 + 2, shade(f, 1.12)); c.r(1, y0 + 2, 14, y0 + 2, shade(f, 0.8))
+    if L.get("bucket"):   # balıkçı (kova) şapka: yumuşak, aşağı eğik kenar
+        b = L["bucket"]
+        c.rows(y0 - 2, [(5, 10), (4, 11), (3, 12), (3, 12)], b)
+        c.r(6, y0 - 2, 9, y0 - 2, shade(b, 1.15))
+        c.rows(y0 + 2, [(2, 13), (1, 14)], shade(b, 0.88))
     if L.get("tray"):
         c.rect(OX - 4, 0, OX + 19, 1, (150, 100, 52))
         for sx in range(OX - 3, OX + 18, 4):
@@ -500,6 +512,15 @@ def head_side(c, L, y0, dx=0, eyes="normal"):
         c.r(12 + dx, y0 + 3, 15 + dx, y0 + 3, shade(L["hat"], 0.7))
     if L.get("beanie"):
         c.rows(y0 - 1, [(6 + dx, 10 + dx), (5 + dx, 11 + dx), (4 + dx, 12 + dx), (4 + dx, 12 + dx), (4 + dx, 12 + dx)], L["beanie"])
+    if L.get("fedora"):
+        f = L["fedora"]
+        c.rows(y0 - 3, [(6 + dx, 10 + dx), (5 + dx, 11 + dx), (5 + dx, 11 + dx), (5 + dx, 11 + dx)], f)
+        c.r(5 + dx, y0, 11 + dx, y0, shade(f, 0.55))
+        c.r(2 + dx, y0 + 1, 14 + dx, y0 + 1, shade(f, 1.12)); c.r(2 + dx, y0 + 2, 14 + dx, y0 + 2, shade(f, 0.8))
+    if L.get("bucket"):
+        b = L["bucket"]
+        c.rows(y0 - 2, [(6 + dx, 10 + dx), (5 + dx, 11 + dx), (4 + dx, 12 + dx), (4 + dx, 12 + dx)], b)
+        c.rows(y0 + 2, [(3 + dx, 13 + dx), (2 + dx, 14 + dx)], shade(b, 0.88))
     if L.get("tray"):
         c.rect(OX - 2, 0, OX + 17, 1, (150, 100, 52))
 
@@ -743,11 +764,28 @@ def all_looks():
     return looks
 
 
+# Butikteki şapkalar (data/shop.gd HATS ile aynı id): oyuncunun üstüne ayrı katman olarak çizilir.
+HATS = {"kep": dict(hat=(200, 44, 52)), "bere": dict(beanie=(52, 72, 130)), "fotr": dict(fedora=(70, 58, 50)),
+        "kova": dict(bucket=(214, 200, 160)), "siyah_kep": dict(hat=(34, 34, 40))}
+
+
+def hat_sheet(base, over):
+    """Şapka katmanı: şapkalı sayfa ile şapkasız sayfanın farkı (her poz ve yön için yalnız şapka pikselleri)."""
+    s0 = sheet(base)
+    L = dict(base)
+    L.update(over)
+    s1 = sheet(L)
+    return [[s1[y][x] if s1[y][x] != s0[y][x] and s1[y][x][3] else (0, 0, 0, 0) for x in range(len(s0[0]))]
+            for y in range(len(s0))]
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     looks = all_looks()
     for who, L in looks.items():
         ms.write_png(os.path.join(OUT, f"td_{who}.png"), sheet(L))
+    for hid, over in HATS.items():
+        ms.write_png(os.path.join(OUT, f"hat_{hid}.png"), hat_sheet(looks["player"], over))
     print("Üstten bakış karakterleri üretildi:", len(looks), os.path.normpath(OUT))
 
 

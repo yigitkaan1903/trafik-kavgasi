@@ -5,7 +5,7 @@ extends Control
 
 const ChoicePopup = preload("res://scenes/ui/choice_popup.gd")
 const Places = preload("res://data/places.gd")
-const VERSION := "v0.3"
+const VERSION := "v0.4"
 const CAR_IDS := ["sahin", "taksi", "doblo", "passat", "dolmus", "tofas", "toros", "egea", "golf", "mercedes", "bmw"]
 const BUS_TEX := preload("res://assets/pixellab/map/metrobus.png")
 const MENU_POS := Vector2(26, 104)

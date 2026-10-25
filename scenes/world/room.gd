@@ -23,6 +23,7 @@ var actors: Node2D        # eşyalar ve insanlar, y'ye göre sıralı
 var top_layer: Node2D     # her şeyin üstü (etiketler, seçim çerçevesi)
 var cam: Camera2D
 var cam_zoom := 1.0
+var cam_free := false     # true: kamera oda sınırına takılmadan hedefi izler (önizleme yakınlaştırması)
 var cam_fixed_y := -1.0   # >= 0 ise kamera dikeyde sabit (metrobüs: üstte hat haritası var)
 var blockers: Array = []  # yolu kesen insanlar (ayak kutuları), itilebilenler "pushable" meta'sı taşır
 var solids: Array[Rect2] = []
@@ -229,6 +230,9 @@ func update_camera() -> void:
 	else:
 		c.x = clampf(_follow.position.x, view.x / 2.0, size.x - view.x / 2.0)
 	var band := view.y - top - bottom
+	if cam_free:
+		cam.position = (_follow.position + Vector2(0, -12)).round()
+		return
 	if cam_fixed_y >= 0.0:
 		c.y = cam_fixed_y
 	elif size.y <= band:
