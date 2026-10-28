@@ -23,6 +23,7 @@ const HIT_WORDS := {
 var rival: Dictionary
 var venue := "traffic"
 var rival_id := ""
+var _enemy_weapon := ""       # güçlendikçe trafikte silahlı rakip (GameState.roll_rival_weapon)
 var player: Fighter
 var enemy: Fighter
 var _room: Room
@@ -73,7 +74,7 @@ func _ready() -> void:
 		player.block_chip *= 0.5
 	player.evade_chance = 0.12 if gs.has_skill("golge") else 0.0
 	player.stun_mult = 0.65 if gs.has_skill("tas_cene") else 1.0
-	player.weapon_id = GameState.weapon
+	player.weapon_id = GameState.weapon if GameState.weapon_allowed() else ""
 	player.position = Vector2(_arena.get_center().x - 45, mid_y)
 
 	enemy = AIFighter.new()
@@ -87,6 +88,10 @@ func _ready() -> void:
 	enemy.reflex = rival["block"]
 	enemy.think_speed = rival["speed"]
 	enemy.position = Vector2(_arena.get_center().x + 45, mid_y)
+	_enemy_weapon = GameState.roll_rival_weapon()
+	if _enemy_weapon != "":
+		enemy.weapon = GameState.Shop.WEAPONS[_enemy_weapon]
+		enemy.weapon_id = _enemy_weapon
 
 	player.opponent = enemy
 	enemy.opponent = player
@@ -120,7 +125,19 @@ func _intro() -> void:
 	if GameState.simit_buff:
 		GameState.simit_buff = false
 		_popup("SİMİT GÜCÜ! +%d can" % GameState.SIMIT_HP, player.position + Vector2(0, -40), Color("ffd84a"), 10)
-	if GameState.weapon != "":
+	if _enemy_weapon != "":
+		var ew := GameState.make_label("DİKKAT! %s elinde %s tutuyor!" % [rival["name"], GameState.Shop.WEAPONS[_enemy_weapon]["name"].to_lower()], 9, Color("ff6a4a"))
+		ew.position = Vector2(0, 76)
+		ew.size = Vector2(480, 12)
+		ew.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_ui.add_child(ew)
+	if GameState.weapon != "" and not GameState.weapon_allowed():
+		var nl := GameState.make_label("Metrobüste silah çıkaramazsın: %s çantada kaldı." % GameState.Shop.WEAPONS[GameState.weapon]["name"], 9, Color(1, 1, 1, 0.6))
+		nl.position = Vector2(0, 64)
+		nl.size = Vector2(480, 12)
+		nl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_ui.add_child(nl)
+	elif GameState.weapon != "":
 		var w := GameState.weapon_info()
 		var wl := GameState.make_label("Elinde: %s  (%s)" % [w["name"], w["desc"]], 9, Color("f6d86a"))
 		wl.position = Vector2(0, 64)

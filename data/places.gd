@@ -27,6 +27,9 @@ const DRIVE_METERS := 1600.0       # trafik sahnesinde gidilecek yol
 const DRIVE_MINUTES := 35.0        # bu yolun oyun içi süresi
 const FUEL_COST := 30              # her yolculukta benzin
 const FIGHT_ENERGY := 15
+# Can (sağlık, 0-100): kavga kaybedince düşer, yemek yiyince artar. Düşükse kavgaya daha az canla girersin.
+const HEALTH_FIGHT_LOSS := 20.0
+const HEALTH_PER_FOOD := 0.5       # yenen tokluğun yarısı kadar can
 const FIGHT_REWARD_MULT := 0.6     # kavgadan kazanılan para (rivals.gd reward x bu)
 
 # Seviye: XP dolunca seviye atlanır, her seviye 1 yetenek puanı verir.
@@ -129,13 +132,17 @@ const PLACES := {
 			{"kind": "npc", "name": "Hoca Rıza", "look": "riza", "stand": "riza", "at": "talk_riza",
 				"actions": ["gym_day", "gym_month", "technique"],
 				"lines": ["Ooo hoş geldin! Isındın mı?", "Ter dökmeden kas olmaz evlat.", "Üyelik al, her gün gel. Düzen her şeydir."]},
+			# aletleri kullanan sporcular saate göre değişir (place.gd _fill_machines)
 			{"kind": "machine", "name": "Halter sehpası", "action": "lift", "anim": "lift", "at": "lift_0", "index": 0},
-			{"kind": "machine", "name": "Halter sehpası", "action": "lift", "anim": "lift", "at": "lift_1", "index": 1, "user": "hipster"},
+			{"kind": "machine", "name": "Halter sehpası", "action": "lift", "anim": "lift", "at": "lift_1", "index": 1},
 			{"kind": "machine", "name": "Koşu bandı", "action": "run", "anim": "run", "at": "run_0", "index": 0},
-			{"kind": "machine", "name": "Koşu bandı", "action": "run", "anim": "run", "at": "run_1", "index": 1, "user": "elif"},
+			{"kind": "machine", "name": "Koşu bandı", "action": "run", "anim": "run", "at": "run_1", "index": 1},
 			{"kind": "machine", "name": "Koşu bandı", "action": "run", "anim": "run", "at": "run_2", "index": 2},
-			{"kind": "machine", "name": "Kum torbası", "action": "bag", "anim": "bag", "at": "bag_0", "index": 0, "user": "abi"},
+			{"kind": "machine", "name": "Koşu bandı", "action": "run", "anim": "run", "at": "run_3", "index": 3},
+			{"kind": "machine", "name": "Koşu bandı", "action": "run", "anim": "run", "at": "run_4", "index": 4},
+			{"kind": "machine", "name": "Kum torbası", "action": "bag", "anim": "bag", "at": "bag_0", "index": 0},
 			{"kind": "machine", "name": "Kum torbası", "action": "bag", "anim": "bag", "at": "bag_1", "index": 1},
+			{"kind": "machine", "name": "Kum torbası", "action": "bag", "anim": "bag", "at": "bag_2", "index": 2},
 			{"kind": "object", "name": "Su sebili", "at": "water", "dir": "up",
 				"lines": ["Buz gibi su. Bedava, tek güzel şey."]},
 		],
@@ -325,3 +332,31 @@ const MAPS := {
 		},
 	},
 }
+
+## Saatlik doluluk profili: [saat, doluluk] — o saatten bir sonrakine kadar geçerli. Hafta sonu çarpanı "weekend".
+const CROWD := {
+	"default": {"hours": [[0, 0.08], [8, 0.3], [11, 0.75], [14, 0.5], [17, 0.6], [20, 0.35], [23, 0.12]], "weekend": 1.0},
+	"gym": {"hours": [[0, 0.0], [6, 0.45], [9, 0.25], [12, 0.45], [14, 0.25], [17, 0.9], [21, 0.5], [23, 0.2]], "weekend": 0.8},
+	"market": {"hours": [[0, 0.05], [7, 0.3], [10, 0.4], [17, 0.85], [20, 0.45], [23, 0.15]], "weekend": 1.2},
+	"butik": {"hours": [[0, 0.0], [10, 0.25], [12, 0.5], [17, 0.85], [21, 0.3], [22, 0.0]], "weekend": 1.3},
+	"hirdavat": {"hours": [[0, 0.0], [9, 0.2], [12, 0.4], [17, 0.6], [21, 0.0]], "weekend": 1.2},
+	"kafe_yildiz": {"hours": [[0, 0.05], [8, 0.4], [11, 0.6], [14, 0.45], [18, 0.9], [23, 0.2]], "weekend": 1.2},
+	"kampus_kafe": {"hours": [[0, 0.0], [8, 0.35], [10, 0.6], [12, 0.9], [14, 0.6], [17, 0.3], [20, 0.1]], "weekend": 0.35},
+	"yemekhane": {"hours": [[0, 0.0], [8, 0.3], [11, 0.95], [14, 0.4], [17, 0.6], [20, 0.1]], "weekend": 0.3},
+	"kargo": {"hours": [[0, 0.05], [7, 0.5], [9, 0.8], [18, 0.4], [22, 0.05]], "weekend": 0.6},
+	"dershane": {"hours": [[0, 0.0], [9, 0.35], [12, 0.55], [16, 0.95], [21, 0.15], [22, 0.0]], "weekend": 1.4},
+	"carsi": {"hours": [[0, 0.08], [9, 0.4], [12, 0.65], [17, 0.95], [21, 0.4], [23, 0.12]], "weekend": 1.25},
+}
+
+## Mekanın şu anki doluluğu (0 = boş/kapalı, ~1 = tıklım tıklım), biraz da şans.
+static func crowd_level(id: String, minute: float, weekday: int) -> float:
+	var prof: Dictionary = CROWD.get(id, CROWD["default"])
+	var base := 0.0
+	for step in prof["hours"]:
+		if minute / 60.0 >= step[0]:
+			base = step[1]
+	if base <= 0.0:   # kapalı saat: kimse yok
+		return 0.0
+	if weekday >= 5:
+		base *= prof["weekend"]
+	return clampf(base + randf_range(-0.1, 0.1), 0.05, 0.95)

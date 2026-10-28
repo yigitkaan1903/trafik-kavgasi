@@ -269,20 +269,33 @@ def chair_away(color=WOOD):
 
 
 def plant(big=False):
+    """Saksı bitkisi: yapraklar gövdelerle saksıya bağlı, alttakiler saksı kenarına sarkar (havada durmasın)."""
     w, hgt = (18, 34) if big else (14, 24)
     c = Painter(w, hgt)
     pot_h = 9 if big else 7
-    c.fill(2, hgt - pot_h, w - 4, pot_h, H("b0603e")); c.fill(2, hgt - pot_h, w - 4, 2, H("d0805a"))
-    c.fill(3, hgt - 1, w - 6, 1, H("7a3a26"))
+    top = hgt - pot_h
+    mid = w // 2
     rng = random.Random(w)
-    for _ in range(14 if big else 9):
-        cx, cy = rng.randint(3, w - 4), rng.randint(2, hgt - pot_h - 2)
-        r = rng.randint(2, 4)
+    for sx in (mid - 3, mid, mid + 2):                                    # gövdeler: topraktan yapraklara
+        x = sx
+        for y in range(top, top - (hgt - pot_h) // 2 - rng.randint(0, 4), -1):
+            c.set(x, y, GREEN[1])
+            if rng.random() < 0.3:
+                x += rng.choice((-1, 1)) if 2 < x < w - 3 else 0
+    blobs = [(mid - 3, top - 2, 3), (mid + 3, top - 2, 3), (mid, top - 4, 3)]   # alt yapraklar saksı ağzına oturur
+    for _ in range(11 if big else 6):
+        blobs.append((rng.randint(4, w - 5), rng.randint(3, top - 5), rng.randint(2, 4)))
+    for (cx, cy, r) in blobs:
         for yy in range(-r, r + 1):
             for xx in range(-r, r + 1):
                 if xx * xx + yy * yy <= r * r:
                     c.set(cx + xx, cy + yy, GREEN[2] if yy > 0 else GREEN[3])
         c.set(cx - 1, cy - 1, GREEN[4])
+    c.fill(2, top, w - 4, pot_h, H("b0603e")); c.fill(2, top, w - 4, 2, H("d0805a"))
+    c.fill(3, top + 1, w - 6, 1, H("4a3020"))                             # toprak
+    c.fill(3, hgt - 1, w - 6, 1, H("7a3a26"))
+    for xx in (mid - 4, mid + 3):                                         # kenardan sarkan yapraklar
+        c.set(xx, top, GREEN[2]); c.set(xx, top + 1, GREEN[2])
     return c
 
 
@@ -459,6 +472,15 @@ def treadmill_console():
     return c
 
 
+def treadmill_front():
+    """Cama dönük koşu bandının ön kısmı (arkadan bakış): iki dikme, tutamak, ekran."""
+    c = Painter(22, 22)
+    c.fill(1, 6, 2, 16, STONE[2]); c.fill(19, 6, 2, 16, STONE[2])
+    c.fill(0, 0, 22, 8, STONE[1]); c.fill(2, 1, 18, 5, H("2b3a55")); c.fill(4, 2, 6, 1, H("62c0ff")); c.fill(12, 2, 5, 1, H("62ff9a"))
+    c.fill(0, 8, 22, 2, STONE[3])
+    return c
+
+
 def punching_bag():
     c = Painter(16, 52)
     c.fill(4, 0, 8, 2, STONE[2])
@@ -560,6 +582,23 @@ def espresso_counter():
     for i in range(4):
         c.fill(74 + i * 6, 4, 4, 5, WHITE); c.fill(74 + i * 6, 4, 4, 1, H("c8c0b0"))  # bardaklar
     return c
+
+
+def sofa_side(c, x, y, face="right", col=None):
+    """Yandan kanepe (tepeden bakış, zemine boyanır ki oturanlar hep üstünde çizilsin): bir yanda sırtlık,
+    uçlarda kolçaklar, üç minder. face: oturanın baktığı yön."""
+    col = col or TEAL
+    w, h = 22, 52
+    c.darken(x + 2, y + 3, w, h, 0.75)                                     # gölge
+    c.fill(x, y, w, h, col[1])
+    bx = x if face == "right" else x + w - 7                               # sırtlık
+    c.fill(bx, y, 7, h, col[1]); c.fill(bx + 1, y + 1, 5, h - 2, col[2]); c.fill(bx + 1, y + 1, 5, 1, col[3])
+    sx = x + 7 if face == "right" else x
+    for k in range(3):                                                     # minderler
+        cy = y + 5 + k * 14
+        c.fill(sx + 1, cy, 14, 13, col[2]); c.fill(sx + 1, cy, 14, 2, col[3]); c.fill(sx + 1, cy + 12, 14, 1, col[0])
+    c.fill(x, y, w, 5, col[1]); c.fill(x + 1, y + 1, w - 2, 2, col[2])    # kolçaklar
+    c.fill(x, y + h - 5, w, 5, col[1]); c.fill(x + 1, y + h - 4, w - 2, 2, col[2]); c.fill(x, y + h - 1, w, 1, col[0])
 
 
 def sofa():
@@ -1075,11 +1114,12 @@ def room_market():
 
 
 def room_gym():
-    """Kareye yakın salon: üst sırada resepsiyon, halter platformu, dambıl rafı, kum torbaları; alt sırada koşu bantları."""
+    """Kareye yakın salon: aynalı camın önünde ona dönük 5 koşu bandı, ortada halter platformu ve iki sehpa,
+    en sağda duvar boyunca 3 kum torbası; solda resepsiyon, altta dambıl rafı ve sehpa."""
     r = Room("gym", 416, 272, wall_h=64)
     c = r.c
     r.back_wall(H("3a4058"), base=H("20232f"))
-    c.fill(110, 18, 284, 40, H("9aa8bc"))                     # aynalar
+    c.fill(110, 18, 284, 40, H("9aa8bc"))                     # aynalı cam
     c.grad_v(112, 20, 280, 36, [H("c8d4e4"), H("a8b8cc"), H("8a9ab0")])
     for x in range(112, 392, 56):
         c.fill(x, 18, 2, 40, STONE[2])
@@ -1095,36 +1135,40 @@ def room_gym():
         c.fill(x, 64, 1, r.H - 64, H("1f2128"))
     for y in range(64, r.H, 32):
         c.fill(0, y, r.W, 1, H("1f2128"))
-    planks(c, 108, 70, 152, 64, WOOD, 3)                       # halter platformu
-    c.fill(108, 70, 152, 1, GOLD[3]); c.fill(108, 133, 152, 1, GOLD[1])
-    c.fill(96, 160, 196, 52, H("23252c")); c.fill(96, 160, 196, 1, H("3a3d48"))   # kardiyo köşesi paspası
-    tm_y = 178
-    for k, x in enumerate((110, 168, 226)):                    # koşu bandı tabanları
-        c.fill(x, tm_y, 46, 18, STONE[1]); c.fill(x + 2, tm_y + 2, 42, 14, H("17171c")); c.fill(x, tm_y, 46, 1, STONE[3])
-        r.add("belts", [x + 2, tm_y + 2, 42, 14])
+    c.fill(114, 64, 214, 58, H("23252c")); c.fill(114, 121, 214, 1, H("3a3d48"))   # kardiyo paspası (cam önü)
+    planks(c, 132, 140, 168, 66, WOOD, 3)                     # halter platformu (orta)
+    c.fill(132, 140, 168, 1, GOLD[3]); c.fill(132, 205, 168, 1, GOLD[1])
+    c.fill(348, 64, 62, 202, H("2f2a30")); c.fill(348, 64, 1, 202, H("3e3840"))   # torba köşesi minderi
+    tm_y = 76
+    tms = (126, 166, 206, 246, 286)
+    for x in tms:                                             # koşu bandı kayışları (cama doğru)
+        c.fill(x, tm_y, 22, 42, STONE[1]); c.fill(x + 2, tm_y, 18, 40, H("17171c")); c.fill(x, tm_y + 41, 22, 1, STONE[3])
+        r.add("belts", [x + 2, tm_y, 18, 40])
     r.borders(door=(20, 32))
     r.prop("reception", reception_desk, 22, 88, foot=16)
-    for i, x in enumerate((118, 188)):
-        r.prop("squat_rack", squat_rack, x, 64, shadow=False)
-        r.solid(x, 104, 6, 6); r.solid(x + 44, 104, 6, 6)
-        r.mark("lift_%d" % i, x + 25, 112)
-        r.add("bars", [x + 25, 86])
-    r.prop("dumbbells", dumbbell_rack, 278, 58, foot=10)
-    for i, x in enumerate((110, 168, 226)):
-        r.prop("tm_console", treadmill_console, x + 36, tm_y - 16, shadow=False)
-        r.solid(x, tm_y, 46, 6)
-        r.mark("run_%d" % i, x + 18, tm_y + 12)
-    for i, x in enumerate((322, 358)):   # torbalar üst sırada, dambıl rafıyla su sebili arasında
-        r.prop("bag", punching_bag, x, 72)
-        r.solid(x + 2, 118, 12, 6)
-        r.mark("bag_%d" % i, x - 8, 126)
-        r.add("bag_pos", [x + 8, 72])
-    r.prop("water_cooler", water_cooler, 388, 40, foot=6)
-    r.prop("gym_bench", gym_bench, 320, 196, foot=8)
+    for i, x in enumerate((148, 234)):
+        r.prop("squat_rack", squat_rack, x, 146, foot=4)
+        r.solid(x, 186, 6, 6); r.solid(x + 44, 186, 6, 6)
+        r.mark("lift_%d" % i, x + 25, 194)
+        r.add("bars", [x + 25, 168])
+    for i, x in enumerate(tms):
+        r.prop("tm_console", treadmill_front, x, tm_y - 14, shadow=False)
+        r.solid(x, tm_y - 2, 22, 4)
+        r.mark("run_%d" % i, x + 11, tm_y + 30)
+    for i, y in enumerate((86, 142, 198)):                    # torbalar: en sağda, duvar boyunca
+        r.prop("bag", punching_bag, 384, y)
+        r.solid(386, y + 46, 12, 6)
+        r.mark("bag_%d" % i, 372, y + 56)
+        r.add("bag_pos", [392, y])
+    r.prop("water_cooler", water_cooler, 340, 40, foot=6)
+    r.prop("dumbbells", dumbbell_rack, 150, 236, foot=10)
+    r.prop("gym_bench", gym_bench, 240, 238, foot=8)
     r.prop("plant_big", lambda: plant(True), 80, 40, foot=4)
     r.mark("spawn", 36, r.H - 22); r.mark("exit", 36, r.H - 4)
-    r.mark("riza", 58, 100); r.mark("talk_riza", 60, 140); r.mark("water", 392, 88)
-    for (x, y) in ((80, 110), (200, 110), (320, 110), (140, 210), (330, 220)):
+    r.mark("riza", 58, 100); r.mark("talk_riza", 60, 140); r.mark("water", 344, 88)
+    for (x, y) in ((106, 214), (320, 160), (316, 232), (110, 150)):   # esneyen / dinlenen sporcular
+        r.add("crowd_stand", [x, y])
+    for (x, y) in ((80, 110), (210, 100), (320, 110), (210, 190), (380, 200)):
         r.add("lamps", [x, y])
     return r.finish()
 
@@ -1560,7 +1604,7 @@ def room_butik():
         x = 320 + k * 8
         c.fill(x, 20, 6, 30, col); c.fill(x + 2, 34, 1, 16, shade(col, 0.7)); c.fill(x, 20, 6, 2, shade(col, 1.2))
     checker(c, 0, 72, r.W, r.H - 72, H("eef0f2"), H("e2e6ea"), size=32)
-    r.borders(door=(20, 30))
+    r.borders(door=(225, 30))          # giriş ortada
     r.prop("fitting_room", fitting_room, 414, 26, foot=4)
     r.prop("fitting_room", fitting_room, 446, 26, foot=4)
     # kasa: şapka rafının hemen sağında, duvarın dibinde
@@ -1568,17 +1612,24 @@ def room_butik():
     c.fill(226, 52, 40, 12, H("1f4fa0")); c.fill(226, 52, 40, 1, H("4a7ad0"))
     r.text(226, 61, 40, "KASA", 6, "ffffff")
     # iki yan sütun: askılıklar ve katlı ürün masaları; ortada boş koridor
-    for k, (x, y) in enumerate(((56, 100), (56, 164), (382, 100), (382, 164))):
+    for k, (x, y) in enumerate(((56, 100), (56, 164), (382, 100), (382, 164),      # her askılığın yanında bir tane daha
+                                 (106, 100), (106, 164), (332, 100), (332, 164))):
         r.prop("round_rack_%d" % k, lambda s=k: round_rack(s + 3), x, y, foot=8)
+    # dinlenme yeri: koridorun iki yanında karşılıklı kanepeler, ortası kasaya giden yol olarak boş
+    for (sx, face) in ((164, "right"), (294, "left")):
+        sofa_side(c, sx, 112, face, col=[H("6a3a4a"), H("8a4a5e"), H("a85c74"), H("c87890")])
+        r.solid(sx, 112, 22, 52)
+        for y in (140, 162):   # iki kişilik: oturanlar sıkışmasın
+            r.add("crowd_seats", [sx + (15 if face == "right" else 7), y, face])
     r.prop("fold_table", lambda: fold_table(9), 124, 214, foot=10)
     r.prop("fold_table_b", lambda: fold_table(13), 300, 214, foot=10)
-    r.prop("mannequin", lambda: mannequin(H("c84060"), H("2a2a30")), 60, 210, foot=4)
-    r.prop("mannequin_b", lambda: mannequin(H("3a6ab8"), H("8a7a5a")), 80, 214, foot=4)
+    r.prop("mannequin", lambda: mannequin(H("c84060"), H("2a2a30")), 200, 206, foot=4)      # kapının iki yanında
+    r.prop("mannequin_b", lambda: mannequin(H("3a6ab8"), H("8a7a5a")), 266, 206, foot=4)
     r.prop("plant_big", lambda: plant(True), 290, 54, foot=4)
-    for (x, y) in ((112, 134), (112, 196), (366, 134), (366, 196)):
+    for (x, y) in ((80, 150), (128, 150), (356, 150), (404, 150)):          # askılık sıraları arasındaki koridor
         r.add("crowd_stand", [x, y])
     r.mark("selin", 250, 92); r.mark("talk_selin", 250, 128)
-    r.mark("spawn", 35, r.H - 22); r.mark("exit", 35, r.H - 4)
+    r.mark("spawn", 240, r.H - 22); r.mark("exit", 240, r.H - 4)
     for (x, y) in ((100, 120), (240, 120), (380, 120), (240, 210)):
         r.add("lamps", [x, y])
     return r.finish()

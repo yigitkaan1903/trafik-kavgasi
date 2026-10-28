@@ -7,6 +7,7 @@ extends Node2D
 const StatusBar = preload("res://scenes/ui/status_bar.gd")
 const Person = preload("res://scenes/metro/person.gd")
 const MetroEvents = preload("res://data/metro_events.gd")
+const Places = preload("res://data/places.gd")
 
 const REACH := 12.0
 const WALK_SPEED := 82.0
@@ -54,7 +55,8 @@ func _ready() -> void:
 	_room.add_blocker(_npc)
 	var order := range(_seats.size())
 	order.shuffle()
-	for i in order.slice(0, _seats.size() / 2):
+	var fill := 0.5 if _mode == "lecture" else Places.crowd_level("yemekhane", GameState.minute, GameState.weekday())
+	for i in order.slice(0, int(_seats.size() * fill)):
 		var s = _person(MetroEvents.random_look(), _seats[i][0])
 		s.sit(_seats[i][1])
 		_occupied[i] = s

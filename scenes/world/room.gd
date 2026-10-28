@@ -139,6 +139,11 @@ func blocked_by_solid(p: Vector2, half: Vector2 = FEET) -> bool:
 ## Engellere kayarak hareket: önce x, sonra y denenir. who verilirse diğer insanlara da çarpar.
 func slide(from: Vector2, motion: Vector2, half: Vector2 = FEET, who: Node2D = null) -> Vector2:
 	var p := from
+	var box := Rect2(from - half, half * 2.0)
+	for s in solids:   # zaten bir eşyanın içinde kalmışsa (ör. alet başında) sıkışmasın: ondan uzaklaşan adıma izin ver
+		if s.intersects(box):
+			var c := s.get_center()
+			return from + motion if (from + motion).distance_to(c) > from.distance_to(c) else from
 	if motion.x != 0.0 and not blocked(p + Vector2(motion.x, 0), half, who):
 		p.x += motion.x
 	if motion.y != 0.0 and not blocked(p + Vector2(0, motion.y), half, who):

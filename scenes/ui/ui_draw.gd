@@ -12,7 +12,7 @@ const TEXT_DIM := Color(1, 1, 1, 0.62)
 const ICONS := {
 	"energy": [0, Vector2(12, 12)], "food": [1, Vector2(12, 10)], "money": [2, Vector2(12, 12)],
 	"str": [3, Vector2(12, 12)], "agi": [4, Vector2(12, 12)], "sta": [5, Vector2(12, 12)],
-	"calendar": [6, Vector2(14, 15)],
+	"calendar": [6, Vector2(14, 15)], "health": [7, Vector2(12, 10)],
 }
 const ICON_SHEET := preload("res://assets/sprites/ui_icons.png")
 

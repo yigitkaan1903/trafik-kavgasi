@@ -321,20 +321,21 @@ func _open_popup(popup, on_done: Callable) -> void:
 
 func _draw_overlay() -> void:
 	var font := ThemeDB.fallback_font
-	for id in _spots:
+	for id in _spots:   # isim sadece imleç (ya da klavye seçimi) üstündeyken, küçük bir etiketle
+		if id != _hover:
+			continue
 		var r := _rect(id)
-		var hot: bool = id == _hover
 		var name: String = _spots[id]["name"]
-		var w := font.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x
+		var w := font.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x
 		var lp := Vector2(clampf(r.get_center().x - w / 2.0, 4.0, _world.size.x - 4.0 - w), r.position.y - 3)
 		if lp.y < 32.0:   # durum çubuğuna değecekse etiket binanın altına
 			lp.y = r.end.y + 10.0
-		_overlay.draw_rect(Rect2(lp.x - 2, lp.y - 8, w + 4, 10), Color(0, 0, 0, 0.55))
-		_overlay.draw_string(font, lp, name, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color("e6b428") if hot else Color.WHITE)
-		if hot:   # seçili yer: etiketin üstünde zıplayan ok (kare çerçeve yerine)
-			var tip := Vector2(lp.x + w / 2.0, lp.y - 10 + roundf(sin(Time.get_ticks_msec() / 160.0) * 1.5))
-			_overlay.draw_colored_polygon(PackedVector2Array([tip + Vector2(-4, -4), tip + Vector2(4, -4), tip]), Color("1b1024"))
-			_overlay.draw_colored_polygon(PackedVector2Array([tip + Vector2(-3, -4), tip + Vector2(3, -4), tip + Vector2(0, -1)]), Color("e6b428"))
+		UIDraw.box(_overlay, Rect2(lp.x - 3, lp.y - 7, w + 6, 9), Color(0.06, 0.05, 0.1, 0.85), Color(UIDraw.GOLD, 0.6), 3)
+		_overlay.draw_string(font, lp, name, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, Color("e6b428"))
+		# etiketin üstünde zıplayan ok
+		var tip := Vector2(lp.x + w / 2.0, lp.y - 10 + roundf(sin(Time.get_ticks_msec() / 160.0) * 1.5))
+		_overlay.draw_colored_polygon(PackedVector2Array([tip + Vector2(-4, -4), tip + Vector2(4, -4), tip]), Color("1b1024"))
+		_overlay.draw_colored_polygon(PackedVector2Array([tip + Vector2(-3, -4), tip + Vector2(3, -4), tip + Vector2(0, -1)]), Color("e6b428"))
 	_overlay.draw_string(font, _map["line"][0], _map["line"][1], HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color(1, 1, 1, 0.75))
 	if _spots.has("otopark") and GameState.has_car():   # araban otoparkta: yanıp sönen kırmızı nokta
 		var c: Vector2 = _spots["otopark"]["pos"] + Vector2(0, -2)

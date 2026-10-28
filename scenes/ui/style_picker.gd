@@ -188,11 +188,14 @@ func _rebuild() -> void:
 			_list.add_child(h)
 			continue
 		var text: String = it["name"]
+		var sale: bool = it.get("note", "") == "" and it.get("base", 0) > it.get("price", 0)
 		if it.get("note", "") != "":
 			text += "  ·  " + it["note"]
-		elif it.get("price", 0) > 0:
+		elif it.get("price", 0) > 0 and not sale:
 			text += "  ·  %d TL" % it["price"]
 		var b := UIDraw.flat_button(text, ACCENT, 8, false)
+		if sale:   # indirimli: eski fiyatın üstü çizili, yanında yeni fiyat
+			_sale_tag(b, it["base"], it["price"])
 		b.custom_minimum_size.x = PANEL.size.x - 30
 		b.toggle_mode = true                      # seçili satır işaretli kalsın
 		b.button_pressed = not _sel.is_empty() and it.get("id") == _sel.get("id") and it.get("kind") == _sel.get("kind")
@@ -212,6 +215,26 @@ func _rebuild() -> void:
 			if it.get("disabled", false) and (_tab == "" or it.get("tab", "") == _tab):
 				_select.call_deferred(it)
 				break
+
+
+## Satırın sağında "eski fiyat (üstü çizili)  yeni fiyat".
+func _sale_tag(b: Button, old: int, now: int) -> void:
+	var l := RichTextLabel.new()
+	l.bbcode_enabled = true
+	l.fit_content = true
+	l.autowrap_mode = TextServer.AUTOWRAP_OFF
+	l.scroll_active = false
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	l.add_theme_font_size_override("normal_font_size", 8)
+	l.text = "[s][color=#ffffff80]%d TL[/color][/s]  [color=#4ade80]%d TL[/color]" % [old, now]
+	var font := ThemeDB.fallback_font
+	var w := font.get_string_size("%d TL  %d TL" % [old, now], HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x + 6.0
+	l.set_anchors_preset(Control.PRESET_CENTER_RIGHT)
+	l.offset_left = -w - 6.0
+	l.offset_right = -6.0
+	l.offset_top = -6.0
+	l.offset_bottom = 6.0
+	b.add_child(l)
 
 
 func _select(item: Dictionary) -> void:

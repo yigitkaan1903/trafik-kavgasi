@@ -658,7 +658,7 @@ def city_map():
             continue
         if (i, j) in at_cell:                                         # mekan: derinlik sırasında çizilir (önündekiler örtebilir)
             name = at_cell[(i, j)]
-            diamond(p, x, y, H("c8c2b4"), 0, H("b0aa9c"))
+            diamond(p, x, y, H("9c978a"), 0, H("88837a"))
             if name == "otopark":
                 iso_parking(p, x, y)
             else:
@@ -680,7 +680,7 @@ def city_map():
             if (i + j) % 4 == 0:
                 lamp(x, y - 5)
         elif (i, j) in plaza:
-            diamond(p, x, y, H("c8c2b4"), 0, H("b0aa9c"))
+            diamond(p, x, y, H("9c978a"), 0, H("88837a"))
         elif j < E5_J[0]:                          # E-5'in kuzeyi (Esenyurt): soluk, sık bloklar
             if rng.random() < 0.85:
                 iso_box(p, x, y, rng.randint(6, 16), _shade(rng.choice(ISO_ROOF), 0.92), rng)
@@ -730,7 +730,7 @@ KAMPUS = {   # data/places.gd MAPS["kampus"]["spots"] ile aynı
     "yemekhane": (56, 82), "kampus_kafe": (190, 210), "otopark": (300, 203),
 }
 # YTÜ kampüs haritası renkleri (canlı yeşil, koyu asfalt, açık gri ızgaralı dış zemin)
-C_OUT, C_OUT_LINE = H("e7e4dd"), H("d8d4ca")
+C_OUT, C_OUT_LINE = H("8e8b85"), H("807d76")   # gece parlamasın diye orta gri
 C_GRASS = [H("6db044"), H("7cbf4f"), H("8fcc5e")]
 C_FOREST = H("2f6b37")
 C_TREE = [H("2b6630"), H("3d8b3a"), H("69b54f")]
@@ -861,9 +861,6 @@ def stadium(p, cx, cy):
     p.fill(cx - 15, cy - 6, 30, 1, WHITE_L); p.fill(cx - 15, cy + 6, 30, 1, WHITE_L)
     p.fill(cx - 15, cy - 6, 1, 13, WHITE_L); p.fill(cx + 14, cy - 6, 1, 13, WHITE_L)
     p.fill(cx, cy - 6, 1, 13, WHITE_L)
-    for a in range(0, 360, 20):   # projektörler
-        pass
-    glow(cx - 28, cy - 14, 12, 60, (255, 250, 230)); glow(cx + 28, cy - 14, 12, 60, (255, 250, 230))
 
 
 WHITE_L = H("f4f2ec")
@@ -876,11 +873,11 @@ def metro_band(p):
         for y in range(max(TOP, t), t + 24):
             k = y - t
             if k < 2 or k > 21:
-                c = H("bfc0c4")
+                c = H("7e8086")
             elif 8 <= k <= 15:
                 c = H("b03a3a") if k not in (8, 15) else H("f2f2f2")
             else:
-                c = H("d6d7da")
+                c = H("8e9095")
             p.set(x, y, c)
         if x % 24 == 0:
             p.set(x, int(band_top(x)) + 11, H("f2f2f2")); p.set(x + 1, int(band_top(x)) + 11, H("f2f2f2"))

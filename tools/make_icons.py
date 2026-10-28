@@ -121,6 +121,18 @@ ICONS = [
         "kggggggggggggk",
         ".kkkkkkkkkkkk.",
     ]),
+    ("health", {"k": K, "R": H("f87171"), "r": H("dc2626"), "d": H("991b1b"), "W": H("fee2e2")}, [   # kalp (can)
+        "..kk...kk...",
+        ".kRRk.kRRk..",
+        "kRWRRkRRrrk.",
+        "kRWRRRRRrrk.",
+        "kRRRRRRrrrk.",
+        ".kRRRRRrrk..",
+        "..kRRRrrk...",
+        "...kRrdk....",
+        "....kdk.....",
+        ".....k......",
+    ]),
 ]
 
 

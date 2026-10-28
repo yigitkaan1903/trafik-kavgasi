@@ -497,7 +497,7 @@ func _buy_simit() -> void:
 		_say(_simitci, "Bir tane yedin ya, doymadın mı?")
 	elif GameState.try_spend(GameState.SIMIT_PRICE):
 		GameState.simit_buff = true
-		GameState.food = minf(100.0, GameState.food + 12.0)
+		GameState.eat(12.0)
 		GameState.save_game()
 		_say(_simitci, "Afiyet olsun! Sonraki kavgada +%d can." % GameState.SIMIT_HP, 3.0)
 	else:

@@ -55,6 +55,7 @@ var day := 1                  # 1 = ilk pazartesi
 var minute := 420.0           # gün içi dakika (07:00)
 var energy := 100.0
 var food := 70.0              # tokluk
+var health := 100.0           # can: kavga kaybı düşürür, yemek artırır
 var stats := {}               # "str", "agi", "sta"
 var trained_today := {}       # bugün hangi kas kaç kez çalışıldı
 var difficulty := "normal"
@@ -154,6 +155,7 @@ func new_game(diff: String = "normal") -> void:
 	minute = Places.START_MINUTE
 	energy = 100.0
 	food = 70.0
+	health = 100.0
 	stats = {"str": Places.STAT_START, "agi": Places.STAT_START, "sta": Places.STAT_START}
 	trained_today = {}
 	place = "ev"
@@ -208,7 +210,7 @@ func save_game() -> void:
 		return
 	var data := {
 		"version": SAVE_VERSION,
-		"day": day, "minute": minute, "energy": energy, "food": food, "stats": stats,
+		"day": day, "minute": minute, "energy": energy, "food": food, "health": health, "stats": stats,
 		"trained_today": trained_today, "difficulty": difficulty, "place": place, "fridge": fridge,
 		"map_id": map_id, "done_today": done_today,
 		"protein_days": protein_days, "gym_until": gym_until, "gym_day_pass": gym_day_pass,
@@ -273,6 +275,7 @@ func load_game() -> bool:
 	minute = float(data.get("minute", Places.START_MINUTE))
 	energy = float(data.get("energy", 100.0))
 	food = float(data.get("food", 70.0))
+	health = float(data.get("health", 100.0))
 	for k in stats:
 		stats[k] = float(data.get("stats", {}).get(k, Places.STAT_START))
 	trained_today = {}
@@ -542,7 +545,8 @@ func do_action(a: Dictionary) -> Array:
 		stats[train] = minf(Places.STAT_MAX, stats[train] + gain)
 		trained_today[train] = train_count(train) + 1
 		lines.append("+%.1f %s" % [gain, Places.STAT_NAMES[train]])
-		lines.append(add_xp(Places.XP_TRAIN))
+		# yorgun kas az XP verir (Punch Club gibi): 12, 8, 5, 3
+		lines.append(add_xp(maxi(1, roundi(Places.XP_TRAIN * Places.TRAIN_FATIGUE[mini(trained_today[train] - 1, Places.TRAIN_FATIGUE.size() - 1)]))))
 		if trained_today[train] >= 2 and trained_today[train] < Places.TRAIN_FATIGUE.size():
 			lines.append("(kas yoruluyor)")
 	for k in a.get("gain", {}):
@@ -550,7 +554,12 @@ func do_action(a: Dictionary) -> Array:
 		lines.append("+%.1f %s" % [a["gain"][k], Places.STAT_NAMES[k]])
 	money += a.get("money", 0)
 	energy = clampf(energy + a.get("energy", 0), 0.0, 100.0)
-	food = clampf(food + a.get("food", 0), 0.0, 100.0)
+	if a.get("food", 0) > 0:
+		var healed := eat(a["food"])
+		if healed != "":
+			lines.append(healed)
+	else:
+		food = clampf(food + a.get("food", 0), 0.0, 100.0)
 	match a.get("effect", ""):
 		"sleep":
 			var until := Places.START_MINUTE + (1440.0 if minute >= Places.START_MINUTE else 0.0)
@@ -641,10 +650,18 @@ func cheapest_car() -> Dictionary:
 	return best
 
 
-## Dayanıklılık can verir; yorgunsan kavgaya daha az canla başlarsın (en az %70).
+## Yemek: tokluk ve can artar. Sonuç satırı döndürür (can zaten doluysa boş).
+func eat(amount: float) -> String:
+	food = clampf(food + amount, 0.0, 100.0)
+	var before := health
+	health = minf(100.0, health + amount * Places.HEALTH_PER_FOOD)
+	return "+%d can" % roundi(health - before) if health - before >= 1.0 else ""
+
+
+## Dayanıklılık can verir; yorgunsan (en az %70) ya da sağlığın bozuksa (en az %60) kavgaya daha az canla başlarsın.
 func player_max_hp() -> float:
 	var bonus := (10.0 if has_skill("kalin_deri") else 0.0) + (25.0 if has_skill("demir_adam") else 0.0)
-	return (70.0 + 3.0 * stats["sta"]) * lerpf(0.7, 1.0, energy / 100.0) + bonus
+	return (70.0 + 3.0 * stats["sta"]) * lerpf(0.7, 1.0, energy / 100.0) * lerpf(0.6, 1.0, health / 100.0) + bonus
 
 
 ## Güç hasarı artırır.
@@ -833,7 +850,7 @@ func apply_fight_result(won: bool) -> Dictionary:
 		var reward := fight_reward()
 		money += reward
 		result["money"] = reward
-		if Shop.WEAPONS.get(weapon, {}).get("police", false) and randf() < Shop.KNIFE_POLICE_CHANCE:
+		if weapon_info().get("police", false) and randf() < Shop.KNIFE_POLICE_CHANCE:
 			var fine := mini(money, Shop.KNIFE_POLICE_FINE)
 			money -= fine
 			result["police"] = "Polis çevirdi, bıçağı gördü: -%d TL ceza!" % fine
@@ -870,6 +887,10 @@ func apply_fight_result(won: bool) -> Dictionary:
 	var tired: int = Places.FIGHT_ENERGY - (5 if has_skill("nefes") else 0)
 	energy = maxf(0.0, energy - tired)
 	result["tired"] = "-%d enerji, +%d dakika" % [tired, Places.FIGHT_MINUTES]
+	if not won:   # dayak yedin: can düşer, yemekle toparlanır
+		var hurt := minf(health, Places.HEALTH_FIGHT_LOSS)
+		health -= hurt
+		result["tired"] += ", -%d can" % roundi(hurt)
 	fight_rival = ""
 	fight_bet = false
 	fight_seat_stake = ""
@@ -1039,9 +1060,14 @@ func get_haircut(id: String) -> String:
 	return ""
 
 
-## Mağaza fiyatı (Pazarlıkçı yeteneğiyle %15 indirimli).
+## Mağaza indirimi: Pazarlıkçı %5, Karizma +%5 (en fazla %10).
+func shop_discount() -> float:
+	return (0.05 if has_skill("pazarlikci") else 0.0) + (0.05 if has_skill("karizma") else 0.0)
+
+
+## Mağaza fiyatı (indirimli).
 func shop_price(base: int) -> int:
-	return int(round(base * (0.85 if has_skill("pazarlikci") else 1.0)))
+	return int(round(base * (1.0 - shop_discount())))
 
 
 func buy_outfit(id: String) -> bool:
@@ -1146,7 +1172,28 @@ func toast(text: String) -> void:
 
 
 func weapon_info() -> Dictionary:
-	return Shop.WEAPONS.get(weapon, {})
+	return Shop.WEAPONS.get(weapon, {}) if weapon_allowed() else {}
+
+
+## Silah sadece trafikte işe yarar: metrobüste ve durakta (turnike, güvenlik) çantadan çıkmaz.
+func weapon_allowed() -> bool:
+	return fight_venue == "traffic"
+
+
+## Güçlendikçe trafikte silahlı rakipler çıkar: ortalama stat 20'den sonra şans artar (en fazla %45),
+## stat yükseldikçe daha tehlikeli silahlar. Metrobüste kimse silah çekemez. Boş: silahsız.
+func roll_rival_weapon() -> String:
+	if not weapon_allowed():
+		return ""
+	var avg: float = (stats["str"] + stats["agi"] + stats["sta"]) / 3.0
+	if randf() >= clampf((avg - 20.0) / 80.0, 0.0, 0.45) and not OS.get_cmdline_user_args().has("--armed"):
+		return ""
+	var pool := ["sopa", "levye", "musta"]
+	if avg >= 35.0:
+		pool.append("bicak")
+	if avg >= 50.0:
+		pool.append_array(["pala", "balta"])
+	return pool.pick_random()
 
 
 func fighter_texture(look: String, pose: String) -> Texture2D:
@@ -1219,6 +1266,8 @@ func _debug_args() -> void:
 		energy = float(args["energy"])
 	if args.has("food"):
 		food = float(args["food"])
+	if args.has("health"):
+		health = float(args["health"])
 	if args.has("place"):
 		open_place = args["place"]
 		place = args["place"]
@@ -1253,6 +1302,8 @@ func _debug_args() -> void:
 		level = int(args["level"])
 	if args.has("sp"):   # --sp=5  yetenek puanı
 		skill_points = int(args["sp"])
+	if args.has("skills"):   # --skills=pazarlikci,karizma
+		skills_owned = Array(args["skills"].split(","))
 	if args.has("weapon"):   # --weapon=sopa  (alıp çantaya koyar)
 		weapons_owned.append(args["weapon"])
 		weapon = args["weapon"]

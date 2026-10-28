@@ -38,7 +38,8 @@ const LIGHTS := {
 const SPOT_PROPS := {
 	"desk": ["desk_laptop", 0], "bed": ["bed", 0], "wardrobe": ["wardrobe", 0], "fridge": ["fridge", 0], "water": ["water_cooler", 0],
 	"lift_0": ["squat_rack", 0], "lift_1": ["squat_rack", 1], "run_0": ["tm_console", 0], "run_1": ["tm_console", 1],
-	"run_2": ["tm_console", 2], "bag_0": ["bag", 0], "bag_1": ["bag", 1],
+	"run_2": ["tm_console", 2], "run_3": ["tm_console", 3], "run_4": ["tm_console", 4],
+	"bag_0": ["bag", 0], "bag_1": ["bag", 1], "bag_2": ["bag", 2],
 }
 const COACH_LINES := ["Bir tane daha!", "Nefesini kontrol et!", "Yavaş, kontrollü!", "Aferin, devam!", "Bırakmak yok!"]
 
@@ -67,6 +68,7 @@ var _busy := false            # eylem/antrenman sürüyor
 var _walk_goal := Vector2(-1, -1)   # tıklanan yere yürüme
 var _walk_then := -1          # vardığında etkileşilecek spot
 var _hover := -1
+var _fill := -1.0             # bu girişteki doluluk (saate göre, bkz. CROWD)
 var _barbers: Array = []     # berberde çalışan berberler (makas hareketi)
 var _anim := ""               # oyuncunun antrenman animasyonu
 var _anim_t := 0.0
@@ -93,9 +95,18 @@ func _ready() -> void:
 	_top.draw.connect(_draw_top)
 	_room.top_layer.add_child(_top)
 
+	_fill = _crowd_level()
+	var machines := {}   # her aletten kaç tane var: en az biri oyuncuya boş kalsın
+	for s in _data["spots"]:
+		if s["kind"] == "machine":
+			machines[s["action"]] = machines.get(s["action"], 0) + 1
+	var busy := {}
 	for s in _data["spots"]:
 		var spot: Dictionary = s.duplicate()
 		spot["pos"] = _room.mark(spot["at"])
+		if spot["kind"] == "machine" and busy.get(spot["action"], 0) < machines[spot["action"]] - 1 and randf() < _fill * 0.9:
+			busy[spot["action"]] = busy.get(spot["action"], 0) + 1
+			spot["user"] = GameState.MetroEvents.random_look()
 		if spot["kind"] == "npc":
 			var p = _person(spot["look"], _room.mark(spot["stand"]))
 			if spot.get("sit", false):
@@ -161,7 +172,7 @@ func _add_crowd() -> float:
 	var stands: Array = _room.points("crowd_stand")
 	if seats.is_empty() and stands.is_empty():
 		return -1.0
-	var fill := _crowd_level()
+	var fill := _fill
 	if fill <= 0.0:
 		return 0.0
 	var taken: Array = []
@@ -206,26 +217,14 @@ func _add_crowd() -> float:
 ## Doluluk: saate göre (sabah sakin, öğle tıklım tıklım, akşam azalır), hafta sonu kampüs boş; biraz da şans.
 func _crowd_level() -> float:
 	var h := GameState.minute / 60.0
-	var base := 0.12
-	if h >= 8.0 and h < 11.0:
-		base = 0.35
-	elif h >= 11.0 and h < 14.0:
-		base = 0.8
-	elif h >= 14.0 and h < 17.0:
-		base = 0.55
-	elif h >= 17.0 and h < 20.0:
-		base = 0.35
-	elif h >= 20.0 and h < 23.0:
-		base = 0.2
-	if GameState.weekday() >= 5 and _id == "kampus_kafe":
-		base *= 0.4
 	if _id == "berber":   # akşamüstü ve hafta sonu kuyruk olur, kapalıyken kimse yok
 		if not GameState.is_open(Shop.BARBER_HOURS):
 			return 0.0
-		base = 0.45 if h < 17.0 else 0.8
+		var b := 0.45 if h < 17.0 else 0.8
 		if GameState.weekday() >= 5:
-			base = 0.9
-	return clampf(base + randf_range(-0.12, 0.12), 0.05, 0.95)
+			b = 0.9
+		return clampf(b + randf_range(-0.12, 0.12), 0.05, 0.95)
+	return Places.crowd_level(_id, GameState.minute, GameState.weekday())
 
 
 func _person(look: String, at: Vector2):
@@ -711,7 +710,7 @@ func _open_shop(s: Dictionary, _page: int = 0) -> void:
 		_open_picker(picker, true)
 	else:
 		picker.title = "Silah vitrini"
-		picker.subtitle = "Camın arkasındakiler. Aldığın çantana girer, kavgada elinde olur."
+		picker.subtitle = "Camın arkasındakiler. Aldığın çantana girer, trafik kavgasında elinde olur. Metrobüste çantada kalır."
 		picker.items = _weapon_items()
 		picker.image_for = func(it: Dictionary) -> Texture2D: return load("res://assets/pixellab/map/weapon_%s.png" % it["id"])
 		picker.on_buy = func(it: Dictionary) -> String:
@@ -733,7 +732,7 @@ func _outfit_items() -> Array:
 		var owned: bool = GameState.outfits_owned.has(id)
 		var on: bool = GameState.outfit == id
 		var price := GameState.shop_price(o["price"])
-		list.append({"kind": "outfit", "tab": o["cat"], "id": id, "name": o["name"], "price": price, "desc": o["desc"],
+		list.append({"kind": "outfit", "tab": o["cat"], "id": id, "name": o["name"], "price": price, "base": o["price"], "desc": o["desc"],
 				"note": "üzerinde" if on else ("sende" if owned else ""), "disabled": on,
 				"action": "Üzerinde" if on else ("Giy" if owned else "Satın al  (%d TL)" % price)})
 	list.append({"kind": "hat", "tab": "Şapka", "id": "", "name": "Şapkasız", "price": 0, "desc": "Saçın görünsün.",
@@ -743,7 +742,7 @@ func _outfit_items() -> Array:
 		var owned: bool = GameState.hats_owned.has(id)
 		var on: bool = GameState.hat == id
 		var price := GameState.shop_price(h["price"])
-		list.append({"kind": "hat", "tab": "Şapka", "id": id, "name": h["name"], "price": price, "desc": h["desc"],
+		list.append({"kind": "hat", "tab": "Şapka", "id": id, "name": h["name"], "price": price, "base": h["price"], "desc": h["desc"],
 				"note": "başında" if on else ("sende" if owned else ""), "disabled": on,
 				"action": "Başında" if on else ("Tak" if owned else "Satın al  (%d TL)" % price)})
 	return list
@@ -756,10 +755,11 @@ func _weapon_items() -> Array:
 		var owned: bool = GameState.weapons_owned.has(id)
 		var on: bool = GameState.weapon == id
 		var price := GameState.shop_price(w["price"])
-		list.append({"id": id, "name": w["name"], "price": price,
+		list.append({"id": id, "name": w["name"], "price": price, "base": w["price"],
 				"desc": "%s  Hasar x%.2f%s." % [w["desc"], w["damage"], ", menzil +%d" % w["range"] if w["range"] > 0 else ""],
 				"note": "çantanda" if on else ("sende" if owned else ""), "disabled": on,
 				"action": "Çantanda" if on else ("Çantaya koy" if owned else "Satın al  (%d TL)" % price)})
+	list.sort_custom(func(a, b): return a["price"] < b["price"])   # ucuzdan pahalıya
 	return list
 
 
@@ -990,8 +990,8 @@ func _pose(p, anim: String, t: float) -> void:
 		"lift":
 			p.face_dir("down")
 			p.set_pose("lift2" if int(t / 0.5) % 2 == 1 else "lift1")
-		"run":
-			p.face_dir("right")
+		"run":   # cama dönük koşar
+			p.face_dir("up")
 			p.set_pose("walk1" if int(t / 0.11) % 2 == 0 else "walk2")
 		"bag":
 			p.face_dir("right")
@@ -1029,10 +1029,10 @@ func _draw_floor_fx() -> void:
 		var active: bool = i == _anim_spot or s.has("user")
 		match s.get("anim", ""):
 			"run":
-				var b: Array = belts[s["index"]]
+				var b: Array = belts[s["index"]]   # dikey kayış: çizgiler aşağı akar
 				var shift := int(fposmod(_time * 50.0, 6.0)) if active else 0
-				for bx in range(0, int(b[2]), 6):
-					_floor_fx.draw_rect(Rect2(b[0] + fposmod(bx - shift, b[2]), b[1] + 1, 1, b[3] - 2), Color("2c2f3b"))
+				for by in range(0, int(b[3]), 6):
+					_floor_fx.draw_rect(Rect2(b[0] + 1, b[1] + fposmod(by + shift, b[3]), b[2] - 2, 1), Color("2c2f3b"))
 			"lift":
 				if not active:
 					var p: Vector2 = bars[s["index"]]
