@@ -67,8 +67,8 @@ func _ready() -> void:
 		shade.draw_rect(Rect2(74, 82, 18, 2), UIDraw.GOLD))
 	add_child(shade)
 
-	var logo1 := _logo("TRAFİK", Vector2(24, 18), Color("e6b428"))
-	var logo2 := _logo("KAVGASI", Vector2(24, 46), Color("f4f2ec"))
+	var logo1 := _logo("İSİM", Vector2(24, 36), Color("e6b428"))
+	var logo2 := _logo("SİZ", Vector2(24 + logo1.get_minimum_size().x - 2, 36), Color("f4f2ec"))
 	logo1.modulate.a = 0.0
 	logo2.modulate.a = 0.0
 	var sub := GameState.make_label("Beylikdüzü – Davutpaşa hattında bir YTÜ'lünün\nhayatta kalma hikâyesi", 8, Color(1, 1, 1, 0.7))

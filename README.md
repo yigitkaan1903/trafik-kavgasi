@@ -1,4 +1,4 @@
-# Trafik Kavgası
+# İsimsiz
 
 Beylikdüzü'nde yaşayan, okulu Davutpaşa'da olan bir YTÜ öğrencisisin. Punch Club tarzı bir günlük hayat: zamanın, enerjin ve tokluğun kısıtlı. Gymde antrenman yaparak güçlen, çarşıda çalışarak para kazan, haftada en az 3 gün derse git ki pazartesi harçlık gelsin, yemek yemeyi unutma. Okula metrobüsle gidiyorsun: durakta insan yığını, kaynakçılar, koltuk kavgaları ve yolda sataşmalar seni bekliyor. Güçlendikçe kavgalar kolaylaşır; yendiğin rakipler senden korkmaya başlar (Nam). Çarşıdaki butikten kıyafet, hırdavatçıdan kavga için silah (muşta, beyzbol sopası, bıçak) alabilir, evdeki gardıroptan giyip çantana koyabilirsin. Kavga, antrenman ve dersle XP toplayıp seviye atlar, her seviyede yetenek puanı kazanır, telefondan ya da Y tuşuyla açılan yetenek ağacında harcarsın. Para biriktirip araba alınca haritadaki otoparktan arabayla okula gidip gelebilirsin: metrobüsten hızlı (~35 dk) ama benzin parası var ve trafikte kavga çıkabilir.
 

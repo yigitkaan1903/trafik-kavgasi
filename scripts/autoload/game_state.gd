@@ -135,6 +135,7 @@ func _ready() -> void:
 	_setup_input()
 	_setup_theme()
 	_setup_fade()
+	_migrate_old_save()
 	new_game()
 	load_game()
 	_load_settings()
@@ -350,6 +351,16 @@ func save_settings() -> void:
 		cfg.set_value("audio", "music", _audio().music_volume)
 		cfg.set_value("audio", "sfx", _audio().sfx_volume)
 	cfg.save(SETTINGS_PATH)
+
+
+## Oyunun adı "Trafik Kavgası"yken kayıtlar başka klasördeydi (user:// proje adına bağlı): ilk açılışta taşı.
+func _migrate_old_save() -> void:
+	if FileAccess.file_exists(SAVE_PATH):
+		return
+	var old := OS.get_user_data_dir().get_base_dir().path_join("Trafik Kavgası")
+	for f in ["save.json", "settings.cfg"]:
+		if FileAccess.file_exists(old.path_join(f)):
+			DirAccess.copy_absolute(old.path_join(f), "user://" + f)
 
 
 func _load_settings() -> void:
